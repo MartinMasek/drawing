@@ -1,0 +1,41 @@
+# Cursor contributor rules for the Drawing Canvas
+
+## Goals
+- Keep the canvas feature modular, strongly typed, and performant.
+- Prioritize clarity over cleverness. Favor explicit math and early returns.
+
+## Files and ownership
+- src/components/DimensionedPolygon.tsx — Orchestrates state and Konva stage. Event handlers live here.
+- src/components/drawing/types.ts — Extend types here instead of using any.
+- src/components/drawing/constants.ts — Add/modify constants and options here.
+- src/components/drawing/URLImage.tsx — Image drag bounds and interactions.
+- src/components/drawing/Toolbar.tsx — UI-only; no business logic.
+- src/components/drawing/ContextMenu.tsx — UI-only; route actions via callbacks.
+- src/components/drawing/InfoLog.tsx — Diagnostics; optional at runtime.
+- src/components/drawing/DistanceModal.tsx — Focused modal. Keep accessible.
+
+## Interaction guidelines
+- Never open context menus over images. Hit-test images manually first.
+- Use container→scene conversions for pointer math. Keep helpers close to the orchestrator.
+- When changing pan/zoom behavior, ensure drag bounds remain correct for sinks.
+
+## TypeScript
+- Do not use any. If a shape needs more fields, update RectShape/ImageShape in types.ts.
+- Prefer readonly/immutability for props and arrays where possible.
+
+## Accessibility and UX
+- Buttons must be keyboard-accessible (include onKeyUp/Down where clicks close overlays).
+- Avoid focus traps; overlays should close with Escape.
+
+## Linting
+- Fix exhaustive-deps warnings thoughtfully. Include only deps that affect a callback’s output. For finalizing rects include default colors; for pointer-move drafts avoid unrelated deps.
+- Don’t fight class sorting warnings unless necessary; sort when convenient.
+
+## Performance
+- Keep heavy layers non-interactive (FastLayer) and reduce label rendering for large rect counts or low zoom.
+- Use stable ids via counters, not array indices, for keys.
+
+## Comments
+- Don’t remove existing comments. Add short comments for non-obvious math and constraints.
+
+

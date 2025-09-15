@@ -1,6 +1,7 @@
 import { signIn, signOut, useSession } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
+import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 
 import { api } from "~/utils/api";
 
@@ -42,12 +43,28 @@ export default function Home() {
 								to deploy it.
 							</div>
 						</Link>
+						<Link
+							className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 text-white hover:bg-white/20"
+							href="/drawing"
+						>
+							<h3 className="font-bold text-2xl">Drawing →</h3>
+							<div className="text-lg">Draw something</div>
+						</Link>
 					</div>
 					<div className="flex flex-col items-center gap-2">
 						<p className="text-2xl text-white">
 							{hello.data ? hello.data.greeting : "Loading tRPC query..."}
 						</p>
 						<AuthShowcase />
+					</div>
+					<div className="flex flex-col items-center gap-2">
+						<p className="text-2xl text-white">Popover test</p>
+						<Popover>
+							<PopoverButton>Open</PopoverButton>
+							<PopoverPanel>
+								<p>Hello</p>
+							</PopoverPanel>
+						</Popover>
 					</div>
 				</div>
 			</main>
@@ -70,6 +87,7 @@ function AuthShowcase() {
 				{secretMessage && <span> - {secretMessage}</span>}
 			</p>
 			<button
+				type="button"
 				className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
 				onClick={sessionData ? () => void signOut() : () => void signIn()}
 			>

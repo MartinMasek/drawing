@@ -13,9 +13,20 @@ const config = {
 	 *
 	 * @see https://github.com/vercel/next.js/issues/41980
 	 */
-	i18n: {
-		locales: ["en"],
-		defaultLocale: "en",
+	// i18n: {
+	// 	locales: ["en"],
+	// 	defaultLocale: "en",
+	// },
+	transpilePackages: ["next-auth"],
+	webpack: (cfg) => {
+		cfg.resolve = cfg.resolve || {};
+		cfg.resolve.alias = {
+			...(cfg.resolve.alias || {}),
+			"next/server$": "next/server.js",
+			"next/headers$": "next/headers.js",
+			"next/navigation$": "next/navigation.js",
+		};
+		return cfg;
 	},
 };
 
