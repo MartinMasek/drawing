@@ -1,5 +1,5 @@
 import {  useCallback, useEffect, useRef, useState } from "react";
-import { Layer,  Stage, Text } from "react-konva";
+import { Layer,  Stage, Text, Group, Rect, Image as KonvaImage, Line } from "react-konva";
 import OutlineLayer from "./drawing/layers/OutlineLayer";
 import DragOverlayLayer from "./drawing/layers/DragOverlayLayer";
 import LabelsLayer from "./drawing/layers/LabelsLayer";
@@ -16,15 +16,22 @@ import CornerClipModal from "./drawing/CornerClipModal";
 import CornerRadiusModal from "./drawing/CornerRadiusModal";
 import DistanceModal from "./drawing/DistanceModal";
 import InfoLog from "./drawing/InfoLog";
-import { MIN_SIZE, DEFAULT_SIZE, SNAP_TO_ORIGIN, SNAP_SIZE, EDGE_TOLERANCE, IMAGE_OPTIONS, STAGE_WIDTH, STAGE_HEIGHT } from "./drawing/constants";
+import { MIN_SIZE, DEFAULT_SIZE, SNAP_TO_ORIGIN, SNAP_SIZE, EDGE_TOLERANCE, IMAGE_OPTIONS, STAGE_WIDTH, STAGE_HEIGHT, L_TURN_MIN_PX, L_TURN_DEADBAND_PX } from "./drawing/constants";
 import { generateRandomRects } from "./drawing/utils/dev";
 import type { Point, RectDraft, EdgeName, CornerName, RectShape, ImageShape, DragDirection, InteractionMode, ToolMode, ContextMenuState, LineShape } from "./drawing/types";
 import { findEdgeAtPointer as htFindEdge, findCornerAtPointer as htFindCorner, findRectAtPoint as htFindRect } from "./drawing/utils/hitTest";
 import { draftForDrag as utilDraftForDrag } from "./drawing/utils/draft";
+import { collectGroups, getBounds, getGroupRectsForRect } from "./drawing/utils/groups";
+import { hitTestBoundsEdge } from "./drawing/utils/edges";
+import { exportJsonToImage } from "./drawing/utils/print";
+import useImage from "use-image";
+import { addRectPathWithCorners } from "./drawing/utils/geometry";
 
 export default function SquareStretchCanvas() {
   const [rects, setRects] = useState<RectShape[]>([]);
   const [newRect, setNewRect] = useState<RectDraft | null>(null);
+  const [draftSegments, setDraftSegments] = useState<ReadonlyArray<RectDraft>>([]);
+  const [draftMetas, setDraftMetas] = useState<ReadonlyArray<{ axis: "h" | "v"; origin: Point; end: Point; dir: 1 | -1 }>>([]);
   const stageRef = useRef<Konva.Stage | null>(null);
   const {
     stageScale,
@@ -43,10 +50,17 @@ export default function SquareStretchCanvas() {
   } = useStageNavigation(stageRef);
   const [images, setImages] = useState<ImageShape[]>([]);
   const [lines, setLines] = useState<ReadonlyArray<LineShape>>([]);
+  // Seam tool hover preview (single cut line through hovered group)
+  const [seamPreview, setSeamPreview] = useState<null | { groupKey: string; orientation: "v" | "h"; at: number; bounds: { left: number; top: number; right: number; bottom: number } }>(null);
 
   const isDrawing = useRef<boolean>(false);
   const startPoint = useRef<Point | null>(null);
   const direction = useRef<DragDirection>(null);
+
+  // L-shape in-gesture state (mouse only)
+  const lTurnCommittedRef = useRef<boolean>(false);
+  const currentAxisRef = useRef<"h" | "v">("h");
+  const segmentStartRef = useRef<Point | null>(null);
 
   // id generator for stable keys
   const rectIdCounter = useRef<number>(0);
@@ -88,6 +102,32 @@ export default function SquareStretchCanvas() {
   const [radiusModal, setRadiusModal] = useState<{ isOpen: boolean; rectId: string | null; corner: CornerName | null; value: number; max: number }>(
     { isOpen: false, rectId: null, corner: null, value: 0, max: 0 }
   );
+
+  // Vain Match mode state
+  const [vainBgSrc, setVainBgSrc] = useState<string | null>(null);
+  const [vainBgEl] = useImage(vainBgSrc ?? "");
+  const [vainGroupTransforms, setVainGroupTransforms] = useState<Map<string, { x: number; y: number; scale: number; rotation: number }>>(new Map());
+  const [vainActiveGroupKey, setVainActiveGroupKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    const groups = collectGroups(rects);
+    setVainGroupTransforms((prev) => {
+      const next = new Map(prev);
+      for (const [key] of groups) {
+        if (!next.has(key)) next.set(key, { x: 0, y: 0, scale: 1, rotation: 0 });
+      }
+      // prune removed groups
+      for (const key of Array.from(next.keys())) {
+        if (!groups.has(key)) next.delete(key);
+      }
+      return next;
+    });
+    setVainActiveGroupKey((prev) => {
+      if (prev && groups.has(prev)) return prev;
+      const first = groups.keys().next().value as string | undefined;
+      return first ?? null;
+    });
+  }, [rects]);
 
   // Context menu controller (provides menu state and helpers)
   const { menu, setMenu, closeMenu, openAtContainerPoint } = useContextMenuController({
@@ -133,6 +173,110 @@ export default function SquareStretchCanvas() {
     // only respond to left click
     if (e.evt.button !== 0) return;
 
+    // Seam: one-click split at nearest axis inside hovered group
+    if (tool === "seam") {
+      const p = getScenePointerPosition();
+      if (!p) return;
+      const groups = collectGroups(rects);
+      // find top-most rect under pointer to identify its group
+      let hitRect: RectShape | null = null;
+      for (let i = rects.length - 1; i >= 0; i -= 1) {
+        const r = rects[i];
+        if (!r) continue;
+        if (p.x >= r.x && p.x <= r.x + r.width && p.y >= r.y && p.y <= r.y + r.height) { hitRect = r; break; }
+      }
+      if (!hitRect) return;
+      const gKey = hitRect.groupId ?? `single:${hitRect.id}`;
+      const gRects = groups.get(gKey) ?? [hitRect];
+      const b = getBounds(gRects);
+      // decide cut orientation by closer axis to pointer
+      const dxCenter = Math.abs(p.x - (b.left + (b.right - b.left) / 2));
+      const dyCenter = Math.abs(p.y - (b.top + (b.bottom - b.top) / 2));
+      const orientation: "v" | "h" = dxCenter < dyCenter ? "v" : "h";
+      const at = orientation === "v" ? p.x : p.y;
+      const newKeyA = `${gKey}-A-${Date.now()}`;
+      const newKeyB = `${gKey}-B-${Date.now()}`;
+
+      // Build new rects array with actual geometric splits where needed
+      setRects((prev) => {
+        const result: RectShape[] = [];
+        // map oldRectId -> {aId, bId} for images reassignment
+        const splitMap = new Map<string, { aId: string; bId: string }>();
+        for (const r of prev) {
+          const member = (r.groupId ?? `single:${r.id}`) === gKey;
+          if (!member) { result.push(r); continue; }
+          if (orientation === "v") {
+            const leftEdge = r.x; const rightEdge = r.x + r.width;
+            if (rightEdge <= at) {
+              result.push({ ...r, groupId: newKeyA });
+            } else if (leftEdge >= at) {
+              result.push({ ...r, groupId: newKeyB });
+            } else {
+              // split
+              const leftWidth = Math.max(0, at - leftEdge);
+              const rightWidth = Math.max(0, rightEdge - at);
+              if (leftWidth > 0) {
+                const leftRect: RectShape = { ...r, id: nextRectId(), width: leftWidth, groupId: newKeyA };
+                result.push(leftRect);
+                splitMap.set(r.id, { ...(splitMap.get(r.id) ?? { aId: leftRect.id, bId: "" }), aId: leftRect.id });
+              }
+              if (rightWidth > 0) {
+                const rightRect: RectShape = { ...r, id: nextRectId(), x: at, width: rightWidth, groupId: newKeyB };
+                result.push(rightRect);
+                splitMap.set(r.id, { ...(splitMap.get(r.id) ?? { aId: "", bId: rightRect.id }), bId: rightRect.id });
+              }
+            }
+          } else {
+            const topEdge = r.y; const bottomEdge = r.y + r.height;
+            if (bottomEdge <= at) {
+              result.push({ ...r, groupId: newKeyA });
+            } else if (topEdge >= at) {
+              result.push({ ...r, groupId: newKeyB });
+            } else {
+              // split horizontally
+              const topHeight = Math.max(0, at - topEdge);
+              const bottomHeight = Math.max(0, bottomEdge - at);
+              if (topHeight > 0) {
+                const topRect: RectShape = { ...r, id: nextRectId(), height: topHeight, groupId: newKeyA };
+                result.push(topRect);
+                splitMap.set(r.id, { ...(splitMap.get(r.id) ?? { aId: topRect.id, bId: "" }), aId: topRect.id });
+              }
+              if (bottomHeight > 0) {
+                const bottomRect: RectShape = { ...r, id: nextRectId(), y: at, height: bottomHeight, groupId: newKeyB };
+                result.push(bottomRect);
+                splitMap.set(r.id, { ...(splitMap.get(r.id) ?? { aId: "", bId: bottomRect.id }), bId: bottomRect.id });
+              }
+            }
+          }
+        }
+        // Reassign images attached to split rects to the nearest piece
+        setImages((imgs) => imgs.map((im) => {
+          const pair = im.parentRectId ? splitMap.get(im.parentRectId) : undefined;
+          if (!pair) return im;
+          if (orientation === "v") {
+            const cx = im.x + im.width / 2;
+            return { ...im, parentRectId: cx >= at ? (pair.bId || pair.aId) : (pair.aId || pair.bId) };
+          }
+          const cy = im.y + im.height / 2;
+          return { ...im, parentRectId: cy >= at ? (pair.bId || pair.aId) : (pair.aId || pair.bId) };
+        }));
+        return result;
+      });
+
+      // Initialize transforms for new groups from old
+      setVainGroupTransforms((prev) => {
+        const next = new Map(prev);
+        const base = prev.get(gKey) ?? { x: 0, y: 0, scale: 1, rotation: 0 };
+        next.set(newKeyA, { ...base });
+        next.set(newKeyB, { ...base });
+        next.delete(gKey);
+        return next;
+      });
+      setVainActiveGroupKey(newKeyA);
+      setSeamPreview(null);
+      return;
+    }
+
     // SHIFT + left click => start panning instead of drawing
     if (e.evt.shiftKey) {
       const p = getContainerPointFromEvent(e.evt);
@@ -146,42 +290,102 @@ export default function SquareStretchCanvas() {
       const containerPoint = getContainerPointFromEvent(e.evt);
       if (!containerPoint) return;
       const scenePoint = toScene(containerPoint);
-      if (findImageAtScenePoint(scenePoint)) return; // don't open over images
-      // Find top-most rect that contains the point
-      let payload: { rectId: string; target: ContextMenuState["target"] } | null = null;
-      for (let i = rects.length - 1; i >= 0; i -= 1) {
-        const r = rects[i];
-        if (!r) continue;
-        const inside = scenePoint.x >= r.x && scenePoint.x <= r.x + r.width && scenePoint.y >= r.y && scenePoint.y <= r.y + r.height;
-        if (inside) {
-          payload = { rectId: r.id, target: { kind: "rect", scenePoint } };
-          break;
+      // inline image hit-test to avoid forward ref
+      const img = (() => {
+        for (let i = images.length - 1; i >= 0; i -= 1) {
+          const it = images[i];
+          if (!it) continue;
+          const inside = scenePoint.x >= it.x && scenePoint.x <= it.x + it.width && scenePoint.y >= it.y && scenePoint.y <= it.y + it.height;
+          if (inside) return it;
         }
+        return null;
+      })();
+      if (!img) {
+      let payload: { rectId: string; target: ContextMenuState["target"] } | null = null;
+        for (let i = rects.length - 1; i >= 0; i -= 1) {
+          const r = rects[i];
+          if (!r) continue;
+          const inside = scenePoint.x >= r.x && scenePoint.x <= r.x + r.width && scenePoint.y >= r.y && scenePoint.y <= r.y + r.height;
+          if (inside) {
+            payload = { rectId: r.id, target: { kind: "rect", scenePoint } };
+            break;
+          }
+        }
+        if (!payload) return;
+        // delegate to controller
+        openAtContainerPoint(containerPoint, e.evt.clientX, e.evt.clientY);
+        return;
       }
-      if (!payload) return;
-      // delegate to controller
-      openAtContainerPoint(containerPoint, e.evt.clientX, e.evt.clientY);
       return;
     }
 
     // In edge (both) mode: if clicking inside an existing rect (not image), start dragging that rect
-    if (mode === "edge" || mode === "edge-new") {
+    if (mode === "edge" || mode === "edge-new" || mode === "reshape") {
       const containerPoint = getContainerPointFromEvent(e.evt);
       if (containerPoint) {
         const scenePoint = toScene(containerPoint);
-        const img = findImageAtScenePoint(scenePoint);
+        // inline image hit-test to avoid forward ref
+        const img = (() => {
+          for (let i = images.length - 1; i >= 0; i -= 1) {
+            const it = images[i];
+            if (!it) continue;
+            const inside = scenePoint.x >= it.x && scenePoint.x <= it.x + it.width && scenePoint.y >= it.y && scenePoint.y <= it.y + it.height;
+            if (inside) return it;
+          }
+          return null;
+        })();
         if (!img) {
-          const rect = findRectAtPoint(scenePoint);
+          const rect = htFindRect(rects, scenePoint);
           if (rect) {
-            draggingRectId.current = rect.id;
-            draggingRectOffset.current = { x: scenePoint.x - rect.x, y: scenePoint.y - rect.y };
-            // Also remember last position for delta calculation
-            draggingRectLastPos.current = { x: rect.x, y: rect.y };
-            // prevent new-rect drawing
-            isDrawing.current = false;
-            startPoint.current = null;
-            direction.current = null;
-            return;
+            // Check for group edge resize hit before drag
+            const groupRects = getGroupRectsForRect(rects, rect);
+            const b = getBounds(groupRects);
+            const hit = hitTestBoundsEdge(b, scenePoint, EDGE_TOLERANCE);
+            if (hit) {
+              beginGroupResize(scenePoint, groupRects, hit, b);
+              return;
+            }
+            // If in reshape mode and not on this group's edge, try other groups' edges
+            if (mode === "reshape") {
+              const groups = new Map<string | null, ReadonlyArray<RectShape>>();
+              for (const r of rects) {
+                const key = r.groupId ?? r.id;
+                groups.set(key, (groups.get(key) ?? []).concat([r]));
+              }
+              for (const [, gRects] of groups) {
+                const gl = Math.min(...gRects.map((r) => r.x));
+                const gt = Math.min(...gRects.map((r) => r.y));
+                const gr = Math.max(...gRects.map((r) => r.x + r.width));
+                const gb = Math.max(...gRects.map((r) => r.y + r.height));
+                let gh: "left" | "right" | "top" | "bottom" | null = null;
+                if (Math.abs(scenePoint.x - gl) <= EDGE_TOLERANCE && scenePoint.y >= gt - EDGE_TOLERANCE && scenePoint.y <= gb + EDGE_TOLERANCE) gh = "left";
+                else if (Math.abs(scenePoint.x - gr) <= EDGE_TOLERANCE && scenePoint.y >= gt - EDGE_TOLERANCE && scenePoint.y <= gb + EDGE_TOLERANCE) gh = "right";
+                else if (Math.abs(scenePoint.y - gt) <= EDGE_TOLERANCE && scenePoint.x >= gl - EDGE_TOLERANCE && scenePoint.x <= gr + EDGE_TOLERANCE) gh = "top";
+                else if (Math.abs(scenePoint.y - gb) <= EDGE_TOLERANCE && scenePoint.x >= gl - EDGE_TOLERANCE && scenePoint.x <= gr + EDGE_TOLERANCE) gh = "bottom";
+                if (gh) {
+                  beginGroupResize(scenePoint, gRects, gh, { left: gl, top: gt, right: gr, bottom: gb });
+                  return;
+                }
+              }
+            }
+            // In reshape mode, don't start drawing; allow group drag inside
+            if (mode === "edge" || mode === "edge-new") {
+              // Begin group drag: move only this rect's group
+              const group = rect.groupId ? rects.filter((r) => r.groupId === rect.groupId) : [rect];
+              beginGroupDrag(scenePoint, group);
+              return;
+            }
+          } else if (mode === "reshape") {
+            // No rect hit; try hit-testing edges of overall groups
+            const groupsMap = collectGroups(rects);
+            for (const [, groupRects] of groupsMap) {
+              const bounds = getBounds(groupRects);
+              const hit = hitTestBoundsEdge(bounds, scenePoint, EDGE_TOLERANCE);
+              if (hit) {
+                beginGroupResize(scenePoint, groupRects, hit, bounds);
+                return;
+              }
+            }
           }
         }
       }
@@ -213,20 +417,299 @@ export default function SquareStretchCanvas() {
       return;
     }
 
+    if (mode === "reshape") {
+      // In reshape mode do not start drawing
+      return;
+    }
+
     isDrawing.current = true;
     startPoint.current = pos;
     direction.current = null;
-
+    lTurnCommittedRef.current = false;
+    currentAxisRef.current = "h";
+    segmentStartRef.current = pos;
+    setDraftSegments([]);
+    setDraftMetas([]);
     setNewRect({
       x: pos.x,
       y: pos.y - DEFAULT_SIZE / 2,
       width: DEFAULT_SIZE,
       height: DEFAULT_SIZE,
     });
-  }, [getScenePointerPosition, getContainerPointFromEvent, nextImageId, nextLineId, selectedImageSrc, toScene, tool, mode, rects, openAtContainerPoint, beginPan]);
+  }, [getScenePointerPosition, getContainerPointFromEvent, nextImageId, nextLineId, selectedImageSrc, toScene, tool, mode, rects, images, openAtContainerPoint, beginPan, nextRectId]);
 
   const handleMouseMove = useCallback(() => {
-    // handle rect dragging in EDGE mode
+    // seam hover preview
+    if (tool === "seam") {
+      const p = getScenePointerPosition();
+      if (!p) { setSeamPreview(null); return; }
+      // find hovered group
+      let hitRect: RectShape | null = null;
+      for (let i = rects.length - 1; i >= 0; i -= 1) {
+        const r = rects[i];
+        if (!r) continue;
+        if (p.x >= r.x && p.x <= r.x + r.width && p.y >= r.y && p.y <= r.y + r.height) { hitRect = r; break; }
+      }
+      if (!hitRect) { setSeamPreview(null); return; }
+      const gKey = hitRect.groupId ?? `single:${hitRect.id}`;
+      const gRects = collectGroups(rects).get(gKey) ?? [hitRect];
+      const b = getBounds(gRects);
+      const dxCenter = Math.abs(p.x - (b.left + (b.right - b.left) / 2));
+      const dyCenter = Math.abs(p.y - (b.top + (b.bottom - b.top) / 2));
+      const orientation: "v" | "h" = dxCenter < dyCenter ? "v" : "h";
+      const at = orientation === "v" ? p.x : p.y;
+      setSeamPreview({ groupKey: gKey, orientation, at, bounds: b });
+      return;
+    }
+    // handle group resizing first
+    if ((mode === "edge" || mode === "edge-new" || mode === "reshape") && resizingGroupRef.current) {
+      const pos = getScenePointerPosition();
+      const bounds = resizeInitialBoundsRef.current;
+      if (!pos || !bounds || !resizeStartSceneRef.current) return;
+      const dx = pos.x - resizeStartSceneRef.current.x;
+      const dy = pos.y - resizeStartSceneRef.current.y;
+      const edge = resizeGroupEdgeRef.current;
+      const gid = resizeGroupIdRef.current;
+      if (!edge) return;
+      const rectBase = resizeInitialRectsByIdRef.current;
+      const orderedIds = resizeInitialOrderedIdsRef.current;
+      if (!orderedIds || orderedIds.length === 0) return;
+      const memberIdSet = new Set(orderedIds);
+
+      // Determine inward shrink and outward grow distances for the dragged edge
+      let shrink = 0;
+      let grow = 0;
+      if (edge === "right") { shrink = Math.max(0, -dx); grow = Math.max(0, dx); }
+      else if (edge === "left") { shrink = Math.max(0, dx); grow = Math.max(0, -dx); }
+      else if (edge === "bottom") { shrink = Math.max(0, -dy); grow = Math.max(0, dy); }
+      else if (edge === "top") { shrink = Math.max(0, dy); grow = Math.max(0, -dy); }
+
+      const isHorizontalEdge = edge === "left" || edge === "right";
+      const touchAt = (r: RectShape): boolean => {
+        if (edge === "right") return Math.abs((r.x + r.width) - bounds.right) <= EDGE_TOLERANCE;
+        if (edge === "left") return Math.abs(r.x - bounds.left) <= EDGE_TOLERANCE;
+        if (edge === "top") return Math.abs(r.y - bounds.top) <= EDGE_TOLERANCE;
+        return Math.abs((r.y + r.height) - bounds.bottom) <= EDGE_TOLERANCE;
+      };
+      // pick end index touching the edge (prefer last or first that touches)
+      let endIdx = -1;
+      const bases = orderedIds.map((id) => rectBase.get(id)).filter((v): v is RectShape => !!v);
+      if (edge === "right" || edge === "bottom") {
+        for (let i = bases.length - 1; i >= 0; i -= 1) { if (touchAt(bases[i] as RectShape)) { endIdx = i; break; } }
+        if (endIdx === -1) endIdx = bases.length - 1;
+      } else {
+        for (let i = 0; i < bases.length; i += 1) { if (touchAt(bases[i] as RectShape)) { endIdx = i; break; } }
+        if (endIdx === -1) endIdx = 0;
+      }
+
+      const updatedById = new Map<string, RectShape>();
+      const removedIds = new Set<string>();
+      // start from initial base shapes
+      for (const b of bases) { if (b) updatedById.set(b.id, { ...b }); }
+
+      // Handle inward shrink first (consume and remove)
+      if (shrink > 0) {
+        let remaining = shrink;
+        let idx = endIdx;
+        const step = (edge === "right" || edge === "bottom") ? -1 : 1;
+        while (remaining > 0 && idx >= 0 && idx < bases.length) {
+          const seg = bases[idx] as RectShape;
+          const horizontalSeg = Math.abs(seg.height - DEFAULT_SIZE) < 1e-6;
+          const verticalSeg = Math.abs(seg.width - DEFAULT_SIZE) < 1e-6;
+          if (isHorizontalEdge) {
+            if (horizontalSeg) {
+              const take = Math.min(remaining, seg.width);
+              remaining -= take;
+              if (edge === "right") {
+                const nw = seg.width - take;
+                if (nw <= MIN_SIZE) { removedIds.add(seg.id); idx += step; remaining = Math.max(remaining, 1); continue; }
+                const upd = updatedById.get(seg.id);
+                if (upd) { upd.width = nw; }
+                break;
+              }
+              {
+                const nw = seg.width - take;
+                if (nw <= MIN_SIZE) { removedIds.add(seg.id); idx += step; remaining = Math.max(remaining, 1); continue; }
+                const upd = updatedById.get(seg.id);
+                if (upd) { upd.x = seg.x + take; upd.width = nw; }
+              }
+              break;
+            }
+            if (verticalSeg) {
+              // vertical contributes DEFAULT_SIZE to width; remove only in whole steps
+              if (remaining >= DEFAULT_SIZE - 1e-6) { removedIds.add(seg.id); remaining = Math.max(remaining - DEFAULT_SIZE, 1); idx += step; continue; }
+              // not enough to remove
+              break;
+            }
+            idx += step;
+          } else {
+            if (verticalSeg) {
+              const take = Math.min(remaining, seg.height);
+              remaining -= take;
+              if (edge === "bottom") {
+                const nh = seg.height - take;
+                if (nh <= MIN_SIZE) { removedIds.add(seg.id); idx += step; remaining = Math.max(remaining, 1); continue; }
+                const upd = updatedById.get(seg.id);
+                if (upd) { upd.height = nh; }
+                break;
+              }
+              const nh = seg.height - take;
+              if (nh <= MIN_SIZE) { removedIds.add(seg.id); idx += step; remaining = Math.max(remaining, 1); continue; }
+              const upd = updatedById.get(seg.id);
+              if (upd) { upd.y = seg.y + take; upd.height = nh; }
+              break;
+            }
+            if (horizontalSeg) {
+              if (remaining >= DEFAULT_SIZE - 1e-6) { removedIds.add(seg.id); remaining = Math.max(remaining - DEFAULT_SIZE, 1); idx += step; continue; }
+              break;
+            }
+            idx += step;
+          }
+        }
+      }
+
+      // Handle outward growth (extend terminal or append new leg)
+      setDraftSegments([]);
+      setNewRect(null);
+      if (grow > 0) {
+        const term = bases[endIdx] as RectShape;
+        const horizontalTerm = Math.abs(term.height - DEFAULT_SIZE) < 1e-6;
+        const verticalTerm = Math.abs(term.width - DEFAULT_SIZE) < 1e-6;
+        if (isHorizontalEdge) {
+          if (horizontalTerm) {
+            // Extend terminal horizontal segment
+            const base = rectBase.get(term.id);
+            if (base) {
+              const upd = updatedById.get(term.id);
+              if (upd) {
+                if (edge === "right") { upd.width = base.width + grow; }
+                else { upd.x = base.x - grow; upd.width = base.width + grow; }
+              }
+            }
+          } else if (verticalTerm) {
+            // Append a new horizontal draft leg
+            const base = rectBase.get(term.id);
+            if (base) {
+              const endX = edge === "right" ? bounds.right : bounds.left - DEFAULT_SIZE;
+              const centerY = base.y + (base.height - DEFAULT_SIZE) / 2;
+              const newSeg: RectDraft = { x: endX, y: centerY, width: Math.max(DEFAULT_SIZE, grow), height: DEFAULT_SIZE };
+              setDraftSegments([newSeg]);
+              // Allow turn into vertical after threshold
+              const ortho = Math.abs(isHorizontalEdge ? dy : dx);
+              if (grow >= L_TURN_MIN_PX && ortho > L_TURN_DEADBAND_PX) {
+                const goingDown = dy >= 0;
+                const vY = goingDown ? centerY : (centerY - Math.abs(ortho));
+                setNewRect({ x: endX + (edge === "right" ? newSeg.width - DEFAULT_SIZE : 0), y: vY, width: DEFAULT_SIZE, height: Math.max(MIN_SIZE, Math.abs(ortho)) });
+              }
+            }
+          }
+        } else {
+          if (verticalTerm) {
+            // Extend terminal vertical segment
+            const base = rectBase.get(term.id);
+            if (base) {
+              const upd = updatedById.get(term.id);
+              if (upd) {
+                if (edge === "bottom") { upd.height = base.height + grow; }
+                else { upd.y = base.y - grow; upd.height = base.height + grow; }
+              }
+            }
+          } else if (horizontalTerm) {
+            // Append a new vertical draft leg
+            const base = rectBase.get(term.id);
+            if (base) {
+              const endY = edge === "bottom" ? bounds.bottom : bounds.top - DEFAULT_SIZE;
+              const centerX = (bounds.right + bounds.left) / 2; // approximate along group
+              const newSeg: RectDraft = { x: centerX, y: endY, width: DEFAULT_SIZE, height: Math.max(DEFAULT_SIZE, grow) };
+              setDraftSegments([newSeg]);
+              const ortho = Math.abs(isHorizontalEdge ? dy : dx);
+              if (grow >= L_TURN_MIN_PX && ortho > L_TURN_DEADBAND_PX) {
+                const goingRight = dx >= 0;
+                const hX = goingRight ? centerX : (centerX - Math.abs(ortho));
+                setNewRect({ x: hX, y: endY + (edge === "bottom" ? newSeg.height - DEFAULT_SIZE : 0), width: Math.max(MIN_SIZE, Math.abs(ortho)), height: DEFAULT_SIZE });
+              }
+            }
+          }
+        }
+      }
+
+      // Apply updates/removals for shrink and extend existing segment sizes
+      setRects((prev) => {
+        return prev.map((r) => {
+          const isMember = gid ? (r.groupId === gid) : memberIdSet.has(r.id);
+          if (!isMember) return r;
+          if (removedIds.has(r.id)) return r; // will filter in a second pass
+          const upd = updatedById.get(r.id);
+          return upd ? { ...r, x: upd.x, y: upd.y, width: upd.width, height: upd.height } : r;
+        }).filter((r) => {
+          const isMember = gid ? (r.groupId === gid) : memberIdSet.has(r.id);
+          return !(isMember && removedIds.has(r.id));
+        });
+      });
+
+      // Move sinks to preserve distance from left edge of parent rect
+      const rectFinalById = new Map<string, RectShape>();
+      // compose final rects map from base + updates - removals
+      for (const [id, base] of rectBase.entries()) {
+        if (removedIds.has(id)) continue;
+        const upd = updatedById.get(id) ?? base;
+        rectFinalById.set(id, { ...upd });
+      }
+      const imgBase = resizeInitialImagesByIdRef.current;
+      setImages((prev) => prev.reduce<ImageShape[]>((acc, im) => {
+        const baseIm = imgBase.get(im.id);
+        const parentId = im.parentRectId;
+        if (!baseIm || !parentId) { acc.push(im); return acc; }
+        const baseParent = rectBase.get(parentId);
+        if (!baseParent) { acc.push(im); return acc; }
+        const baseCenterX = baseIm.x + baseIm.width / 2;
+        const baseDistance = baseCenterX - baseParent.x;
+        const updatedParent = rectFinalById.get(parentId);
+        if (!updatedParent) { return acc; }
+        // Adjust x to preserve distance
+        const desiredCenterX = updatedParent.x + baseDistance;
+        const newXRaw = desiredCenterX - im.width / 2;
+        const minX = updatedParent.x - im.width / 2;
+        const maxX = updatedParent.x + updatedParent.width - im.width / 2;
+        const clampedX = Math.min(Math.max(newXRaw, minX), maxX);
+        acc.push({ ...im, x: clampedX });
+        return acc;
+      }, []));
+      return;
+    }
+    // handle group dragging next
+    if ((mode === "edge" || mode === "edge-new") && draggingAllRef.current) {
+      const pos = getScenePointerPosition();
+      if (!pos || !dragAllStartSceneRef.current) return;
+      const dx = pos.x - dragAllStartSceneRef.current.x;
+      const dy = pos.y - dragAllStartSceneRef.current.y;
+      const baseRects = dragAllInitialRectsRef.current;
+      const baseImages = dragAllInitialImagesRef.current;
+      const dragGid = dragAllGroupIdRef.current;
+      if (dragGid) {
+        // Move only members of this group, anchored to initial positions
+        const rectBaseMap = dragAllInitialRectsByIdRef.current;
+        const imgBaseMap = dragAllInitialImagesByIdRef.current;
+        setRects((prev) => prev.map((r) => {
+          if (r.groupId === dragGid) {
+            const base = rectBaseMap.get(r.id);
+            if (base) return { ...r, x: base.x + dx, y: base.y + dy };
+          }
+          return r;
+        }));
+        setImages((prev) => prev.map((im) => {
+          const base = imgBaseMap.get(im.id);
+          if (base) return { ...im, x: base.x + dx, y: base.y + dy };
+          return im;
+        }));
+      } else {
+        // No groupId -> move everything relative to initial snapshot
+        setRects(baseRects.map((r) => ({ ...r, x: r.x + dx, y: r.y + dy })));
+        setImages(baseImages.map((im) => ({ ...im, x: im.x + dx, y: im.y + dy })));
+      }
+      return;
+    }
+    // handle rect dragging in EDGE mode (legacy single-rect)
     if ((mode === "edge" || mode === "edge-new") && draggingRectId.current && draggingRectOffset.current) {
       const pos = getScenePointerPosition();
       if (!pos) return;
@@ -255,22 +738,114 @@ export default function SquareStretchCanvas() {
       return;
     }
 
-    if (mode === "sink") return;
+    if (mode === "sink" || mode === "reshape") return;
     if (!isDrawing.current || !startPoint.current) return;
 
     const pos = getScenePointerPosition();
     if (!pos) return;
 
-    const dx = pos.x - startPoint.current.x;
-    const dy = pos.y - startPoint.current.y;
+    const origin = segmentStartRef.current ?? startPoint.current;
+    if (!origin) return;
+    const dx = pos.x - origin.x;
+    const dy = pos.y - origin.y;
 
-    const draft = draftForDrag(startPoint.current, dx, dy, direction.current);
-    setNewRect(draft);
-  }, [draftForDrag, getContainerPointerPosition, getScenePointerPosition, mode, isPanningRef.current, panMove]);
+    // Backtrack removal: if moving opposite along the last committed axis near the joint, pop one segment
+    const lastMeta = draftMetas[draftMetas.length - 1];
+    if (lastMeta) {
+      if (currentAxisRef.current === "h" && lastMeta.axis === "v") {
+        const verticalOpposite = (dy >= 0 ? 1 : -1) === (lastMeta.dir === 1 ? -1 : 1);
+        if (verticalOpposite && Math.abs(dy) > L_TURN_DEADBAND_PX && Math.abs(dx) <= L_TURN_DEADBAND_PX) {
+          setDraftSegments((prev) => prev.slice(0, -1));
+          setDraftMetas((prev) => prev.slice(0, -1));
+          currentAxisRef.current = lastMeta.axis; // revert to last axis
+          segmentStartRef.current = lastMeta.origin;
+          // After popping, wait for next move to draft from restored origin
+          return;
+        }
+      } else if (currentAxisRef.current === "v" && lastMeta.axis === "h") {
+        const horizontalOpposite = (dx >= 0 ? 1 : -1) === (lastMeta.dir === 1 ? -1 : 1);
+        if (horizontalOpposite && Math.abs(dx) > L_TURN_DEADBAND_PX && Math.abs(dy) <= L_TURN_DEADBAND_PX) {
+          setDraftSegments((prev) => prev.slice(0, -1));
+          setDraftMetas((prev) => prev.slice(0, -1));
+          currentAxisRef.current = lastMeta.axis; // revert to last axis
+          segmentStartRef.current = lastMeta.origin;
+          return;
+        }
+      }
+    }
+
+    if (currentAxisRef.current === "h") {
+      // Horizontal segment
+      const hDraft = draftForDrag(origin, dx, 0, direction.current);
+      setNewRect(hDraft);
+      const canTurn = Math.abs(dx) >= L_TURN_MIN_PX;
+      const verticalMotion = Math.abs(dy);
+      if (canTurn && verticalMotion > L_TURN_DEADBAND_PX) {
+        // lock this horizontal segment, switch axis, start next from its end
+        lTurnCommittedRef.current = true;
+        setDraftSegments((prev) => [...prev, hDraft]);
+        setDraftMetas((prev) => [...prev, { axis: "h", origin: segmentStartRef.current as Point, end: nextOrigin, dir: goingRight ? 1 : -1 }]);
+        currentAxisRef.current = "v";
+        // new origin at end of horizontal depending on direction
+        const goingRight = dx >= 0;
+        const nextOrigin: Point = { x: goingRight ? (hDraft.x + hDraft.width - DEFAULT_SIZE) : hDraft.x, y: hDraft.y + DEFAULT_SIZE / 2 };
+        segmentStartRef.current = { x: nextOrigin.x, y: nextOrigin.y };
+      }
+    } else {
+      // Vertical segment
+      const absDy = Math.abs(dy);
+      const h = Math.max(MIN_SIZE, MIN_SIZE + absDy);
+      const goingDown = dy >= 0;
+      const baseY = (segmentStartRef.current?.y ?? origin.y) - DEFAULT_SIZE / 2;
+      const y = goingDown ? baseY : (baseY + DEFAULT_SIZE - h);
+      const x = (segmentStartRef.current?.x ?? origin.x);
+      const vDraft: RectDraft = { x, y, width: DEFAULT_SIZE, height: h };
+      setNewRect(vDraft);
+
+      // Turn back to horizontal when enough vertical length and enough horizontal deviation appears
+      const canTurn = Math.abs(dy) >= L_TURN_MIN_PX;
+      const horizontalMotion = Math.abs(dx);
+      if (canTurn && horizontalMotion > L_TURN_DEADBAND_PX) {
+        setDraftSegments((prev) => [...prev, vDraft]);
+        currentAxisRef.current = "h";
+        const goingRight = dx >= 0;
+        const nextOrigin: Point = { x: goingRight ? (x + DEFAULT_SIZE) : x, y: goingDown ? (y + h) : y };
+        setDraftMetas((prev) => [...prev, { axis: "v", origin: segmentStartRef.current as Point, end: nextOrigin, dir: goingDown ? 1 : -1 }]);
+        // normalize next origin to center line for horizontal draft
+        segmentStartRef.current = { x: nextOrigin.x, y: (goingDown ? (y + h) : y) + DEFAULT_SIZE / 2 };
+      }
+    }
+  }, [draftForDrag, getContainerPointerPosition, getScenePointerPosition, mode, isPanningRef.current, panMove, draftMetas, tool, rects]);
 
   const handleMouseUp = useCallback(() => {
     // stop panning if active
     if (isPanningRef.current) { endPan(); }
+    // stop group resizing if active
+    if (resizingGroupRef.current) {
+      // finalize any drafted new segments into the same group
+      finalizeResizeDrafts(draftSegments, newRect, resizeGroupIdRef.current);
+      setDraftSegments([]);
+      setNewRect(null);
+      resizingGroupRef.current = false;
+      resizeGroupEdgeRef.current = null;
+      resizeGroupIdRef.current = null;
+      resizeStartSceneRef.current = null;
+      resizeInitialBoundsRef.current = null;
+      resizeInitialRectsByIdRef.current = new Map();
+      resizeInitialImagesByIdRef.current = new Map();
+      return;
+    }
+    // stop group dragging if active
+    if (draggingAllRef.current) {
+      draggingAllRef.current = false;
+      dragAllStartSceneRef.current = null;
+      dragAllInitialRectsRef.current = [];
+      dragAllInitialImagesRef.current = [];
+      dragAllGroupIdRef.current = null;
+      dragAllInitialRectsByIdRef.current = new Map();
+      dragAllInitialImagesByIdRef.current = new Map();
+      return;
+    }
     // stop rect dragging if active
     if (draggingRectId.current) {
       draggingRectId.current = null;
@@ -280,25 +855,29 @@ export default function SquareStretchCanvas() {
     }
     if (mode === "sink") return;
     if (newRect) {
-      setRects((prev) => [
+      const finalSegments = [...draftSegments, newRect];
+      const newGroupId = `grp-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+      setRects((prev) => ([
         ...prev,
-        {
+        ...finalSegments.map((seg) => ({
           id: nextRectId(),
-          x: newRect.x,
-          y: newRect.y,
-          width: newRect.width,
-          height: newRect.height,
+          x: seg.x,
+          y: seg.y,
+          width: seg.width,
+          height: seg.height,
           edges: { left: defaultEdgeColor, right: defaultEdgeColor, top: defaultEdgeColor, bottom: defaultEdgeColor },
           corners: { 'top-left': defaultCornerColor, 'top-right': defaultCornerColor, 'bottom-left': defaultCornerColor, 'bottom-right': defaultCornerColor },
           clips: { 'top-left': 0, 'top-right': 0, 'bottom-left': 0, 'bottom-right': 0 },
-        },
-      ]);
+          groupId: newGroupId,
+        }))
+      ]));
       setNewRect(null);
+      setDraftSegments([]);
     }
     isDrawing.current = false;
     startPoint.current = null;
     direction.current = null;
-  }, [newRect, nextRectId, mode, defaultEdgeColor, defaultCornerColor, endPan, isPanningRef.current]);
+  }, [newRect, draftSegments, nextRectId, mode, defaultEdgeColor, defaultCornerColor, endPan, isPanningRef.current]);
 
   const findImageAtScenePoint = useCallback(
     (point: Point): ImageShape | null => {
@@ -396,6 +975,35 @@ export default function SquareStretchCanvas() {
   }, [zoomAtContainerPoint]);
 
 
+  const handleExportJpeg = useCallback(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    // Render stage to a high-res PNG first to keep vector sharpness
+    const pixelRatio = 2; // 2x for crisper export; adjust if needed
+    const dataUrl = stage.toDataURL({ pixelRatio, mimeType: 'image/png' });
+    // Draw on an offscreen canvas with white background, then export as JPEG
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      const jpegUrl = canvas.toDataURL('image/jpeg', 0.92);
+      const a = document.createElement('a');
+      a.href = jpegUrl;
+      a.download = 'drawing.jpg';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    };
+    img.src = dataUrl;
+  }, []);
+
+
   const pinchLastDistance = useRef<number | null>(null);
   const getScenePointFromTouchIndex = useCallback((evt: TouchEvent, index: number): Point | null => {
     const t = evt.touches.item(index);
@@ -423,6 +1031,82 @@ export default function SquareStretchCanvas() {
   const draggingRectId = useRef<string | null>(null);
   const draggingRectOffset = useRef<Point | null>(null);
   const draggingRectLastPos = useRef<Point | null>(null);
+  // Group dragging (move entire drawing as one)
+  const draggingAllRef = useRef<boolean>(false);
+  const dragAllStartSceneRef = useRef<Point | null>(null);
+  const dragAllInitialRectsRef = useRef<ReadonlyArray<RectShape>>([]);
+  const dragAllInitialImagesRef = useRef<ReadonlyArray<ImageShape>>([]);
+  const dragAllGroupIdRef = useRef<string | null>(null);
+  const dragAllInitialRectsByIdRef = useRef<Map<string, RectShape>>(new Map());
+  const dragAllInitialImagesByIdRef = useRef<Map<string, ImageShape>>(new Map());
+  // Group resizing (drag group bounding box edges)
+  const resizingGroupRef = useRef<boolean>(false);
+  const resizeGroupEdgeRef = useRef<"left" | "right" | "top" | "bottom" | null>(null);
+  const resizeGroupIdRef = useRef<string | null>(null);
+  const resizeStartSceneRef = useRef<Point | null>(null);
+  const resizeInitialBoundsRef = useRef<{ left: number; top: number; right: number; bottom: number } | null>(null);
+  const resizeInitialRectsByIdRef = useRef<Map<string, RectShape>>(new Map());
+  const resizeInitialImagesByIdRef = useRef<Map<string, ImageShape>>(new Map());
+  const resizeInitialOrderedIdsRef = useRef<ReadonlyArray<string>>([]);
+
+  // Inner helpers (avoid forward-ref issues and keep logic tidy)
+  function beginGroupResize(scenePoint: Point, groupRects: ReadonlyArray<RectShape>, edge: "left" | "right" | "top" | "bottom", bounds: { left: number; top: number; right: number; bottom: number }) {
+    resizingGroupRef.current = true;
+    resizeGroupEdgeRef.current = edge;
+    resizeGroupIdRef.current = groupRects[0]?.groupId ?? null;
+    resizeStartSceneRef.current = scenePoint;
+    resizeInitialBoundsRef.current = bounds;
+    resizeInitialRectsByIdRef.current = new Map(groupRects.map((r) => [r.id, r] as const));
+    const memberRectIds = new Set(groupRects.map((r) => r.id));
+    const gid = groupRects[0]?.groupId ?? null;
+    const memberImages = images.filter((im) => (gid ? (im.groupId === gid || (im.parentRectId && memberRectIds.has(im.parentRectId))) : (im.parentRectId ? memberRectIds.has(im.parentRectId) : false)));
+    resizeInitialImagesByIdRef.current = new Map(memberImages.map((im) => [im.id, im] as const));
+    resizeInitialOrderedIdsRef.current = [...groupRects]
+      .sort((a, b) => (a.x + a.y) - (b.x + b.y))
+      .map((r) => r.id);
+    isDrawing.current = false;
+    startPoint.current = null;
+    direction.current = null;
+  }
+
+  function beginGroupDrag(scenePoint: Point, groupRects: ReadonlyArray<RectShape>) {
+    draggingAllRef.current = true;
+    dragAllStartSceneRef.current = scenePoint;
+    const gid = groupRects[0]?.groupId ?? null;
+    dragAllGroupIdRef.current = gid;
+    dragAllInitialRectsRef.current = groupRects;
+    const memberRectIds = new Set(groupRects.map((r) => r.id));
+    dragAllInitialImagesRef.current = gid ? images.filter((im) => (im.groupId === gid || (im.parentRectId && memberRectIds.has(im.parentRectId)))) : images;
+    dragAllInitialRectsByIdRef.current = new Map(dragAllInitialRectsRef.current.map((r) => [r.id, r] as const));
+    dragAllInitialImagesByIdRef.current = new Map(dragAllInitialImagesRef.current.map((im) => [im.id, im] as const));
+    isDrawing.current = false;
+    startPoint.current = null;
+    direction.current = null;
+    draggingRectId.current = null;
+    draggingRectOffset.current = null;
+    draggingRectLastPos.current = null;
+  }
+
+  function finalizeResizeDrafts(drafts: ReadonlyArray<RectDraft>, maybeNewRect: RectDraft | null, groupId: string | null) {
+    const toCommit: RectDraft[] = [...drafts, ...(maybeNewRect ? [maybeNewRect] : [])];
+    if (toCommit.length === 0) return;
+    const gid = groupId ?? `grp-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    setRects((prev) => ([
+      ...prev,
+      ...toCommit.map((seg) => ({
+        id: nextRectId(),
+        x: seg.x,
+        y: seg.y,
+        width: seg.width,
+        height: seg.height,
+        edges: { left: defaultEdgeColor, right: defaultEdgeColor, top: defaultEdgeColor, bottom: defaultEdgeColor },
+        corners: { 'top-left': defaultCornerColor, 'top-right': defaultCornerColor, 'bottom-left': defaultCornerColor, 'bottom-right': defaultCornerColor },
+        clips: { 'top-left': 0, 'top-right': 0, 'bottom-left': 0, 'bottom-right': 0 },
+        groupId: gid,
+      }))
+    ]));
+  }
+
   const findRectAtPoint = useCallback((point: Point): RectShape | null => htFindRect(rects, point), [rects]);
   const handleTouchMove = useCallback((e: KonvaEventObject<TouchEvent>) => {
     if (e.evt.touches.length === 1) {
@@ -559,6 +1243,34 @@ export default function SquareStretchCanvas() {
         onSpawn1k={handleSpawn1k}
         onSpawn5k={handleSpawn5k}
         onClearRects={handleClearRects}
+        onExportJpeg={handleExportJpeg}
+        onExportJson={() => {
+          const payload = {
+            stage: { position: stagePosition, scale: stageScale },
+            rects,
+            images,
+            lines,
+          };
+          // eslint-disable-next-line no-console
+          console.log("Canvas JSON:", JSON.stringify(payload));
+          alert("Canvas JSON logged to console.");
+        }}
+        onImportJsonToImage={async () => {
+          const input = prompt("Paste canvas JSON:");
+          if (!input) return;
+          try {
+            const data = JSON.parse(input) as { rects?: ReadonlyArray<RectShape>; images?: ReadonlyArray<ImageShape>; lines?: ReadonlyArray<LineShape>; stage?: { position?: { x: number; y: number }; scale?: number; width?: number; height?: number } };
+            const url = await exportJsonToImage({ rects: data.rects ?? [], images: data.images ?? [], lines: data.lines ?? [], stage: { width: STAGE_WIDTH, height: STAGE_HEIGHT } });
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'imported-canvas.png';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          } catch (err) {
+            alert("Invalid JSON.");
+          }
+        }}
         showLog={showLog}
         onToggleLog={() => setShowLog((v) => !v)}
         mode={mode}
@@ -572,92 +1284,302 @@ export default function SquareStretchCanvas() {
         selectedImageSrc={selectedImageSrc}
         onSelectedImageChange={(v) => setSelectedImageSrc(v)}
       />
-      <Stage
-        width={STAGE_WIDTH}
-        height={STAGE_HEIGHT}
-        style={{
-          border: "1px solid #ccc",
-          backgroundColor: "white",
-          touchAction: "none",
-        }}
-        x={stagePosition.x}
-        y={stagePosition.y}
-        scaleX={stageScale}
-        scaleY={stageScale}
-        onWheel={handleWheel}
-        onTouchStart={(e) => onTouchStart({ evt: e.evt as TouchEvent, target: e.target as { getStage?: () => { container: () => { getBoundingClientRect: () => DOMRect } } } })}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onContextMenu={(e) => {
-          e.evt.preventDefault();
-          const pos = getContainerPointFromEvent(e.evt);
-          if (!pos) return;
-          openAtContainerPoint(pos, e.evt.clientX, e.evt.clientY);
-        }}
-        ref={stageRef}
-      >
-        {/* Images layer (interactive) */}
-        <Layer>
-          {images.map((img) => (
-            <URLImage
-              key={img.id}
-              image={img}
-              rects={rects}
-              stageScale={stageScale}
-              stagePosition={stagePosition}
-              setImages={setImages}
-              onSinkDragStart={onSinkDragStart}
-              onSinkDragMove={onSinkDragMove}
-              onSinkDragEnd={onSinkDragEnd}
-            />
-          ))}
-        </Layer>
-
-        <OutlineLayer rects={rects} />
-
-        {/* Labels and draft overlay in a lightweight layer; labels conditionally rendered */}
-        <LabelsLayer
-          rects={rects}
-          lines={lines}
-          newRect={newRect}
-          stageScale={stageScale}
-          renderLabels={renderLabels}
-          distanceClick={(rectId, sinkId, value) => setEditDistance({ isOpen: true, rectId, sinkId, value })}
-          images={images}
-        />
-        <DragOverlayLayer rects={rects} active={sinkDrag.active} candidateRectId={sinkDrag.candidateRectId} />
-        {/* Interactive layer just for sink distance labels (clickable) */}
-        {(rects.length <= 300 || stageScale > 1.5) && (
-          <Layer>
-            {rects.map((r) => {
-              const sinks = images.filter((img) => img.parentRectId === r.id);
-              return sinks.map((img, idx) => {
-                const centerX = img.x + img.width / 2;
-                const distancePx = Math.round(centerX - r.x);
-                return (
-                  <Text
-                    key={`sinkdist-${r.id}-${img.id}`}
-                    x={r.x + 4}
-                    y={r.y + r.height + 4 + idx * 14}
-                    text={`${distancePx} px`}
-                    fontSize={12}
-                    fill="purple"
-                    scaleX={1 / stageScale}
-                    scaleY={1 / stageScale}
-                    listening
-                    onClick={() => {
-                      setEditDistance({ isOpen: true, rectId: r.id, sinkId: img.id, value: Math.max(0, centerX - r.x) });
-                    }}
-                  />
-                );
+      {mode === "vain-match" && (
+        <div className="flex flex-wrap items-center gap-3 mb-2">
+          <label className="text-sm text-gray-700" htmlFor="vain-bg-input">Match Image</label>
+          <input
+            id="vain-bg-input"
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const url = URL.createObjectURL(file);
+              setVainBgSrc(url);
+            }}
+          />
+          {/* Active group selector */}
+          <label className="text-sm text-gray-700" htmlFor="vain-group">Group</label>
+          <select
+            id="vain-group"
+            className="rounded-md border border-gray-200 bg-white px-2 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            value={vainActiveGroupKey ?? ""}
+            onChange={(e) => setVainActiveGroupKey(e.target.value || null)}
+          >
+            {Array.from(collectGroups(rects).keys()).map((k) => (
+              <option key={k} value={k}>{k}</option>
+            ))}
+          </select>
+          {/* Scale */}
+          <label className="text-sm text-gray-700" htmlFor="vain-scale">Scale</label>
+          <input
+            id="vain-scale"
+            type="range"
+            min={0.2}
+            max={3}
+            step={0.01}
+            value={(vainActiveGroupKey && vainGroupTransforms.get(vainActiveGroupKey)?.scale) ?? 1}
+            onChange={(e) => {
+              const v = Number.parseFloat(e.target.value);
+              setVainGroupTransforms((prev) => {
+                const next = new Map(prev);
+                const key = vainActiveGroupKey ?? "";
+                const cur = next.get(key) ?? { x: 0, y: 0, scale: 1, rotation: 0 };
+                next.set(key, { ...cur, scale: v });
+                return next;
               });
-            })}
+            }}
+          />
+          {/* Rotation */}
+          <label className="text-sm text-gray-700" htmlFor="vain-rotation">Rotation</label>
+          <input
+            id="vain-rotation"
+            type="range"
+            min={-180}
+            max={180}
+            step={1}
+            value={(vainActiveGroupKey && vainGroupTransforms.get(vainActiveGroupKey)?.rotation) ?? 0}
+            onChange={(e) => {
+              const v = Number.parseFloat(e.target.value);
+              setVainGroupTransforms((prev) => {
+                const next = new Map(prev);
+                const key = vainActiveGroupKey ?? "";
+                const cur = next.get(key) ?? { x: 0, y: 0, scale: 1, rotation: 0 };
+                next.set(key, { ...cur, rotation: v });
+                return next;
+              });
+            }}
+          />
+          <button
+            type="button"
+            className="bg-white border border-gray-200 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 px-3 py-1 rounded-md shadow-sm text-sm"
+            onClick={() => {
+              if (!vainActiveGroupKey) return;
+              setVainGroupTransforms((prev) => {
+                const next = new Map(prev);
+                next.set(vainActiveGroupKey, { x: 0, y: 0, scale: 1, rotation: 0 });
+                return next;
+              });
+            }}
+          >
+            Reset Overlay
+          </button>
+        </div>
+      )}
+      {mode !== "vain-match" && (
+        <Stage
+          width={STAGE_WIDTH}
+          height={STAGE_HEIGHT}
+          style={{
+            border: "1px solid #ccc",
+            backgroundColor: "white",
+            touchAction: "none",
+          }}
+          x={stagePosition.x}
+          y={stagePosition.y}
+          scaleX={stageScale}
+          scaleY={stageScale}
+          onWheel={handleWheel}
+          onTouchStart={(e) => onTouchStart({ evt: e.evt as TouchEvent, target: e.target as { getStage?: () => { container: () => { getBoundingClientRect: () => DOMRect } } } })}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onContextMenu={(e) => {
+            e.evt.preventDefault();
+            const pos = getContainerPointFromEvent(e.evt);
+            if (!pos) return;
+            openAtContainerPoint(pos, e.evt.clientX, e.evt.clientY);
+          }}
+          ref={stageRef}
+        >
+          {/* Images layer (interactive) */}
+          <Layer>
+            {images.map((img) => (
+              <URLImage
+                key={img.id}
+                image={img}
+                rects={rects}
+                stageScale={stageScale}
+                stagePosition={stagePosition}
+                setImages={setImages}
+                onSinkDragStart={onSinkDragStart}
+                onSinkDragMove={onSinkDragMove}
+                onSinkDragEnd={onSinkDragEnd}
+              />
+            ))}
           </Layer>
-        )}
-      </Stage>
+
+          <OutlineLayer rects={rects} />
+
+          {/* Labels and draft overlay in a lightweight layer; labels conditionally rendered */}
+          <LabelsLayer
+            rects={rects}
+            lines={lines}
+            newRect={newRect}
+            draftSegments={draftSegments}
+            stageScale={stageScale}
+            renderLabels={renderLabels}
+            distanceClick={(rectId, sinkId, value) => setEditDistance({ isOpen: true, rectId, sinkId, value })}
+            images={images}
+          />
+          <DragOverlayLayer rects={rects} active={sinkDrag.active} candidateRectId={sinkDrag.candidateRectId} />
+          {/* Interactive layer just for sink distance labels (clickable) */}
+          {(rects.length <= 300 || stageScale > 1.5) && (
+            <Layer>
+              {rects.map((r) => {
+                const sinks = images.filter((img) => img.parentRectId === r.id);
+                return sinks.map((img, idx) => {
+                  const centerX = img.x + img.width / 2;
+                  const distancePx = Math.round(centerX - r.x);
+                  return (
+                    <Text
+                      key={`sinkdist-${r.id}-${img.id}`}
+                      x={r.x + 4}
+                      y={r.y + r.height + 4 + idx * 14}
+                      text={`${distancePx} px`}
+                      fontSize={12}
+                      fill="purple"
+                      scaleX={1 / stageScale}
+                      scaleY={1 / stageScale}
+                      listening
+                      onClick={() => {
+                        setEditDistance({ isOpen: true, rectId: r.id, sinkId: img.id, value: Math.max(0, centerX - r.x) });
+                      }}
+                    />
+                  );
+                });
+              })}
+            </Layer>
+          )}
+        </Stage>
+      )}
+      {mode === "vain-match" && (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {/* Preview stage with ghost overlay */}
+          <Stage
+            width={STAGE_WIDTH}
+            height={STAGE_HEIGHT}
+            style={{ border: "1px solid #ccc", backgroundColor: "white", touchAction: "none" }}
+            x={stagePosition.x}
+            y={stagePosition.y}
+            scaleX={stageScale}
+            scaleY={stageScale}
+            onWheel={handleWheel}
+            onTouchStart={(e) => onTouchStart({ evt: e.evt as TouchEvent, target: e.target as { getStage?: () => { container: () => { getBoundingClientRect: () => DOMRect } } } })}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onContextMenu={(e) => {
+              e.evt.preventDefault();
+              const pos = getContainerPointFromEvent(e.evt);
+              if (!pos) return;
+              openAtContainerPoint(pos, e.evt.clientX, e.evt.clientY);
+            }}
+            ref={stageRef}
+          >
+            {/* Clipped preview: for each group, clip rects and draw inverse-transformed image around group's top-left pivot */}
+            {vainBgEl && (
+              <Layer listening={false}>
+                {Array.from(collectGroups(rects).entries()).map(([key, gRects]) => {
+                  const t = vainGroupTransforms.get(key) ?? { x: 0, y: 0, scale: 1, rotation: 0 };
+                  const b = getBounds(gRects);
+                  return (
+                    <Group key={`clip-${key}`}
+                      clipFunc={(ctx) => {
+                        ctx.beginPath();
+                        for (const r of gRects) { addRectPathWithCorners(ctx as unknown as CanvasRenderingContext2D, r); }
+                        ctx.closePath();
+                      }}
+                    >
+                      {/* Pivot at group's top-left (b.left, b.top) */}
+                      <Group x={b.left} y={b.top}>
+                        <Group
+                          x={-t.x}
+                          y={-t.y}
+                          rotation={-t.rotation}
+                          scaleX={1 / (t.scale || 1)}
+                          scaleY={1 / (t.scale || 1)}
+                        >
+                          <KonvaImage
+                            image={vainBgEl}
+                            x={-b.left}
+                            y={-b.top}
+                            width={STAGE_WIDTH}
+                            height={STAGE_HEIGHT}
+                            listening={false}
+                          />
+                        </Group>
+                      </Group>
+                    </Group>
+                  );
+                })}
+              </Layer>
+            )}
+            {/* Seam hover guide in preview */}
+            {seamPreview && (
+              <Layer listening={false}>
+                <Line
+                  points={seamPreview.orientation === "v" ? [seamPreview.at, seamPreview.bounds.top, seamPreview.at, seamPreview.bounds.bottom] : [seamPreview.bounds.left, seamPreview.at, seamPreview.bounds.right, seamPreview.at]}
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                  dash={[6, 4]}
+                  listening={false}
+                />
+              </Layer>
+            )}
+          </Stage>
+          {/* Matching stage with background and draggable overlay per group */}
+          <Stage
+            width={STAGE_WIDTH}
+            height={STAGE_HEIGHT}
+            style={{ border: "1px solid #ccc", backgroundColor: "white", touchAction: "none" }}
+            onContextMenu={(e) => e.evt.preventDefault()}
+          >
+            <Layer>
+              {vainBgEl && (
+                <KonvaImage image={vainBgEl} x={0} y={0} width={STAGE_WIDTH} height={STAGE_HEIGHT} listening={false} />
+              )}
+              {/* Seam hover guide in matching */}
+              {seamPreview && (
+                <Line
+                  points={seamPreview.orientation === "v" ? [seamPreview.at, seamPreview.bounds.top, seamPreview.at, seamPreview.bounds.bottom] : [seamPreview.bounds.left, seamPreview.at, seamPreview.bounds.right, seamPreview.at]}
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                  dash={[6, 4]}
+                  listening={false}
+                />
+              )}
+              {Array.from(collectGroups(rects).entries()).map(([key, gRects]) => {
+                const t = vainGroupTransforms.get(key) ?? { x: 0, y: 0, scale: 1, rotation: 0 };
+                const b = getBounds(gRects);
+                return (
+                  <Group key={`vmgrp-${key}`} x={b.left} y={b.top}>
+                    <Group
+                      x={t.x}
+                      y={t.y}
+                      rotation={t.rotation}
+                      scaleX={t.scale}
+                      scaleY={t.scale}
+                      draggable
+                      onDragStart={() => setVainActiveGroupKey(key)}
+                      onDragMove={(e) => setVainGroupTransforms((prev) => { const next = new Map(prev); const cur = next.get(key) ?? t; next.set(key, { ...cur, x: e.target.x(), y: e.target.y() }); return next; })}
+                      onDragEnd={(e) => setVainGroupTransforms((prev) => { const next = new Map(prev); const cur = next.get(key) ?? t; next.set(key, { ...cur, x: e.target.x(), y: e.target.y() }); return next; })}
+                    >
+                      {gRects.map((r) => (
+                        <Rect key={`vm-${key}-${r.id}`} x={r.x - b.left} y={r.y - b.top} width={r.width} height={r.height} stroke="#0ea5e9" strokeWidth={2} />
+                      ))}
+                    </Group>
+                  </Group>
+                );
+              })}
+            </Layer>
+          </Stage>
+        </div>
+      )}
 
       <InfoLog
         show={showLog}

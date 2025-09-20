@@ -46,4 +46,51 @@ export function outlinePointsWithBevels(rect: RectShape): number[] {
   ];
 }
 
+/**
+ * Adds a path for a rectangle with rounded corners (radii) or bevel clips to the given 2D context.
+ * - Corner rendering rule matches OutlineLayer: radius arcs win only when radius > 0 and clip == 0, otherwise bevel.
+ */
+export function addRectPathWithCorners(ctx: CanvasRenderingContext2D, rect: RectShape): void {
+  const o = getEffectiveCornerOffsets(rect);
+  const radii = rect.radii ?? { "top-left": 0, "top-right": 0, "bottom-left": 0, "bottom-right": 0 };
+  const clips = rect.clips ?? { "top-left": 0, "top-right": 0, "bottom-left": 0, "bottom-right": 0 };
+
+  const x = rect.x; const y = rect.y; const w = rect.width; const h = rect.height;
+  const tl = o["top-left"]; const tr = o["top-right"]; const bl = o["bottom-left"]; const br = o["bottom-right"];
+  const rtl = radii["top-left"]; const rtr = radii["top-right"]; const rbl = radii["bottom-left"]; const rbr = radii["bottom-right"];
+  const ctl = clips["top-left"]; const ctr = clips["top-right"]; const cbl = clips["bottom-left"]; const cbr = clips["bottom-right"];
+
+  const arcTL = rtl > 0 && ctl === 0;
+  const arcTR = rtr > 0 && ctr === 0;
+  const arcBL = rbl > 0 && cbl === 0;
+  const arcBR = rbr > 0 && cbr === 0;
+
+  ctx.moveTo(x + (arcTL ? rtl : tl), y);
+  // Top edge
+  ctx.lineTo(x + w - (arcTR ? rtr : tr), y);
+  // Top-right corner
+  if (arcTR) { ctx.arc(x + w - rtr, y + rtr, rtr, -Math.PI / 2, 0); }
+  else if (tr > 0) { ctx.lineTo(x + w, y + tr); }
+
+  // Right edge
+  ctx.lineTo(x + w, y + h - (arcBR ? rbr : br));
+  // Bottom-right corner
+  if (arcBR) { ctx.arc(x + w - rbr, y + h - rbr, rbr, 0, Math.PI / 2); }
+  else if (br > 0) { ctx.lineTo(x + w - br, y + h); }
+
+  // Bottom edge
+  ctx.lineTo(x + (arcBL ? rbl : bl), y + h);
+  // Bottom-left corner
+  if (arcBL) { ctx.arc(x + rbl, y + h - rbl, rbl, Math.PI / 2, Math.PI); }
+  else if (bl > 0) { ctx.lineTo(x, y + h - bl); }
+
+  // Left edge
+  ctx.lineTo(x, y + (arcTL ? rtl : tl));
+  // Top-left corner
+  if (arcTL) { ctx.arc(x + rtl, y + rtl, rtl, Math.PI, 1.5 * Math.PI); }
+  else if (tl > 0) { ctx.lineTo(x + tl, y); }
+
+  ctx.closePath();
+}
+
 

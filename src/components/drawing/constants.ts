@@ -5,6 +5,10 @@ export const SNAP_TO_ORIGIN = 10; // px — considered "at origin"
 export const SNAP_SIZE = 15; // px — snap back to default size
 export const EDGE_TOLERANCE = 10; // px — sensitivity for edge detection
 
+// L-shape drawing thresholds
+export const L_TURN_MIN_PX = 300; // require at least this segment length before allowing a turn
+export const L_TURN_DEADBAND_PX = 8; // ignore tiny vertical wiggles before committing to the vertical leg
+
 export const ZOOM_MIN = 0.05; // minimum scale (max zoom-out)
 export const ZOOM_MAX = 10; // maximum scale (max zoom-in)
 

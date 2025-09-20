@@ -7,13 +7,14 @@ type Props = {
   rects: ReadonlyArray<RectShape>;
   lines: ReadonlyArray<LineShape>;
   newRect: RectDraft | null;
+  draftSegments?: ReadonlyArray<RectDraft>;
   stageScale: number;
   renderLabels: (r: RectDraft) => ReactNode;
   distanceClick: (rectId: string, sinkId: string, value: number) => void;
   images: ReadonlyArray<{ id: string; x: number; y: number; width: number; height: number; parentRectId?: string }>; 
 };
 
-export default function LabelsLayer({ rects, lines, newRect, stageScale, renderLabels, distanceClick, images }: Props) {
+export default function LabelsLayer({ rects, lines, newRect, draftSegments, stageScale, renderLabels, distanceClick, images }: Props) {
   return (
     <>
       <Layer listening={false} hitGraphEnabled={false}>
@@ -24,6 +25,21 @@ export default function LabelsLayer({ rects, lines, newRect, stageScale, renderL
             stroke="#94a3b8"
             dash={[6, 4]}
             strokeWidth={1}
+            listening={false}
+          />
+        ))}
+        {draftSegments?.map((seg) => (
+          <Rect
+            key={`${seg.x}-${seg.y}-${seg.width}-${seg.height}`}
+            x={seg.x}
+            y={seg.y}
+            width={seg.width}
+            height={seg.height}
+            stroke="red"
+            dash={[4, 4]}
+            strokeWidth={2}
+            perfectDrawEnabled={false}
+            shadowForStrokeEnabled={false}
             listening={false}
           />
         ))}
@@ -47,6 +63,9 @@ export default function LabelsLayer({ rects, lines, newRect, stageScale, renderL
               <Fragment key={`label-${r.id}`}>{renderLabels(r)}</Fragment>
             ))}
             {newRect && renderLabels(newRect)}
+            {draftSegments?.map((seg) => (
+              <Fragment key={`label-draft-${seg.x}-${seg.y}-${seg.width}-${seg.height}`}>{renderLabels(seg)}</Fragment>
+            ))}
           </>
         )}
       </Layer>

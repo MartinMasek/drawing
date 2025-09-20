@@ -7,6 +7,9 @@ type Props = {
   onSpawn1k: () => void;
   onSpawn5k: () => void;
   onClearRects: () => void;
+  onExportJpeg: () => void;
+  onExportJson: () => void;
+  onImportJsonToImage: () => void;
   showLog: boolean;
   onToggleLog: () => void;
   mode: InteractionMode;
@@ -28,6 +31,9 @@ export default function Toolbar(props: Props) {
     onSpawn1k,
     onSpawn5k,
     onClearRects,
+    onExportJpeg,
+    onExportJson,
+    onImportJsonToImage,
     showLog,
     onToggleLog,
     mode,
@@ -82,6 +88,27 @@ export default function Toolbar(props: Props) {
         </button>
         <button
           type="button"
+          onClick={onExportJpeg}
+          className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        >
+          Export JPEG
+        </button>
+        <button
+          type="button"
+          onClick={onExportJson}
+          className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        >
+          Log JSON
+        </button>
+        <button
+          type="button"
+          onClick={onImportJsonToImage}
+          className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        >
+          Paste JSON → Image
+        </button>
+        <button
+          type="button"
           onClick={onToggleLog}
           className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         >
@@ -89,7 +116,7 @@ export default function Toolbar(props: Props) {
         </button>
       </div>
       <div className="ml-4 flex items-center gap-2">
-        <label htmlFor="mode-select" className="text-sm text-gray-600">
+        <label htmlFor="mode-select" className="text-gray-600 text-sm">
           Mode
         </label>
         <select
@@ -104,17 +131,19 @@ export default function Toolbar(props: Props) {
           <option value="corner-new">Corner (custom)</option>
           <option value="sink">Sink</option>
           <option value="line">Line</option>
+          <option value="reshape">Reshape</option>
+          <option value="vain-match">Vain Match</option>
         </select>
       </div>
       <div className="ml-4 flex items-center gap-2">
-        <span className="text-sm text-gray-600">Defaults</span>
-        <label className="text-sm text-gray-600" htmlFor="def-edge">Edge</label>
+        <span className="text-gray-600 text-sm">Defaults</span>
+        <label className="text-gray-600 text-sm" htmlFor="def-edge">Edge</label>
         <input id="def-edge" type="color" value={defaultEdgeColor} onChange={(e) => onDefaultEdgeColorChange(e.target.value)} className="h-6 w-10 cursor-pointer" />
-        <label className="text-sm text-gray-600" htmlFor="def-corner">Corner</label>
+        <label className="text-gray-600 text-sm" htmlFor="def-corner">Corner</label>
         <input id="def-corner" type="color" value={defaultCornerColor} onChange={(e) => onDefaultCornerColorChange(e.target.value)} className="h-6 w-10 cursor-pointer" />
       </div>
       <div className="ml-4 flex items-center gap-2">
-        <label htmlFor="tool-select" className="text-sm text-gray-600">
+        <label htmlFor="tool-select" className="text-gray-600 text-sm">
           Tool
         </label>
         <select
@@ -125,10 +154,11 @@ export default function Toolbar(props: Props) {
         >
           <option value="rect">Rectangle</option>
           <option value="image">Image</option>
+          <option value="seam">Seam</option>
         </select>
         {tool === "image" && (
           <>
-            <label htmlFor="image-select" className="text-sm text-gray-600">
+            <label htmlFor="image-select" className="text-gray-600 text-sm">
               Image
             </label>
             <select

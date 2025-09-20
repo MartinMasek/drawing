@@ -20,7 +20,7 @@ export type CornerColors = Readonly<{ "top-left": string; "top-right": string; "
 export type CornerClips = Readonly<{ "top-left": number; "top-right": number; "bottom-left": number; "bottom-right": number }>;
 export type CornerRadii = Readonly<{ "top-left": number; "top-right": number; "bottom-left": number; "bottom-right": number }>;
 
-export type RectShape = RectDraft & { id: string; edges: EdgeColors; corners: CornerColors; clips?: CornerClips; radii?: CornerRadii };
+export type RectShape = RectDraft & { id: string; edges: EdgeColors; corners: CornerColors; clips?: CornerClips; radii?: CornerRadii; groupId?: string | null };
 
 export type ImageShape = Readonly<{
   id: string;
@@ -30,12 +30,13 @@ export type ImageShape = Readonly<{
   height: number;
   src: string;
   parentRectId?: string;
+  groupId?: string | null;
 }>;
 
 export type DragDirection = "right" | "left" | "up" | "down" | null;
 
-export type InteractionMode = "edge" | "edge-new" | "corner" | "corner-new" | "sink" | "line";
-export type ToolMode = "rect" | "image";
+export type InteractionMode = "edge" | "edge-new" | "corner" | "corner-new" | "sink" | "line" | "reshape" | "vain-match";
+export type ToolMode = "rect" | "image" | "seam";
 
 export type ContextMenuTarget =
   | { kind: "edge"; edge: Exclude<Edge, null> }
