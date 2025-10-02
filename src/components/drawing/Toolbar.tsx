@@ -2,16 +2,7 @@ import type { InteractionMode, ToolMode } from "./types";
 import { IMAGE_OPTIONS } from "./constants";
 
 type Props = {
-  onZoomIn: () => void;
-  onZoomOut: () => void;
-  onSpawn1k: () => void;
-  onSpawn5k: () => void;
   onClearRects: () => void;
-  onExportJpeg: () => void;
-  onExportJson: () => void;
-  onImportJsonToImage: () => void;
-  showLog: boolean;
-  onToggleLog: () => void;
   mode: InteractionMode;
   onModeChange: (mode: InteractionMode) => void;
   defaultEdgeColor: string;
@@ -26,16 +17,7 @@ type Props = {
 
 export default function Toolbar(props: Props) {
   const {
-    onZoomIn,
-    onZoomOut,
-    onSpawn1k,
-    onSpawn5k,
     onClearRects,
-    onExportJpeg,
-    onExportJson,
-    onImportJsonToImage,
-    showLog,
-    onToggleLog,
     mode,
     onModeChange,
     defaultEdgeColor,
@@ -50,69 +32,13 @@ export default function Toolbar(props: Props) {
 
   return (
     <div className="mb-2 flex items-center gap-2">
-      <button
-        type="button"
-        onClick={onZoomOut}
-        className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-      >
-        -
-      </button>
-      <button
-        type="button"
-        onClick={onZoomIn}
-        className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-      >
-        +
-      </button>
       <div className="ml-2 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={onSpawn1k}
-          className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-        >
-          Spawn 1k
-        </button>
-        <button
-          type="button"
-          onClick={onSpawn5k}
-          className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-        >
-          Spawn 5k
-        </button>
         <button
           type="button"
           onClick={onClearRects}
           className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         >
           Clear
-        </button>
-        <button
-          type="button"
-          onClick={onExportJpeg}
-          className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-        >
-          Export JPEG
-        </button>
-        <button
-          type="button"
-          onClick={onExportJson}
-          className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-        >
-          Log JSON
-        </button>
-        <button
-          type="button"
-          onClick={onImportJsonToImage}
-          className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-        >
-          Paste JSON → Image
-        </button>
-        <button
-          type="button"
-          onClick={onToggleLog}
-          className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-        >
-          {showLog ? "Hide Log" : "Show Log"}
         </button>
       </div>
       <div className="ml-4 flex items-center gap-2">

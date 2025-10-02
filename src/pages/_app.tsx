@@ -4,6 +4,7 @@ import type { AppType } from "next/app";
 import { Geist } from "next/font/google";
 
 import { api } from "~/utils/api";
+import { NuqsAdapter } from 'nuqs/adapters/next/app'
 
 import "~/styles/globals.css";
 
@@ -17,9 +18,11 @@ const MyApp: AppType<{ session: Session | null }> = ({
 }) => {
 	return (
 		<SessionProvider session={session}>
+			<NuqsAdapter>
 			<div className={geist.className}>
 				<Component {...pageProps} />
 			</div>
+			</NuqsAdapter>
 		</SessionProvider>
 	);
 };
