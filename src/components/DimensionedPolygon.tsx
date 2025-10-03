@@ -411,20 +411,6 @@ export default function SquareStretchCanvas() {
     const pos = getScenePointerPosition();
     if (!pos) return;
 
-    // Rectangle tool: begin top-left anchored rectangle from pointer
-    if (tool === "rect") {
-      isDrawing.current = true;
-      startPoint.current = pos;
-      direction.current = null;
-      lTurnCommittedRef.current = false;
-      currentAxisRef.current = "h";
-      segmentStartRef.current = pos;
-      setDraftSegments([]);
-      setDraftMetas([]);
-      setNewRect({ x: pos.x, y: pos.y, width: 0, height: 0 });
-      return;
-    }
-
     // In line mode: add infinite line (vertical/horizontal) at click based on modifier
     if (mode === "line") {
       // Alt/Option => horizontal line, otherwise vertical
@@ -758,20 +744,6 @@ export default function SquareStretchCanvas() {
     if (mode === "sink" || mode === "reshape") return;
     if (!isDrawing.current || !startPoint.current) return;
 
-    // Rectangle tool: update draft rect anchored at initial point's top-left
-    if (tool === "rect") {
-      const pos = getScenePointerPosition();
-      if (!pos) return;
-      const sx = startPoint.current.x;
-      const sy = startPoint.current.y;
-      const x = Math.min(sx, pos.x);
-      const y = Math.min(sy, pos.y);
-      const w = Math.max(MIN_SIZE, Math.abs(pos.x - sx));
-      const h = Math.max(MIN_SIZE, Math.abs(pos.y - sy));
-      setNewRect({ x, y, width: w, height: h });
-      return;
-    }
-
     const pos = getScenePointerPosition();
     if (!pos) return;
 
@@ -848,7 +820,6 @@ export default function SquareStretchCanvas() {
     }
   }, [draftForDrag, getContainerPointerPosition, getScenePointerPosition, mode, isPanningRef.current, panMove, draftMetas, tool, rects]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const handleMouseUp = useCallback(() => {
     // stop panning if active
     if (isPanningRef.current) { endPan(); }
@@ -887,7 +858,7 @@ export default function SquareStretchCanvas() {
     }
     if (mode === "sink") return;
     if (newRect) {
-      const finalSegments = tool === "rect" ? [newRect] : [...draftSegments, newRect];
+      const finalSegments = [...draftSegments, newRect];
       const newGroupId = `grp-${Date.now()}-${Math.floor(Math.random()*1000)}`;
       setRects((prev) => ([
         ...prev,
@@ -1376,11 +1347,11 @@ export default function SquareStretchCanvas() {
   );
 
   return (
-    <div ref={containerRef} className="flex h-full min-h-0 w-full flex-1 overflow-hidden">
+    <div ref={containerRef} className="flex h-full w-full min-h-0 flex-1 overflow-hidden">
       {/* Toolbar moved to header Settings popover */}
       {mode === "vain-match" && (
-        <div className="mb-2 flex flex-wrap items-center gap-3">
-          <label className="text-gray-700 text-sm" htmlFor="vain-bg-input">Match Image</label>
+        <div className="flex flex-wrap items-center gap-3 mb-2">
+          <label className="text-sm text-gray-700" htmlFor="vain-bg-input">Match Image</label>
           <input
             id="vain-bg-input"
             type="file"
@@ -1393,7 +1364,7 @@ export default function SquareStretchCanvas() {
             }}
           />
           {/* Active group selector */}
-          <label className="text-gray-700 text-sm" htmlFor="vain-group">Group</label>
+          <label className="text-sm text-gray-700" htmlFor="vain-group">Group</label>
           <select
             id="vain-group"
             className="rounded-md border border-gray-200 bg-white px-2 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
@@ -1405,7 +1376,7 @@ export default function SquareStretchCanvas() {
             ))}
           </select>
           {/* Scale */}
-          <label className="text-gray-700 text-sm" htmlFor="vain-scale">Scale</label>
+          <label className="text-sm text-gray-700" htmlFor="vain-scale">Scale</label>
           <input
             id="vain-scale"
             type="range"
@@ -1425,7 +1396,7 @@ export default function SquareStretchCanvas() {
             }}
           />
           {/* Rotation */}
-          <label className="text-gray-700 text-sm" htmlFor="vain-rotation">Rotation</label>
+          <label className="text-sm text-gray-700" htmlFor="vain-rotation">Rotation</label>
           <input
             id="vain-rotation"
             type="range"
@@ -1446,7 +1417,7 @@ export default function SquareStretchCanvas() {
           />
           <button
             type="button"
-            className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="bg-white border border-gray-200 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 px-3 py-1 rounded-md shadow-sm text-sm"
             onClick={() => {
               if (!vainActiveGroupKey) return;
               setVainGroupTransforms((prev) => {
