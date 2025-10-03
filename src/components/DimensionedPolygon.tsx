@@ -26,6 +26,7 @@ import { hitTestBoundsEdge } from "./drawing/utils/edges";
 import { exportJsonToImage } from "./drawing/utils/print";
 import useImage from "use-image";
 import { addRectPathWithCorners } from "./drawing/utils/geometry";
+import { useDrawing } from "./header/context/DrawingContext";
 
 export default function SquareStretchCanvas() {
   const [rects, setRects] = useState<RectShape[]>([]);
@@ -33,6 +34,8 @@ export default function SquareStretchCanvas() {
   const [draftSegments, setDraftSegments] = useState<ReadonlyArray<RectDraft>>([]);
   const [draftMetas, setDraftMetas] = useState<ReadonlyArray<{ axis: "h" | "v"; origin: Point; end: Point; dir: 1 | -1 }>>([]);
   const stageRef = useRef<Konva.Stage | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [containerSize, setContainerSize] = useState<{ width: number; height: number }>({ width: STAGE_WIDTH, height: STAGE_HEIGHT });
   const {
     stageScale,
     stagePosition,
@@ -52,7 +55,7 @@ export default function SquareStretchCanvas() {
   const [lines, setLines] = useState<ReadonlyArray<LineShape>>([]);
   // Seam tool hover preview (single cut line through hovered group)
   const [seamPreview, setSeamPreview] = useState<null | { groupKey: string; orientation: "v" | "h"; at: number; bounds: { left: number; top: number; right: number; bottom: number } }>(null);
-
+  const { zoom: currentZoomLevel, setCanvasActions, setCanvasSetters, setCanvasState } = useDrawing();
   const isDrawing = useRef<boolean>(false);
   const startPoint = useRef<Point | null>(null);
   const direction = useRef<DragDirection>(null);
@@ -959,21 +962,66 @@ export default function SquareStretchCanvas() {
     [menu.rectId, menu.target, rects, closeMenu, mode, nextImageId]
   );
 
-  const handleZoomIn = useCallback(() => {
-    const stage = stageRef.current;
-    const width = stage?.width() ?? 800;
-    const height = stage?.height() ?? 600;
-    const centerContainer = { x: width / 2, y: height / 2 };
-    zoomAtContainerPoint(centerContainer, 1.2);
-  }, [zoomAtContainerPoint]);
-  const handleZoomOut = useCallback(() => {
-    const stage = stageRef.current;
-    const width = stage?.width() ?? 800;
-    const height = stage?.height() ?? 600;
-    const centerContainer = { x: width / 2, y: height / 2 };
-    zoomAtContainerPoint(centerContainer, 1 / 1.2);
-  }, [zoomAtContainerPoint]);
+  // const handleZoomIn = useCallback(() => {
+  //   const stage = stageRef.current;
+  //   const width = stage?.width() ?? 800;
+  //   const height = stage?.height() ?? 600;
+  //   const centerContainer = { x: width / 2, y: height / 2 };
+  //   zoomAtContainerPoint(centerContainer, 1.2);
+  // }, [zoomAtContainerPoint]);
 
+  // const handleZoomOut = useCallback(() => {
+  //   const stage = stageRef.current;
+  //   const width = stage?.width() ?? 800;
+  //   const height = stage?.height() ?? 600;
+  //   const centerContainer = { x: width / 2, y: height / 2 };
+  //   zoomAtContainerPoint(centerContainer, 1 / 1.2);
+  // }, [zoomAtContainerPoint]);
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+  
+    const width = stage.width() ?? 800;
+    const height = stage.height() ?? 600;
+    const centerContainer = { x: width / 2, y: height / 2 };
+  
+    // Absolute scale factor (based on percentage)
+    const scaleFactor = currentZoomLevel / 100;
+  
+    // Get current scale
+    const oldScale = stage.scaleX();
+  
+    // Compute pointer relative to current scale
+    const pointerTo = {
+      x: (centerContainer.x - stage.x()) / oldScale,
+      y: (centerContainer.y - stage.y()) / oldScale,
+    };
+  
+    // Set new absolute scale
+    stage.scale({ x: scaleFactor, y: scaleFactor });
+  
+    // Adjust position so center stays in place
+    stage.position({
+      x: centerContainer.x - pointerTo.x * scaleFactor,
+      y: centerContainer.y - pointerTo.y * scaleFactor,
+    });
+  
+    stage.batchDraw();
+  }, [currentZoomLevel]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const cr = entry.contentRect;
+      setContainerSize({ width: Math.max(0, Math.floor(cr.width)), height: Math.max(0, Math.floor(cr.height)) });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const handleExportJpeg = useCallback(() => {
     const stage = stageRef.current;
@@ -1002,7 +1050,84 @@ export default function SquareStretchCanvas() {
     };
     img.src = dataUrl;
   }, []);
+  const handleExportJson = useCallback(() => {
+    const payload = {
+      stage: { position: stagePosition, scale: stageScale },
+      rects,
+      images,
+      lines,
+    };
+    // eslint-disable-next-line no-console
+    console.log("Canvas JSON:", JSON.stringify(payload));
+    alert("Canvas JSON logged to console.");
+  }, [images, lines, rects, stagePosition, stageScale]);
 
+  const handleImportJsonToImage = useCallback(async () => {
+    const input = prompt("Paste canvas JSON:");
+    if (!input) return;
+    try {
+      const data = JSON.parse(input) as { rects?: ReadonlyArray<RectShape>; images?: ReadonlyArray<ImageShape>; lines?: ReadonlyArray<LineShape>; stage?: { position?: { x: number; y: number }; scale?: number; width?: number; height?: number } };
+      const url = await exportJsonToImage({ rects: data.rects ?? [], images: data.images ?? [], lines: data.lines ?? [], stage: { width: containerSize.width, height: containerSize.height } });
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'imported-canvas.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (err) {
+      alert("Invalid JSON.");
+    }
+  }, [containerSize.height, containerSize.width]);
+  // --- Testing helpers: spawn lots of random rectangles for performance checks
+  const spawnRandomRects = useCallback((count: number) => {
+    const stage = stageRef.current;
+  const width = stage?.width() ?? STAGE_WIDTH;
+  const height = stage?.height() ?? STAGE_HEIGHT;
+  const generated = generateRandomRects(count, toScene, nextRectId, defaultEdgeColor, defaultCornerColor, width, height, MIN_SIZE);
+    setRects((prev) => [...prev, ...generated]);
+}, [defaultCornerColor, defaultEdgeColor, nextRectId, toScene]);
+
+
+
+  const toggleLogCb = useCallback(() => setShowLog((v) => !v), []);
+  const handleSpawn1k = useCallback(() => spawnRandomRects(1000), [spawnRandomRects]);
+  const handleSpawn5k = useCallback(() => spawnRandomRects(5000), [spawnRandomRects]);
+  const handleClearRects = useCallback(() => setRects([]), []);
+
+  useEffect(() => {
+    setCanvasActions({
+      exportJpeg: handleExportJpeg,
+      exportJson: handleExportJson,
+      importJsonToImage: handleImportJsonToImage,
+      toggleLog: toggleLogCb,
+      spawn1k: handleSpawn1k,
+      spawn5k: handleSpawn5k,
+      clearRects: handleClearRects,
+    });
+    // Register once per handler identity; handlers are memoized
+  }, [handleClearRects, handleExportJpeg, handleExportJson, handleImportJsonToImage, handleSpawn1k, handleSpawn5k, setCanvasActions, toggleLogCb]);
+
+  // Provide canvas setters so header changes can propagate
+  useEffect(() => {
+    setCanvasSetters({
+      setMode: (m) => setMode(m),
+      setDefaultEdgeColor: (v) => setDefaultEdgeColor(v),
+      setDefaultCornerColor: (v) => setDefaultCornerColor(v),
+      setTool: (t) => setTool(t),
+      setSelectedImageSrc: (src) => setSelectedImageSrc(src),
+    });
+  }, [setCanvasSetters]);
+
+  // Push current canvas state snapshot into context for header UI
+  useEffect(() => {
+    setCanvasState({
+      mode,
+      defaultEdgeColor,
+      defaultCornerColor,
+      tool,
+      selectedImageSrc,
+    });
+  }, [defaultCornerColor, defaultEdgeColor, mode, selectedImageSrc, setCanvasState, tool]);
 
   const pinchLastDistance = useRef<number | null>(null);
   const getScenePointFromTouchIndex = useCallback((evt: TouchEvent, index: number): Point | null => {
@@ -1192,20 +1317,6 @@ export default function SquareStretchCanvas() {
     }
   }, [newRect, nextRectId, onTouchEndSingle, nextImageId, selectedImageSrc, toScene, tool, defaultEdgeColor, defaultCornerColor, getContainerPointerPosition]);
 
-  // --- Testing helpers: spawn lots of random rectangles for performance checks
-  const spawnRandomRects = useCallback((count: number) => {
-      const stage = stageRef.current;
-    const width = stage?.width() ?? STAGE_WIDTH;
-    const height = stage?.height() ?? STAGE_HEIGHT;
-    const generated = generateRandomRects(count, toScene, nextRectId, defaultEdgeColor, defaultCornerColor, width, height, MIN_SIZE);
-      setRects((prev) => [...prev, ...generated]);
-  }, [defaultCornerColor, defaultEdgeColor, nextRectId, toScene]);
-
-  const handleSpawn1k = useCallback(() => spawnRandomRects(1000), [spawnRandomRects]);
-  const handleSpawn5k = useCallback(() => spawnRandomRects(5000), [spawnRandomRects]);
-  const handleClearRects = useCallback(() => setRects([]), []);
-
-  
 
   const renderLabels = (r: RectDraft) => (
     <>
@@ -1236,54 +1347,8 @@ export default function SquareStretchCanvas() {
   );
 
   return (
-    <>
-      <Toolbar
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onSpawn1k={handleSpawn1k}
-        onSpawn5k={handleSpawn5k}
-        onClearRects={handleClearRects}
-        onExportJpeg={handleExportJpeg}
-        onExportJson={() => {
-          const payload = {
-            stage: { position: stagePosition, scale: stageScale },
-            rects,
-            images,
-            lines,
-          };
-          // eslint-disable-next-line no-console
-          console.log("Canvas JSON:", JSON.stringify(payload));
-          alert("Canvas JSON logged to console.");
-        }}
-        onImportJsonToImage={async () => {
-          const input = prompt("Paste canvas JSON:");
-          if (!input) return;
-          try {
-            const data = JSON.parse(input) as { rects?: ReadonlyArray<RectShape>; images?: ReadonlyArray<ImageShape>; lines?: ReadonlyArray<LineShape>; stage?: { position?: { x: number; y: number }; scale?: number; width?: number; height?: number } };
-            const url = await exportJsonToImage({ rects: data.rects ?? [], images: data.images ?? [], lines: data.lines ?? [], stage: { width: STAGE_WIDTH, height: STAGE_HEIGHT } });
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'imported-canvas.png';
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-          } catch (err) {
-            alert("Invalid JSON.");
-          }
-        }}
-        showLog={showLog}
-        onToggleLog={() => setShowLog((v) => !v)}
-        mode={mode}
-        onModeChange={(m) => setMode(m)}
-        defaultEdgeColor={defaultEdgeColor}
-        defaultCornerColor={defaultCornerColor}
-        onDefaultEdgeColorChange={(v) => setDefaultEdgeColor(v)}
-        onDefaultCornerColorChange={(v) => setDefaultCornerColor(v)}
-        tool={tool}
-        onToolChange={(t) => setTool(t)}
-        selectedImageSrc={selectedImageSrc}
-        onSelectedImageChange={(v) => setSelectedImageSrc(v)}
-      />
+    <div ref={containerRef} className="flex h-full w-full min-h-0 flex-1 overflow-hidden">
+      {/* Toolbar moved to header Settings popover */}
       {mode === "vain-match" && (
         <div className="flex flex-wrap items-center gap-3 mb-2">
           <label className="text-sm text-gray-700" htmlFor="vain-bg-input">Match Image</label>
@@ -1368,10 +1433,10 @@ export default function SquareStretchCanvas() {
       )}
       {mode !== "vain-match" && (
         <Stage
-          width={STAGE_WIDTH}
-          height={STAGE_HEIGHT}
+          width={containerSize.width}
+          height={containerSize.height}
           style={{
-            border: "1px solid #ccc",
+            // border: "2px solid red",
             backgroundColor: "white",
             touchAction: "none",
           }}
@@ -1459,9 +1524,11 @@ export default function SquareStretchCanvas() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {/* Preview stage with ghost overlay */}
           <Stage
-            width={STAGE_WIDTH}
-            height={STAGE_HEIGHT}
-            style={{ border: "1px solid #ccc", backgroundColor: "white", touchAction: "none" }}
+            width={containerSize.width}
+            height={containerSize.height}
+            style={{ 
+              // border: "2px solid red", 
+              backgroundColor: "white", touchAction: "none" }}
             x={stagePosition.x}
             y={stagePosition.y}
             scaleX={stageScale}
@@ -1534,14 +1601,16 @@ export default function SquareStretchCanvas() {
           </Stage>
           {/* Matching stage with background and draggable overlay per group */}
           <Stage
-            width={STAGE_WIDTH}
-            height={STAGE_HEIGHT}
-            style={{ border: "1px solid #ccc", backgroundColor: "white", touchAction: "none" }}
+            width={containerSize.width}
+            height={containerSize.height}
+            style={{ 
+              // border: "2px solid red", 
+              backgroundColor: "white", touchAction: "none" }}
             onContextMenu={(e) => e.evt.preventDefault()}
           >
             <Layer>
               {vainBgEl && (
-                <KonvaImage image={vainBgEl} x={0} y={0} width={STAGE_WIDTH} height={STAGE_HEIGHT} listening={false} />
+                <KonvaImage image={vainBgEl} x={0} y={0} width={containerSize.width} height={containerSize.height} listening={false} />
               )}
               {/* Seam hover guide in matching */}
               {seamPreview && (
@@ -1654,6 +1723,6 @@ export default function SquareStretchCanvas() {
           setRadiusModal({ isOpen: false, rectId: null, corner: null, value: 0, max: 0 });
         }}
       />
-    </>
+    </div>
   );
 }
