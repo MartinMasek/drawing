@@ -27,10 +27,7 @@ const Zoom: React.FC<ZoomProps> = ({ min = 50, max = 200, step = 10, value, onCh
     }
 
     const zoomLevels = Array.from({ length: Math.floor((max - min) / step) + 1 }, (_, i) => min + i * step)
-    const selectOptions = zoomLevels.map((level) => ({
-        value: level,
-        label: `${level}%`,
-    }))
+
     return (
         <div className={cn('flex', className)}>
             <Button
