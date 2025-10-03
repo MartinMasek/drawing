@@ -27,6 +27,10 @@ import { exportJsonToImage } from "./drawing/utils/print";
 import useImage from "use-image";
 import { addRectPathWithCorners } from "./drawing/utils/geometry";
 import { useDrawing } from "./header/context/DrawingContext";
+import Button from "./header/header/Button";
+import { Icon } from "./header/header/Icon";
+import { IconDimensions, IconMarquee2, IconPackage, IconTextSize } from "@tabler/icons-react";
+import { Divider } from "./header/header/Divider";
 
 export default function SquareStretchCanvas() {
   const [rects, setRects] = useState<RectShape[]>([]);
@@ -1347,11 +1351,34 @@ export default function SquareStretchCanvas() {
   );
 
   return (
-    <div ref={containerRef} className="flex h-full w-full min-h-0 flex-1 overflow-hidden">
+    <div ref={containerRef} className="relative flex h-full min-h-0 w-full flex-1 overflow-hidden">
+      <div className="absolute top-1 left-1 z-50 flex w-11 flex-col items-center gap-1 rounded-[10px] py-1 shadow-lg">
+          <Button color='neutral' iconOnly size='sm' variant='outlined' className="h-[36px] w-[36px]">
+            <Icon size='md'>
+                <IconDimensions />
+            </Icon>
+        </Button>
+        <Divider />
+        <Button color='neutral' iconOnly size='sm' variant='text' className="h-[36px] w-[36px]">
+            <Icon size='md'>
+                <IconTextSize />
+            </Icon>
+        </Button>
+        <Button color='neutral' iconOnly size='sm' variant='text' className="h-[36px] w-[36px]">
+            <Icon size='md'>
+                <IconMarquee2 />
+            </Icon>
+        </Button>
+        <Button color='neutral' iconOnly size='sm' variant='text' className="h-[36px] w-[36px]">
+            <Icon size='md'>
+                <IconPackage />
+            </Icon>
+        </Button>
+      </div>
       {/* Toolbar moved to header Settings popover */}
       {mode === "vain-match" && (
-        <div className="flex flex-wrap items-center gap-3 mb-2">
-          <label className="text-sm text-gray-700" htmlFor="vain-bg-input">Match Image</label>
+        <div className="mb-2 flex flex-wrap items-center gap-3">
+          <label className="text-gray-700 text-sm" htmlFor="vain-bg-input">Match Image</label>
           <input
             id="vain-bg-input"
             type="file"
@@ -1364,7 +1391,7 @@ export default function SquareStretchCanvas() {
             }}
           />
           {/* Active group selector */}
-          <label className="text-sm text-gray-700" htmlFor="vain-group">Group</label>
+          <label className="text-gray-700 text-sm" htmlFor="vain-group">Group</label>
           <select
             id="vain-group"
             className="rounded-md border border-gray-200 bg-white px-2 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
@@ -1376,7 +1403,7 @@ export default function SquareStretchCanvas() {
             ))}
           </select>
           {/* Scale */}
-          <label className="text-sm text-gray-700" htmlFor="vain-scale">Scale</label>
+          <label className="text-gray-700 text-sm" htmlFor="vain-scale">Scale</label>
           <input
             id="vain-scale"
             type="range"
@@ -1396,7 +1423,7 @@ export default function SquareStretchCanvas() {
             }}
           />
           {/* Rotation */}
-          <label className="text-sm text-gray-700" htmlFor="vain-rotation">Rotation</label>
+          <label className="text-gray-700 text-sm" htmlFor="vain-rotation">Rotation</label>
           <input
             id="vain-rotation"
             type="range"
@@ -1417,7 +1444,7 @@ export default function SquareStretchCanvas() {
           />
           <button
             type="button"
-            className="bg-white border border-gray-200 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 px-3 py-1 rounded-md shadow-sm text-sm"
+            className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             onClick={() => {
               if (!vainActiveGroupKey) return;
               setVainGroupTransforms((prev) => {
