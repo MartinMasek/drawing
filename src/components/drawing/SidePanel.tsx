@@ -14,6 +14,7 @@ const SidePanel: FC = () => {
 
     return(
         <Sheet open={open} onOpenChange={setOpen}>
+            {cursorType !== CursorTypes.Text && cursorType !== CursorTypes.Select && cursorType !== CursorTypes.Package &&
             <SheetTrigger>
             {/* <div className="absolute top-3 right-3 z-50 flex h-[36px] cursor-pointer items-center gap-2 rounded-[10px] py-1 pr-3 pl-2 shadow-lg"> */}
             {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
@@ -52,6 +53,7 @@ const SidePanel: FC = () => {
                 
                 </div>
             </SheetTrigger>
+            }
             <SheetContent onInteractOutside={(e) => e.preventDefault()}>
                 <SheetHeader>
                     <SheetTitle>Side Panel Title</SheetTitle>
