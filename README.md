@@ -107,7 +107,8 @@ Implementation notes (for contributors):
     - Holds information about zoom level
     
     - Also SHOULD hold information about right side dialog window (isOpen), since we want to close it when changing tabs ?
-    - Also SHOULD hold information about cursor type ? (edges, dimesions, copy, corners, duplicate mode, etc..)
+    - Also SHOULD hold information about cursor type ? (text, edges, dimesions, copy, corners, duplicate mode, etc..)
+        - Should be reset when tabs change
         - If we have this we can easily know what SD to open when tab === Shape and cursor === curves & bumps || corners
     
     - Undo / Redo buttons, where is the stack? 

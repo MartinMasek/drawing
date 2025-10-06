@@ -45,6 +45,7 @@ export const DrawingProvider = ({ children }: { children: React.ReactNode }) => 
         serialize: String,
     })
 
+    // ----- THIS IS JUST HELPERS, WILL NOT BE PROD CODE -------- // 
     const exportJpegRef = useRef<(() => void) | undefined>(undefined)
     const exportJsonRef = useRef<(() => void) | undefined>(undefined)
     const importJsonToImageRef = useRef<(() => void) | undefined>(undefined)
@@ -92,6 +93,7 @@ export const DrawingProvider = ({ children }: { children: React.ReactNode }) => 
         if (Object.prototype.hasOwnProperty.call(state, 'tool') && state.tool !== undefined) setToolState(state.tool)
         if (Object.prototype.hasOwnProperty.call(state, 'selectedImageSrc') && state.selectedImageSrc !== undefined) setSelectedImageSrcState(state.selectedImageSrc)
     }, [])
+    // ------------------------------------- // 
 
     const value = useMemo<DrawingContextType>(() => ({
         activeTab,
