@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import type Konva from "konva";
 import type { Point } from "../types";
 import { ZOOM_MAX, ZOOM_MIN } from "../constants";
+import { useDrawing } from "~/components/header/context/DrawingContext";
 
 export function useStageNavigation(stageRef: React.RefObject<Konva.Stage | null>) {
   const [stageScale, setStageScale] = useState<number>(1);
@@ -55,15 +56,33 @@ export function useStageNavigation(stageRef: React.RefObject<Konva.Stage | null>
       return newScale;
     });
   }, [clampScale]);
+    
+  const { zoom, setZoom } = useDrawing();
 
-  const onWheel = useCallback((e: { evt: WheelEvent }) => {
-    e.evt.preventDefault();
-    const scaleBy = 1.1;
-    const factor = e.evt.deltaY > 0 ? 1 / scaleBy : scaleBy;
-    const containerPoint = getContainerPointFromEvent(e.evt);
-    if (!containerPoint) return;
-    zoomAtContainerPoint(containerPoint, factor);
-  }, [getContainerPointFromEvent, zoomAtContainerPoint]);
+  // const onWheel = useCallback((e: { evt: WheelEvent }) => {
+  //   e.evt.preventDefault();
+  //   const scaleBy = 1.1;
+  //   const factor = e.evt.deltaY > 0 ? 1 / scaleBy : scaleBy;
+  //   const containerPoint = getContainerPointFromEvent(e.evt);
+  //   if (!containerPoint) return;
+  //   zoomAtContainerPoint(containerPoint, factor);
+  // }, [getContainerPointFromEvent, zoomAtContainerPoint]);
+
+  const onWheel = useCallback(
+    (e: { evt: WheelEvent }) => {
+      e.evt.preventDefault();
+
+      const scaleBy = 1.1;
+      const factor = e.evt.deltaY > 0 ? 1 / scaleBy : scaleBy;
+
+      let newZoom = zoom * factor;
+      newZoom = Math.min(200, Math.max(50, newZoom));
+      newZoom = Math.round(newZoom / 10) * 10;
+
+      setZoom(newZoom);
+    },
+    [zoom, setZoom]
+  );
 
   const beginPan = useCallback((containerPoint: Point) => {
     isPanning.current = true;

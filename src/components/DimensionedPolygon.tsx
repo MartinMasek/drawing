@@ -27,6 +27,14 @@ import { exportJsonToImage } from "./drawing/utils/print";
 import useImage from "use-image";
 import { addRectPathWithCorners } from "./drawing/utils/geometry";
 import { useDrawing } from "./header/context/DrawingContext";
+import DimensionsPanel from "./topLeftPanel/DimesionsPanel";
+import ShapePanel from "./topLeftPanel/ShapePanel";
+import EdgesPanel from "./topLeftPanel/EdgesPanel";
+import CutoutsPanel from "./topLeftPanel/CutoutsPanel";
+import { DrawingTab } from "./header/header/drawing-types";
+import { IconLayoutSidebarRightExpand } from "@tabler/icons-react";
+import { Icon } from "./header/header/Icon";
+import SidePanel from "./drawing/SidePanel";
 
 export default function SquareStretchCanvas() {
   const [rects, setRects] = useState<RectShape[]>([]);
@@ -55,7 +63,7 @@ export default function SquareStretchCanvas() {
   const [lines, setLines] = useState<ReadonlyArray<LineShape>>([]);
   // Seam tool hover preview (single cut line through hovered group)
   const [seamPreview, setSeamPreview] = useState<null | { groupKey: string; orientation: "v" | "h"; at: number; bounds: { left: number; top: number; right: number; bottom: number } }>(null);
-  const { zoom: currentZoomLevel, setCanvasActions, setCanvasSetters, setCanvasState } = useDrawing();
+  const { zoom: currentZoomLevel, setCanvasActions, setCanvasSetters, setCanvasState, activeTab } = useDrawing();
   const isDrawing = useRef<boolean>(false);
   const startPoint = useRef<Point | null>(null);
   const direction = useRef<DragDirection>(null);
@@ -1318,40 +1326,171 @@ export default function SquareStretchCanvas() {
   }, [newRect, nextRectId, onTouchEndSingle, nextImageId, selectedImageSrc, toScene, tool, defaultEdgeColor, defaultCornerColor, getContainerPointerPosition]);
 
 
-  const renderLabels = (r: RectDraft) => (
-    <>
-      <Text
-        x={r.x + r.width / 2}
-        y={r.y - 15}
-        text={`${r.width.toFixed(0)} px`}
-        fontSize={14}
-        fill="blue"
-        align="center"
-        offsetX={20}
-        scaleX={1 / stageScale}
-        scaleY={1 / stageScale}
-        listening={false}
-      />
-      <Text
-        x={r.x - 40}
-        y={r.y + r.height / 2}
-        text={`${r.height.toFixed(0)} px`}
-        fontSize={14}
-        fill="blue"
-        rotation={-90}
-        scaleX={1 / stageScale}
-        scaleY={1 / stageScale}
-        listening={false}
-      />
-    </>
-  );
+  // const renderLabels = (r: RectDraft) => (
+  //   <>
+  //     <Text
+  //       x={r.x + r.width / 2}
+  //       y={r.y - 15}
+  //       text={`${r.width.toFixed(0)} px`}
+  //       fontSize={14}
+  //       fill="blue"
+  //       align="center"
+  //       offsetX={20}
+  //       scaleX={1 / stageScale}
+  //       scaleY={1 / stageScale}
+  //       listening={false}
+  //     />
+  //     <Text
+  //       x={r.x - 40}
+  //       y={r.y + r.height / 2}
+  //       text={`${r.height.toFixed(0)} px`}
+  //       fontSize={14}
+  //       fill="blue"
+  //       rotation={-90}
+  //       scaleX={1 / stageScale}
+  //       scaleY={1 / stageScale}
+  //       listening={false}
+  //     />
+  //   </>
+  // );
+  
+
+  const renderLabels = (r: RectDraft) => {
+    const labelOffset = 15; // distance from rectangle
+    const fontSize = 14;
+    const scale = 1 / stageScale;
+    const arrowLength = 8; // small arrow size
+  
+    return (
+      <>
+        {/* WIDTH LABEL (horizontal, top) */}
+        <Line
+          points={[
+            r.x, r.y - labelOffset,
+            r.x + r.width, r.y - labelOffset
+          ]}
+          stroke="blue"
+          strokeWidth={1 / stageScale}
+          listening={false}
+        />
+        {/* Left arrow */}
+        <Line
+          points={[
+            r.x, r.y - labelOffset,
+            r.x + arrowLength, r.y - labelOffset - arrowLength / 2,
+            r.x + arrowLength, r.y - labelOffset + arrowLength / 2,
+            r.x, r.y - labelOffset
+          ]}
+          fill="blue"
+          closed
+          listening={false}
+        />
+        {/* Right arrow */}
+        <Line
+          points={[
+            r.x + r.width, r.y - labelOffset,
+            r.x + r.width - arrowLength, r.y - labelOffset - arrowLength / 2,
+            r.x + r.width - arrowLength, r.y - labelOffset + arrowLength / 2,
+            r.x + r.width, r.y - labelOffset
+          ]}
+          fill="blue"
+          closed
+          listening={false}
+        />
+        {/* Text label */}
+        <Text
+          x={r.x + r.width / 2}
+          y={r.y - labelOffset - fontSize * 1.1}
+          text={`${r.width.toFixed(0)} px`}
+          fontSize={fontSize}
+          fill="blue"
+          align="center"
+          width={80}
+          offsetX={40}
+          scaleX={scale}
+          scaleY={scale}
+          listening={false}
+        />
+  
+        {/* HEIGHT LABEL (vertical, left) */}
+        <Line
+          points={[
+            r.x - labelOffset, r.y,
+            r.x - labelOffset, r.y + r.height
+          ]}
+          stroke="blue"
+          strokeWidth={1 / stageScale}
+          listening={false}
+        />
+        {/* Top arrow */}
+        <Line
+          points={[
+            r.x - labelOffset, r.y,
+            r.x - labelOffset - arrowLength / 2, r.y + arrowLength,
+            r.x - labelOffset + arrowLength / 2, r.y + arrowLength,
+            r.x - labelOffset, r.y
+          ]}
+          fill="blue"
+          closed
+          listening={false}
+        />
+        {/* Bottom arrow */}
+        <Line
+          points={[
+            r.x - labelOffset, r.y + r.height,
+            r.x - labelOffset - arrowLength / 2, r.y + r.height - arrowLength,
+            r.x - labelOffset + arrowLength / 2, r.y + r.height - arrowLength,
+            r.x - labelOffset, r.y + r.height
+          ]}
+          fill="blue"
+          closed
+          listening={false}
+        />
+        {/* Text label */}
+        <Text
+          x={r.x - labelOffset - fontSize * 1.2}
+          y={r.y + r.height / 2}
+          text={`${r.height.toFixed(0)} px`}
+          fontSize={fontSize}
+          fill="blue"
+          rotation={-90}
+          align="center"
+          width={80}
+          offsetX={40}
+          scaleX={scale}
+          scaleY={scale}
+          listening={false}
+        />
+      </>
+    );
+  };
+  
 
   return (
-    <div ref={containerRef} className="flex h-full w-full min-h-0 flex-1 overflow-hidden">
+    <div ref={containerRef} className="relative flex h-full min-h-0 w-full flex-1 overflow-hidden">
+      {/* Top left corner */}
+      {activeTab === DrawingTab.Dimensions && 
+        <DimensionsPanel />
+      }
+      {activeTab === DrawingTab.Shape && 
+        <ShapePanel />
+      }
+      {activeTab === DrawingTab.Edges && 
+        <EdgesPanel />
+      }
+      {activeTab === DrawingTab.Cutouts && 
+        <CutoutsPanel />
+      }
+      
+      {/* Top right corner */}
+      <SidePanel />
+
+
+
       {/* Toolbar moved to header Settings popover */}
       {mode === "vain-match" && (
-        <div className="flex flex-wrap items-center gap-3 mb-2">
-          <label className="text-sm text-gray-700" htmlFor="vain-bg-input">Match Image</label>
+        <div className="mb-2 flex flex-wrap items-center gap-3">
+          <label className="text-gray-700 text-sm" htmlFor="vain-bg-input">Match Image</label>
           <input
             id="vain-bg-input"
             type="file"
@@ -1364,7 +1503,7 @@ export default function SquareStretchCanvas() {
             }}
           />
           {/* Active group selector */}
-          <label className="text-sm text-gray-700" htmlFor="vain-group">Group</label>
+          <label className="text-gray-700 text-sm" htmlFor="vain-group">Group</label>
           <select
             id="vain-group"
             className="rounded-md border border-gray-200 bg-white px-2 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
@@ -1376,7 +1515,7 @@ export default function SquareStretchCanvas() {
             ))}
           </select>
           {/* Scale */}
-          <label className="text-sm text-gray-700" htmlFor="vain-scale">Scale</label>
+          <label className="text-gray-700 text-sm" htmlFor="vain-scale">Scale</label>
           <input
             id="vain-scale"
             type="range"
@@ -1396,7 +1535,7 @@ export default function SquareStretchCanvas() {
             }}
           />
           {/* Rotation */}
-          <label className="text-sm text-gray-700" htmlFor="vain-rotation">Rotation</label>
+          <label className="text-gray-700 text-sm" htmlFor="vain-rotation">Rotation</label>
           <input
             id="vain-rotation"
             type="range"
@@ -1417,7 +1556,7 @@ export default function SquareStretchCanvas() {
           />
           <button
             type="button"
-            className="bg-white border border-gray-200 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 px-3 py-1 rounded-md shadow-sm text-sm"
+            className="rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             onClick={() => {
               if (!vainActiveGroupKey) return;
               setVainGroupTransforms((prev) => {
