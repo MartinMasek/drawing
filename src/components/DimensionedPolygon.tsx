@@ -27,14 +27,11 @@ import { exportJsonToImage } from "./drawing/utils/print";
 import useImage from "use-image";
 import { addRectPathWithCorners } from "./drawing/utils/geometry";
 import { useDrawing } from "./header/context/DrawingContext";
-import DimensionsPanel from "./topLeftPanel/DimesionsPanel";
-import ShapePanel from "./topLeftPanel/ShapePanel";
-import EdgesPanel from "./topLeftPanel/EdgesPanel";
-import CutoutsPanel from "./topLeftPanel/CutoutsPanel";
 import { DrawingTab } from "./header/header/drawing-types";
 import { IconLayoutSidebarRightExpand } from "@tabler/icons-react";
 import { Icon } from "./header/header/Icon";
 import SidePanel from "./drawing/SidePanel";
+import CursorPanel from "./drawing/CursorPanel";
 
 export default function SquareStretchCanvas() {
   const [rects, setRects] = useState<RectShape[]>([]);
@@ -1469,18 +1466,7 @@ export default function SquareStretchCanvas() {
   return (
     <div ref={containerRef} className="relative flex h-full min-h-0 w-full flex-1 overflow-hidden">
       {/* Top left corner */}
-      {activeTab === DrawingTab.Dimensions && 
-        <DimensionsPanel />
-      }
-      {activeTab === DrawingTab.Shape && 
-        <ShapePanel />
-      }
-      {activeTab === DrawingTab.Edges && 
-        <EdgesPanel />
-      }
-      {activeTab === DrawingTab.Cutouts && 
-        <CutoutsPanel />
-      }
+      <CursorPanel />
       
       {/* Top right corner */}
       <SidePanel />
