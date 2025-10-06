@@ -1,10 +1,10 @@
 import type { FC } from "react"
-import { CursorTypes, useDrawing } from "../header/context/DrawingContext"
+import { useDrawing } from "../header/context/DrawingContext"
 import Button from "../header/header/Button"
 import { Icon } from "../header/header/Icon"
 import { IconBorderRadius, IconDimensions, IconMarquee2, IconTextSize } from "@tabler/icons-react"
 import { Divider } from "../header/header/Divider"
-import { DrawingTab } from "../header/header/drawing-types"
+import { CursorTypes, DrawingTab } from "../header/header/drawing-types"
 
 const CursorPanel: FC = () => {
     const { activeTab, cursorType, setCursorType } = useDrawing()

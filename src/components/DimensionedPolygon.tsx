@@ -9,7 +9,6 @@ import { useTouchInteractions } from "./drawing/hooks/useTouchInteractions";
 import { useContextMenuController } from "./drawing/hooks/useContextMenuController";
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
-import Toolbar from "./drawing/Toolbar";
 import URLImage from "./drawing/URLImage";
 import ContextMenu from "./drawing/ContextMenu";
 import CornerClipModal from "./drawing/CornerClipModal";
@@ -27,9 +26,6 @@ import { exportJsonToImage } from "./drawing/utils/print";
 import useImage from "use-image";
 import { addRectPathWithCorners } from "./drawing/utils/geometry";
 import { useDrawing } from "./header/context/DrawingContext";
-import { DrawingTab } from "./header/header/drawing-types";
-import { IconLayoutSidebarRightExpand } from "@tabler/icons-react";
-import { Icon } from "./header/header/Icon";
 import SidePanel from "./drawing/SidePanel";
 import CursorPanel from "./drawing/CursorPanel";
 
@@ -60,7 +56,7 @@ export default function SquareStretchCanvas() {
   const [lines, setLines] = useState<ReadonlyArray<LineShape>>([]);
   // Seam tool hover preview (single cut line through hovered group)
   const [seamPreview, setSeamPreview] = useState<null | { groupKey: string; orientation: "v" | "h"; at: number; bounds: { left: number; top: number; right: number; bottom: number } }>(null);
-  const { zoom: currentZoomLevel, setCanvasActions, setCanvasSetters, setCanvasState, activeTab } = useDrawing();
+  const { zoom: currentZoomLevel, setCanvasActions, setCanvasSetters, setCanvasState } = useDrawing();
   const isDrawing = useRef<boolean>(false);
   const startPoint = useRef<Point | null>(null);
   const direction = useRef<DragDirection>(null);
