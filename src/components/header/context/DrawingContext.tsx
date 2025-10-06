@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useRef, useState, useCallback, useEffect } from 'react'
 import type { InteractionMode, ToolMode } from '../../drawing/types'
 import { useQueryState } from 'nuqs'
-import { DrawingTab } from '../header/drawing-types'
+import { DrawingTab, DrawingTabList } from '../header/drawing-types'
 
 
 export enum CursorTypes {
@@ -71,13 +71,17 @@ export const DrawingProvider = ({ children }: { children: React.ReactNode }) => 
         [DrawingTab.Quote]: CursorTypes.Quote,
     }
     
-      // Update cursorType whenever tab changes
-      // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+    // Update cursorType whenever tab changes 
+    // Update browser tab name
+    // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
     useEffect(() => {
         const defaultCursor = defaultCursorByTab[activeTab] ?? CursorTypes.Select
         setCursorType(defaultCursor)
-    }, [activeTab])
 
+        const currentTab = DrawingTabList.find((tab) => tab.id === activeTab);
+        const tabLabel = currentTab?.label ?? "Drawings";
+        document.title = `${tabLabel} | Stonify`;
+    }, [activeTab])
 
     // ----- THIS IS JUST HELPERS, WILL NOT BE PROD CODE -------- // 
     const exportJpegRef = useRef<(() => void) | undefined>(undefined)
