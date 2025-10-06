@@ -99,3 +99,15 @@ Implementation notes (for contributors):
   - On drag move, it hit-tests the sink center against rects to compute `candidateRectId`.
   - On drag end, it accepts the drop if inside a rect; otherwise reverts using the snapshot. It also explicitly resets the Konva node’s position to prevent visual drift.
 - The overlay is a `Layer` with a large semi-opaque `Rect` and `destination-out` holes for rects; the candidate rect is drawn with an orange stroke.
+
+
+### Layout design and data flow
+ - Drawing context 
+    - Holds information about active tab (+ uses nuqs)
+    - Holds information about zoom level
+    
+    - Also SHOULD hold information about right side dialog window (isOpen), since we want to close it when changing tabs ?
+    - Also SHOULD hold information about cursor type ? (edges, dimesions, copy, corners, duplicate mode, etc..)
+        - If we have this we can easily know what SD to open when tab === Shape and cursor === curves & bumps || corners
+    
+    - Undo / Redo buttons, where is the stack? 
