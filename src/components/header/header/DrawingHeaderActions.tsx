@@ -19,7 +19,7 @@ import { useDrawing } from '../context/DrawingContext'
 import Button from './Button'
 import { Icon } from './Icon'
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react'
-import { IMAGE_OPTIONS } from '../../drawing/constants'
+import { IMAGE_OPTIONS } from '../../drawing-old/constants'
 
 const DrawingHeaderActions: FC = () => {
     const {

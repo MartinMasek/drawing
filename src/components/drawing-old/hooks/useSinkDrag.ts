@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import type Konva from "konva";
-import type { ImageShape, Point, RectShape } from "../../drawing/types";
+import type { ImageShape, Point, RectShape } from "../../drawing-old/types";
 
 type SinkDragState = {
   active: boolean;

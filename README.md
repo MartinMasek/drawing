@@ -30,7 +30,11 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 
 ## Drawing Canvas (Konva) — Overview
 
-This app includes an interactive drawing canvas implemented with React Konva. The feature is composed of small, focused components under `src/components/drawing/` and a single orchestrator component `src/components/DimensionedPolygon.tsx` that wires state and events.
+Right now we have 2 versions of the drawing canvas:
+- `src/components/DimensionedPolygon.tsx` (old)
+- `src/components/DrawingCanvas.tsx` (new)
+
+all old components are in `src/components/drawing-old/` they will be removed in the future.
 
 ### Key files
 
