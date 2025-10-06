@@ -27,10 +27,14 @@ import { exportJsonToImage } from "./drawing/utils/print";
 import useImage from "use-image";
 import { addRectPathWithCorners } from "./drawing/utils/geometry";
 import { useDrawing } from "./header/context/DrawingContext";
-import Button from "./header/header/Button";
+import DimensionsPanel from "./topLeftPanel/DimesionsPanel";
+import ShapePanel from "./topLeftPanel/ShapePanel";
+import EdgesPanel from "./topLeftPanel/EdgesPanel";
+import CutoutsPanel from "./topLeftPanel/CutoutsPanel";
+import { DrawingTab } from "./header/header/drawing-types";
+import { IconLayoutSidebarRightExpand } from "@tabler/icons-react";
 import { Icon } from "./header/header/Icon";
-import { IconDimensions, IconMarquee2, IconPackage, IconTextSize } from "@tabler/icons-react";
-import { Divider } from "./header/header/Divider";
+import SidePanel from "./drawing/SidePanel";
 
 export default function SquareStretchCanvas() {
   const [rects, setRects] = useState<RectShape[]>([]);
@@ -59,7 +63,7 @@ export default function SquareStretchCanvas() {
   const [lines, setLines] = useState<ReadonlyArray<LineShape>>([]);
   // Seam tool hover preview (single cut line through hovered group)
   const [seamPreview, setSeamPreview] = useState<null | { groupKey: string; orientation: "v" | "h"; at: number; bounds: { left: number; top: number; right: number; bottom: number } }>(null);
-  const { zoom: currentZoomLevel, setCanvasActions, setCanvasSetters, setCanvasState } = useDrawing();
+  const { zoom: currentZoomLevel, setCanvasActions, setCanvasSetters, setCanvasState, activeTab } = useDrawing();
   const isDrawing = useRef<boolean>(false);
   const startPoint = useRef<Point | null>(null);
   const direction = useRef<DragDirection>(null);
@@ -1352,29 +1356,25 @@ export default function SquareStretchCanvas() {
 
   return (
     <div ref={containerRef} className="relative flex h-full min-h-0 w-full flex-1 overflow-hidden">
-      <div className="absolute top-1 left-1 z-50 flex w-11 flex-col items-center gap-1 rounded-[10px] py-1 shadow-lg">
-          <Button color='neutral' iconOnly size='sm' variant='outlined' className="h-[36px] w-[36px]">
-            <Icon size='md'>
-                <IconDimensions />
-            </Icon>
-        </Button>
-        <Divider />
-        <Button color='neutral' iconOnly size='sm' variant='text' className="h-[36px] w-[36px]">
-            <Icon size='md'>
-                <IconTextSize />
-            </Icon>
-        </Button>
-        <Button color='neutral' iconOnly size='sm' variant='text' className="h-[36px] w-[36px]">
-            <Icon size='md'>
-                <IconMarquee2 />
-            </Icon>
-        </Button>
-        <Button color='neutral' iconOnly size='sm' variant='text' className="h-[36px] w-[36px]">
-            <Icon size='md'>
-                <IconPackage />
-            </Icon>
-        </Button>
-      </div>
+      {/* Top left corner */}
+      {activeTab === DrawingTab.Dimensions && 
+        <DimensionsPanel />
+      }
+      {activeTab === DrawingTab.Shape && 
+        <ShapePanel />
+      }
+      {activeTab === DrawingTab.Edges && 
+        <EdgesPanel />
+      }
+      {activeTab === DrawingTab.Cutouts && 
+        <CutoutsPanel />
+      }
+      
+      {/* Top right corner */}
+      <SidePanel />
+
+
+
       {/* Toolbar moved to header Settings popover */}
       {mode === "vain-match" && (
         <div className="mb-2 flex flex-wrap items-center gap-3">
