@@ -1,7 +1,7 @@
 
 import { useState, type FC } from "react"
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from "../ui/sheet"
-import { useDrawing } from "../header/context/DrawingContext"
+import { CursorTypes, useDrawing } from "../header/context/DrawingContext"
 import { DrawingTab } from "../header/header/drawing-types"
 import { Icon } from "../header/header/Icon"
 import { IconLayoutSidebarLeftExpand, IconLayoutSidebarRightExpand } from "@tabler/icons-react"
@@ -9,7 +9,7 @@ import Button from "../header/header/Button"
 
 
 const SidePanel: FC = () => {
-    const { activeTab } = useDrawing()
+    const { activeTab, cursorType } = useDrawing()
     const [open, setOpen] = useState(false) 
 
     return(
@@ -35,8 +35,11 @@ const SidePanel: FC = () => {
                         {activeTab === DrawingTab.Dimensions && 
                                 <p className="text-sm">Materials</p>
                             }
-                            {activeTab === DrawingTab.Shape && 
+                            {activeTab === DrawingTab.Shape && cursorType === CursorTypes.Curves &&
                                 <p className="text-sm">Curves & Bumps</p>
+                            }
+                            {activeTab === DrawingTab.Shape && cursorType === CursorTypes.Corners &&
+                                <p className="text-sm">Corners</p>
                             }
                             {activeTab === DrawingTab.Edges && 
                                 <p className="text-sm">Edges</p>
