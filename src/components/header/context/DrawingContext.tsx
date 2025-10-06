@@ -1,14 +1,29 @@
-import { createContext, useContext, useMemo, useRef, useState, useCallback } from 'react'
+import { createContext, useContext, useMemo, useRef, useState, useCallback, useEffect } from 'react'
 import type { InteractionMode, ToolMode } from '../../drawing/types'
 import { useQueryState } from 'nuqs'
 import { DrawingTab } from '../header/drawing-types'
 
+
+export enum CursorTypes {
+    Dimesions = 1,
+    Curves = 2,
+    Corners = 3,
+    Egdes = 4,
+    Cutouts = 5,
+    Layout = 6,
+    Quote = 7,
+    Text = 8,
+    Select = 9,
+    Package = 10
+}
 
 type DrawingContextType = {
     activeTab: number
     setActiveTab: (tab: number) => void
     zoom: number
     setZoom: (zoom: number) => void
+    cursorType: number
+    setCursorType: (type: number) => void
     // Canvas actions
     exportJpeg: () => void
     exportJson: () => void
@@ -44,6 +59,25 @@ export const DrawingProvider = ({ children }: { children: React.ReactNode }) => 
         parse: (v) => Number(v) as DrawingTab,
         serialize: String,
     })
+
+    const [cursorType, setCursorType] = useState(CursorTypes.Dimesions)
+    
+    const defaultCursorByTab: Record<DrawingTab, CursorTypes> = {
+        [DrawingTab.Dimensions]: CursorTypes.Dimesions,
+        [DrawingTab.Shape]: CursorTypes.Curves,
+        [DrawingTab.Edges]: CursorTypes.Egdes,
+        [DrawingTab.Cutouts]: CursorTypes.Cutouts,
+        [DrawingTab.Layout]: CursorTypes.Layout,
+        [DrawingTab.Quote]: CursorTypes.Quote,
+    }
+    
+      // Update cursorType whenever tab changes
+      // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+    useEffect(() => {
+        const defaultCursor = defaultCursorByTab[activeTab] ?? CursorTypes.Select
+        setCursorType(defaultCursor)
+    }, [activeTab])
+
 
     // ----- THIS IS JUST HELPERS, WILL NOT BE PROD CODE -------- // 
     const exportJpegRef = useRef<(() => void) | undefined>(undefined)
@@ -100,6 +134,8 @@ export const DrawingProvider = ({ children }: { children: React.ReactNode }) => 
         setActiveTab,
         zoom,
         setZoom,
+        cursorType,
+        setCursorType,
         exportJpeg: () => { exportJpegRef.current?.() },
         exportJson: () => { exportJsonRef.current?.() },
         importJsonToImage: () => { importJsonToImageRef.current?.() },
@@ -121,7 +157,7 @@ export const DrawingProvider = ({ children }: { children: React.ReactNode }) => 
         setCanvasSetters,
         setCanvasState,
         setCanvasActions,
-    }), [activeTab, setActiveTab, zoom, setCanvasActions, setCanvasSetters, setCanvasState, defaultCornerColor, defaultEdgeColor, mode, selectedImageSrc, tool])
+    }), [activeTab, setActiveTab, zoom, cursorType, setCanvasActions, setCanvasSetters, setCanvasState, defaultCornerColor, defaultEdgeColor, mode, selectedImageSrc, tool])
 
     return <DrawingContext.Provider value={value}>{children}</DrawingContext.Provider>
 }
