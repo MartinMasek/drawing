@@ -1326,33 +1326,145 @@ export default function SquareStretchCanvas() {
   }, [newRect, nextRectId, onTouchEndSingle, nextImageId, selectedImageSrc, toScene, tool, defaultEdgeColor, defaultCornerColor, getContainerPointerPosition]);
 
 
-  const renderLabels = (r: RectDraft) => (
-    <>
-      <Text
-        x={r.x + r.width / 2}
-        y={r.y - 15}
-        text={`${r.width.toFixed(0)} px`}
-        fontSize={14}
-        fill="blue"
-        align="center"
-        offsetX={20}
-        scaleX={1 / stageScale}
-        scaleY={1 / stageScale}
-        listening={false}
-      />
-      <Text
-        x={r.x - 40}
-        y={r.y + r.height / 2}
-        text={`${r.height.toFixed(0)} px`}
-        fontSize={14}
-        fill="blue"
-        rotation={-90}
-        scaleX={1 / stageScale}
-        scaleY={1 / stageScale}
-        listening={false}
-      />
-    </>
-  );
+  // const renderLabels = (r: RectDraft) => (
+  //   <>
+  //     <Text
+  //       x={r.x + r.width / 2}
+  //       y={r.y - 15}
+  //       text={`${r.width.toFixed(0)} px`}
+  //       fontSize={14}
+  //       fill="blue"
+  //       align="center"
+  //       offsetX={20}
+  //       scaleX={1 / stageScale}
+  //       scaleY={1 / stageScale}
+  //       listening={false}
+  //     />
+  //     <Text
+  //       x={r.x - 40}
+  //       y={r.y + r.height / 2}
+  //       text={`${r.height.toFixed(0)} px`}
+  //       fontSize={14}
+  //       fill="blue"
+  //       rotation={-90}
+  //       scaleX={1 / stageScale}
+  //       scaleY={1 / stageScale}
+  //       listening={false}
+  //     />
+  //   </>
+  // );
+  
+
+  const renderLabels = (r: RectDraft) => {
+    const labelOffset = 15; // distance from rectangle
+    const fontSize = 14;
+    const scale = 1 / stageScale;
+    const arrowLength = 8; // small arrow size
+  
+    return (
+      <>
+        {/* WIDTH LABEL (horizontal, top) */}
+        <Line
+          points={[
+            r.x, r.y - labelOffset,
+            r.x + r.width, r.y - labelOffset
+          ]}
+          stroke="blue"
+          strokeWidth={1 / stageScale}
+          listening={false}
+        />
+        {/* Left arrow */}
+        <Line
+          points={[
+            r.x, r.y - labelOffset,
+            r.x + arrowLength, r.y - labelOffset - arrowLength / 2,
+            r.x + arrowLength, r.y - labelOffset + arrowLength / 2,
+            r.x, r.y - labelOffset
+          ]}
+          fill="blue"
+          closed
+          listening={false}
+        />
+        {/* Right arrow */}
+        <Line
+          points={[
+            r.x + r.width, r.y - labelOffset,
+            r.x + r.width - arrowLength, r.y - labelOffset - arrowLength / 2,
+            r.x + r.width - arrowLength, r.y - labelOffset + arrowLength / 2,
+            r.x + r.width, r.y - labelOffset
+          ]}
+          fill="blue"
+          closed
+          listening={false}
+        />
+        {/* Text label */}
+        <Text
+          x={r.x + r.width / 2}
+          y={r.y - labelOffset - fontSize * 1.1}
+          text={`${r.width.toFixed(0)} px`}
+          fontSize={fontSize}
+          fill="blue"
+          align="center"
+          width={80}
+          offsetX={40}
+          scaleX={scale}
+          scaleY={scale}
+          listening={false}
+        />
+  
+        {/* HEIGHT LABEL (vertical, left) */}
+        <Line
+          points={[
+            r.x - labelOffset, r.y,
+            r.x - labelOffset, r.y + r.height
+          ]}
+          stroke="blue"
+          strokeWidth={1 / stageScale}
+          listening={false}
+        />
+        {/* Top arrow */}
+        <Line
+          points={[
+            r.x - labelOffset, r.y,
+            r.x - labelOffset - arrowLength / 2, r.y + arrowLength,
+            r.x - labelOffset + arrowLength / 2, r.y + arrowLength,
+            r.x - labelOffset, r.y
+          ]}
+          fill="blue"
+          closed
+          listening={false}
+        />
+        {/* Bottom arrow */}
+        <Line
+          points={[
+            r.x - labelOffset, r.y + r.height,
+            r.x - labelOffset - arrowLength / 2, r.y + r.height - arrowLength,
+            r.x - labelOffset + arrowLength / 2, r.y + r.height - arrowLength,
+            r.x - labelOffset, r.y + r.height
+          ]}
+          fill="blue"
+          closed
+          listening={false}
+        />
+        {/* Text label */}
+        <Text
+          x={r.x - labelOffset - fontSize * 1.2}
+          y={r.y + r.height / 2}
+          text={`${r.height.toFixed(0)} px`}
+          fontSize={fontSize}
+          fill="blue"
+          rotation={-90}
+          align="center"
+          width={80}
+          offsetX={40}
+          scaleX={scale}
+          scaleY={scale}
+          listening={false}
+        />
+      </>
+    );
+  };
+  
 
   return (
     <div ref={containerRef} className="relative flex h-full min-h-0 w-full flex-1 overflow-hidden">
