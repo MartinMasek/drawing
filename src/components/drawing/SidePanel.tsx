@@ -1,33 +1,29 @@
 
 import type { FC } from "react"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from "../ui/sheet"
+import { Sheet } from "../ui/sheet"
 import { useDrawing } from "../header/context/DrawingContext"
-
-
-
-import Button from "../header/header/Button"
 import SidePanelTriggerButton from "./SidePanelTriggerButton"
+import SidePanelDimensions from "../sidePanelContent/SidePanelDimensions"
+import { CursorTypes, DrawingTab } from "../header/header/drawing-types"
+import SidePanelCurvesAndBumps from "../sidePanelContent/SidePanelCurvesAndBumps"
+import SidePanelCorners from "../sidePanelContent/SidePanelCorners"
+import SidePanelEdges from "../sidePanelContent/SidePanelEdges"
+import SidePanelCutouts from "../sidePanelContent/SidePanelCutouts"
 
 
 const SidePanel: FC = () => {
-    const { isOpenSideDialog, setIsOpenSideDialog } = useDrawing()
+    const { isOpenSideDialog, setIsOpenSideDialog, activeTab, cursorType } = useDrawing()
 
     return(
         <Sheet open={isOpenSideDialog} onOpenChange={setIsOpenSideDialog}>
             <SidePanelTriggerButton />
-            <SheetContent onInteractOutside={(e) => e.preventDefault()}>
-                <SheetHeader>
-                    <SheetTitle>Side Panel Title</SheetTitle>
-                    <SheetDescription>
-                        Work in progress...
-                    </SheetDescription>
-                </SheetHeader>
-                <SheetFooter>
-                    <SheetClose asChild>
-                        <Button variant="outlined">Close</Button>
-                    </SheetClose>
-                </SheetFooter>
-            </SheetContent>
+            {activeTab === DrawingTab.Dimensions && <SidePanelDimensions />}
+            {activeTab === DrawingTab.Shape && cursorType === CursorTypes.Curves && <SidePanelCurvesAndBumps />}
+            {activeTab === DrawingTab.Shape && cursorType === CursorTypes.Corners && <SidePanelCorners />}
+            {activeTab === DrawingTab.Edges && <SidePanelEdges />}
+            {activeTab === DrawingTab.Cutouts && <SidePanelCutouts />}
+
+            {/* Missing last 2 tabs, no designs for now */}
         </Sheet>
     )
 } 
