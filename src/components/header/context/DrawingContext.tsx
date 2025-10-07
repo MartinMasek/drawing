@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, useRef, useState, useCallback, useEffect } from 'react'
-import type { InteractionMode, ToolMode } from '../../drawing/types'
+import type { InteractionMode, ToolMode } from '../../drawing-old/types'
 import { useQueryState } from 'nuqs'
 import { CursorTypes, defaultCursorByTab, DrawingTab, DrawingTabList } from '../header/drawing-types'
 
