@@ -59,7 +59,7 @@ export default function SquareStretchCanvas() {
   const [lines, setLines] = useState<ReadonlyArray<LineShape>>([]);
   // Seam tool hover preview (single cut line through hovered group)
   const [seamPreview, setSeamPreview] = useState<null | { groupKey: string; orientation: "v" | "h"; at: number; bounds: { left: number; top: number; right: number; bottom: number } }>(null);
-  const { zoom: currentZoomLevel, setCanvasActions, setCanvasSetters, setCanvasState, activeTab } = useDrawing();
+  const { zoom: currentZoomLevel, setCanvasActions, setCanvasSetters, setCanvasState } = useDrawing();
   const isDrawing = useRef<boolean>(false);
   const startPoint = useRef<Point | null>(null);
   const direction = useRef<DragDirection>(null);

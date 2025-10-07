@@ -123,13 +123,12 @@ Implementation notes (for contributors):
 
 
 ### Layout design and data flow
- - Drawing context 
-    - Holds information about active tab (+ uses nuqs)
-    - Holds information about zoom level
-    
-    - Also SHOULD hold information about right side dialog window (isOpen), since we want to close it when changing tabs ?
-    - Also SHOULD hold information about cursor type ? (text, edges, dimesions, copy, corners, duplicate mode, etc..)
-        - Should be reset when tabs change
-        - If we have this we can easily know what SD to open when tab === Shape and cursor === curves & bumps || corners
-    
-    - Undo / Redo buttons, where is the stack? 
+  #### Drawing context 
+  - Holds information about active tab (+ uses nuqs)
+  - Holds information about zoom level
+  - Holds information if right side dialog window is open (closes on tab change)
+  - Holds information about cursor type (text, edges, dimesions, copy, corners, duplicate mode, etc..)
+      - Resets on tab change (to default per tab)
+  
+  
+  - Undo / Redo buttons, where is the stack? 
