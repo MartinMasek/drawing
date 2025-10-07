@@ -1,0 +1,44 @@
+import type { FC } from "react";
+import { SheetTrigger } from "../ui/sheet";
+import { useDrawing } from "../header/context/DrawingContext";
+import { IconLayoutSidebarLeftExpand, IconLayoutSidebarRightExpand } from "@tabler/icons-react";
+import { Icon } from "../header/header/Icon";
+import { CursorTypes, DrawingTab } from "../header/header/drawing-types";
+
+const SidePanelTriggerButton: FC = () => {
+    const { activeTab, cursorType, isOpenSideDialog, setIsOpenSideDialog } = useDrawing()
+    
+    if (
+        cursorType === CursorTypes.Text ||
+        cursorType === CursorTypes.Select ||
+        cursorType === CursorTypes.Package
+      ) return null;
+      
+      return (
+        <SheetTrigger>
+          {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
+          <div
+            onClick={() => setIsOpenSideDialog(!open)}
+            className={`absolute top-3 z-50 flex h-[36px] cursor-pointer items-center gap-2 rounded-[10px] py-1 pr-3 pl-2 shadow-lg transition-all duration-300 ${
+              isOpenSideDialog ? "right-[396px]" : "right-3"
+            }`}
+          >
+            <Icon size="md">
+              {isOpenSideDialog ? <IconLayoutSidebarLeftExpand /> : <IconLayoutSidebarRightExpand />}
+            </Icon>
+      
+            {!isOpenSideDialog && (
+              <p className="text-sm">
+                {activeTab === DrawingTab.Dimensions && "Materials"}
+                {activeTab === DrawingTab.Shape && cursorType === CursorTypes.Curves && "Curves & Bumps"}
+                {activeTab === DrawingTab.Shape && cursorType === CursorTypes.Corners && "Corners"}
+                {activeTab === DrawingTab.Edges && "Edges"}
+                {activeTab === DrawingTab.Cutouts && "Cutout Parameters"}
+              </p>
+            )}
+          </div>
+        </SheetTrigger>
+      );
+}
+
+export default SidePanelTriggerButton

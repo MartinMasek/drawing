@@ -4,8 +4,10 @@ import { IconArrowLeft } from '@tabler/icons-react'
 import { Divider } from './Divider'
 import Button from './Button'
 import { Icon } from './Icon'
+import { useDrawing } from '../context/DrawingContext'
 
 const DrawingHeaderInfo: FC = () => {
+    const { totalArea } = useDrawing()
     return (
         <div className='flex min-w-[320px] flex-1 items-center gap-2 pr-4 pl-2'>
             <Button color='neutral' iconOnly size='sm' variant='text'>
@@ -17,7 +19,7 @@ const DrawingHeaderInfo: FC = () => {
                 <p className='text-sm'>Quote title</p>
                 <span className='flex items-center gap-2 text-text-neutral-terciary text-xs'>
                     <p>
-                        Total area: <b>0 SF</b>
+                        Total area: <b>{totalArea} SF</b>
                     </p>
                     <Divider className='h-3' orientation='vertical' />
                     <p>

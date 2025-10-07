@@ -1,21 +1,10 @@
 import { createContext, useContext, useMemo, useRef, useState, useCallback, useEffect } from 'react'
 import type { InteractionMode, ToolMode } from '../../drawing-old/types'
 import { useQueryState } from 'nuqs'
-import { DrawingTab, DrawingTabList } from '../header/drawing-types'
+import { CursorTypes, defaultCursorByTab, DrawingTab, DrawingTabList } from '../header/drawing-types'
 
 
-export enum CursorTypes {
-    Dimesions = 1,
-    Curves = 2,
-    Corners = 3,
-    Egdes = 4,
-    Cutouts = 5,
-    Layout = 6,
-    Quote = 7,
-    Text = 8,
-    Select = 9,
-    Package = 10
-}
+
 
 type DrawingContextType = {
     activeTab: number
@@ -24,6 +13,11 @@ type DrawingContextType = {
     setZoom: (zoom: number) => void
     cursorType: number
     setCursorType: (type: number) => void
+    isOpenSideDialog: boolean
+    setIsOpenSideDialog: (isOpen: boolean) => void
+    totalArea: number
+    setTotalArea: (area: number) => void
+    
     // Canvas actions
     exportJpeg: () => void
     exportJson: () => void
@@ -54,6 +48,7 @@ const DrawingContext = createContext<DrawingContextType | null>(null)
 
 export const DrawingProvider = ({ children }: { children: React.ReactNode }) => {
     const [zoom, setZoom] = useState(100)
+    const [isOpenSideDialog, setIsOpenSideDialog] = useState(false)
     const [activeTab, setActiveTab] = useQueryState('tab', {
         defaultValue: DrawingTab.Dimensions,
         parse: (v) => Number(v) as DrawingTab,
@@ -61,19 +56,12 @@ export const DrawingProvider = ({ children }: { children: React.ReactNode }) => 
     })
 
     const [cursorType, setCursorType] = useState(CursorTypes.Dimesions)
-    
-    const defaultCursorByTab: Record<DrawingTab, CursorTypes> = {
-        [DrawingTab.Dimensions]: CursorTypes.Dimesions,
-        [DrawingTab.Shape]: CursorTypes.Curves,
-        [DrawingTab.Edges]: CursorTypes.Egdes,
-        [DrawingTab.Cutouts]: CursorTypes.Cutouts,
-        [DrawingTab.Layout]: CursorTypes.Layout,
-        [DrawingTab.Quote]: CursorTypes.Quote,
-    }
-    
-    // Update cursorType whenever tab changes 
+    const [totalArea, setTotalArea] = useState(0)
+
+    // On tab change
+    // Update cursorType
     // Update browser tab name
-    // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+    // Close side dialog
     useEffect(() => {
         const defaultCursor = defaultCursorByTab[activeTab] ?? CursorTypes.Select
         setCursorType(defaultCursor)
@@ -81,7 +69,22 @@ export const DrawingProvider = ({ children }: { children: React.ReactNode }) => 
         const currentTab = DrawingTabList.find((tab) => tab.id === activeTab);
         const tabLabel = currentTab?.label ?? "Drawings";
         document.title = `${tabLabel} | Stonify`;
+
+        setIsOpenSideDialog(false)
     }, [activeTab])
+
+    // On curosr type change
+    // Close side dialog
+    // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+    useEffect(() => {
+        setIsOpenSideDialog(false)
+    }, [cursorType])
+
+
+
+
+
+
 
     // ----- THIS IS JUST HELPERS, WILL NOT BE PROD CODE -------- // 
     const exportJpegRef = useRef<(() => void) | undefined>(undefined)
@@ -140,6 +143,11 @@ export const DrawingProvider = ({ children }: { children: React.ReactNode }) => 
         setZoom,
         cursorType,
         setCursorType,
+        isOpenSideDialog,
+        setIsOpenSideDialog,
+        totalArea,
+        setTotalArea,
+        // Below is not prod code
         exportJpeg: () => { exportJpegRef.current?.() },
         exportJson: () => { exportJsonRef.current?.() },
         importJsonToImage: () => { importJsonToImageRef.current?.() },
@@ -161,7 +169,7 @@ export const DrawingProvider = ({ children }: { children: React.ReactNode }) => 
         setCanvasSetters,
         setCanvasState,
         setCanvasActions,
-    }), [activeTab, setActiveTab, zoom, cursorType, setCanvasActions, setCanvasSetters, setCanvasState, defaultCornerColor, defaultEdgeColor, mode, selectedImageSrc, tool])
+    }), [activeTab, setActiveTab, zoom, cursorType, isOpenSideDialog, totalArea ,setCanvasActions, setCanvasSetters, setCanvasState, defaultCornerColor, defaultEdgeColor, mode, selectedImageSrc, tool])
 
     return <DrawingContext.Provider value={value}>{children}</DrawingContext.Provider>
 }
