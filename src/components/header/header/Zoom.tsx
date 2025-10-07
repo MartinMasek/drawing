@@ -1,32 +1,32 @@
-import { useState } from 'react'
 import { IconMinus, IconPlus } from '@tabler/icons-react'
-
 
 import { cn } from '~/utils/ui-utils'
 import { Icon } from './Icon'
 import Button from './Button'
+import { CANVAS_MIN_ZOOM, CANVAS_MAX_ZOOM } from '~/utils/canvas-constants'
 import { Select } from '@headlessui/react'
 
 type ZoomProps = {
     min?: number
     max?: number
     step?: number
-    value?: number
-    onChange?: (zoom: number) => void
+    value: number
+    onChange: (zoom: number) => void
     className?: string
 }
 
-const Zoom: React.FC<ZoomProps> = ({ min = 50, max = 200, step = 10, value, onChange, className }) => {
-    const [internalValue, setInternalValue] = useState(100)
-    const zoom = value ?? internalValue
-
+const Zoom: React.FC<ZoomProps> = ({ min = CANVAS_MIN_ZOOM, max = CANVAS_MAX_ZOOM, step = 10, value, onChange, className }) => {
     const updateZoom = (newZoom: number) => {
         const clamped = Math.min(max, Math.max(min, newZoom))
-        if (value === undefined) setInternalValue(clamped)
-        onChange?.(clamped)
+        onChange(clamped)
     }
 
-    const zoomLevels = Array.from({ length: Math.floor((max - min) / step) + 1 }, (_, i) => min + i * step)
+    const baseLevels = Array.from({ length: Math.floor((max - min) / step) + 1 }, (_, i) => min + i * step)
+    
+    // Include current value if it's not in the predefined levels
+    const zoomLevels = baseLevels.includes(value) 
+        ? baseLevels 
+        : [...baseLevels, value].sort((a, b) => a - b)
 
     return (
         <div className={cn('flex', className)}>
@@ -34,7 +34,7 @@ const Zoom: React.FC<ZoomProps> = ({ min = 50, max = 200, step = 10, value, onCh
                 className='rounded-r-none'
                 color='neutral'
                 iconOnly
-                onClick={() => updateZoom(zoom - step)}
+                onClick={() => updateZoom(value - step)}
                 size='sm'
                 variant='outlined'
             >
@@ -44,7 +44,7 @@ const Zoom: React.FC<ZoomProps> = ({ min = 50, max = 200, step = 10, value, onCh
             </Button>
             
             <Select
-                value={zoom}
+                value={value}
                 onChange={(e) => updateZoom(Number(e.target.value))}
                 className={cn(
                     "w-24 border-neutral-300 border-y bg-white px-2 py-1 text-black text-sm",
@@ -62,7 +62,7 @@ const Zoom: React.FC<ZoomProps> = ({ min = 50, max = 200, step = 10, value, onCh
                 className='rounded-l-none'
                 color='neutral'
                 iconOnly
-                onClick={() => updateZoom(zoom + step)}
+                onClick={() => updateZoom(value + step)}
                 size='sm'
                 variant='outlined'
             >
