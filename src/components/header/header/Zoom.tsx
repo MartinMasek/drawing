@@ -4,6 +4,7 @@ import { cn } from '~/utils/ui-utils'
 import { Icon } from './Icon'
 import Button from './Button'
 import { CANVAS_MIN_ZOOM, CANVAS_MAX_ZOOM } from '~/utils/canvas-constants'
+import { Select } from '@headlessui/react'
 
 type ZoomProps = {
     min?: number
@@ -42,7 +43,7 @@ const Zoom: React.FC<ZoomProps> = ({ min = CANVAS_MIN_ZOOM, max = CANVAS_MAX_ZOO
                 </Icon>
             </Button>
             
-            <select
+            <Select
                 value={value}
                 onChange={(e) => updateZoom(Number(e.target.value))}
                 className={cn(
@@ -55,7 +56,7 @@ const Zoom: React.FC<ZoomProps> = ({ min = CANVAS_MIN_ZOOM, max = CANVAS_MAX_ZOO
                     {level}%
                     </option>
                 ))}
-            </select>
+            </Select>
 
             <Button
                 className='rounded-l-none'
