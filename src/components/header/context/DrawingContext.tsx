@@ -2,6 +2,7 @@ import { createContext, useContext, useMemo, useRef, useState, useCallback, useE
 import type { InteractionMode, ToolMode } from '../../drawing-old/types'
 import { useQueryState } from 'nuqs'
 import { DrawingTab, DrawingTabList } from '../header/drawing-types'
+import { CANVAS_DEFAULT_ZOOM } from '../../../utils/canvas-constants'
 
 
 export enum CursorTypes {
@@ -24,6 +25,16 @@ type DrawingContextType = {
     setZoom: (zoom: number) => void
     cursorType: number
     setCursorType: (type: number) => void
+    // Canvas container size
+    containerSize: { width: number; height: number }
+    containerRef: (node: HTMLDivElement | null) => void
+    // Canvas navigation state
+    canvasPosition: { x: number; y: number }
+    setCanvasPosition: (pos: { x: number; y: number }) => void
+    isPanning: boolean
+    setIsPanning: (panning: boolean) => void
+    panStart: { x: number; y: number } | null
+    setPanStart: (start: { x: number; y: number } | null) => void
     // Canvas actions
     exportJpeg: () => void
     exportJson: () => void
@@ -53,7 +64,7 @@ type DrawingContextType = {
 const DrawingContext = createContext<DrawingContextType | null>(null)
 
 export const DrawingProvider = ({ children }: { children: React.ReactNode }) => {
-    const [zoom, setZoom] = useState(100)
+    const [zoom, setZoom] = useState(CANVAS_DEFAULT_ZOOM)
     const [activeTab, setActiveTab] = useQueryState('tab', {
         defaultValue: DrawingTab.Dimensions,
         parse: (v) => Number(v) as DrawingTab,
@@ -61,6 +72,33 @@ export const DrawingProvider = ({ children }: { children: React.ReactNode }) => 
     })
 
     const [cursorType, setCursorType] = useState(CursorTypes.Dimesions)
+    const [containerSize, setContainerSize] = useState({ width: 800, height: 600 })
+    const resizeObserverRef = useRef<ResizeObserver | null>(null)
+    
+    // Canvas navigation state
+    const [canvasPosition, setCanvasPosition] = useState({ x: 0, y: 0 })
+    const [isPanning, setIsPanning] = useState(false)
+    const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null)
+
+    const containerRef = useCallback((node: HTMLDivElement | null) => {
+        if (resizeObserverRef.current) {
+            resizeObserverRef.current.disconnect()
+        }
+        
+        if (node) {
+            const updateSize = () => {
+                const rect = node.getBoundingClientRect()
+                setContainerSize({ 
+                    width: Math.floor(rect.width), 
+                    height: Math.floor(rect.height) 
+                })
+            }
+            
+            updateSize()
+            resizeObserverRef.current = new ResizeObserver(updateSize)
+            resizeObserverRef.current.observe(node)
+        }
+    }, [])
     
     const defaultCursorByTab: Record<DrawingTab, CursorTypes> = {
         [DrawingTab.Dimensions]: CursorTypes.Dimesions,
@@ -140,6 +178,14 @@ export const DrawingProvider = ({ children }: { children: React.ReactNode }) => 
         setZoom,
         cursorType,
         setCursorType,
+        containerSize,
+        containerRef,
+        canvasPosition,
+        setCanvasPosition,
+        isPanning,
+        setIsPanning,
+        panStart,
+        setPanStart,
         exportJpeg: () => { exportJpegRef.current?.() },
         exportJson: () => { exportJsonRef.current?.() },
         importJsonToImage: () => { importJsonToImageRef.current?.() },
@@ -161,7 +207,7 @@ export const DrawingProvider = ({ children }: { children: React.ReactNode }) => 
         setCanvasSetters,
         setCanvasState,
         setCanvasActions,
-    }), [activeTab, setActiveTab, zoom, cursorType, setCanvasActions, setCanvasSetters, setCanvasState, defaultCornerColor, defaultEdgeColor, mode, selectedImageSrc, tool])
+    }), [activeTab, setActiveTab, zoom, cursorType, containerSize, containerRef, canvasPosition, isPanning, panStart, setCanvasActions, setCanvasSetters, setCanvasState, defaultCornerColor, defaultEdgeColor, mode, selectedImageSrc, tool])
 
     return <DrawingContext.Provider value={value}>{children}</DrawingContext.Provider>
 }

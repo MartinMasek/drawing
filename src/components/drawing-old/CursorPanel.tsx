@@ -10,7 +10,7 @@ const CursorPanel: FC = () => {
     const { activeTab, cursorType, setCursorType } = useDrawing()
     
     return(
-        <div className="absolute top-3 left-3 z-50 flex w-11 flex-col items-center gap-1 rounded-[10px] py-1 shadow-lg">
+        <div className="absolute top-3 left-3 z-50 flex w-11 flex-col items-center gap-1 rounded-[10px] bg-white py-1 shadow-lg">
         {activeTab === DrawingTab.Dimensions && 
             <Button color='neutral' iconOnly size='sm' variant={cursorType === CursorTypes.Dimesions ? 'outlined' : 'text'} className="h-[36px] w-[36px]" onClick={()=>setCursorType(CursorTypes.Dimesions)}>
                 <Icon size='md'>

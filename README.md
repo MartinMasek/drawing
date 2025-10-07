@@ -36,6 +36,23 @@ Right now we have 2 versions of the drawing canvas:
 
 all old components are in `src/components/drawing-old/` they will be removed in the future.
 
+### Canvas Interactions
+The new canvas (`DrawingCanvas.tsx`) provides simple pan and zoom navigation:
+
+**Zoom:**
+- Mouse wheel to zoom in/out
+- Zoom is centered on cursor position
+- Current zoom level syncs with the header zoom controls
+
+**Pan:**
+- Middle-click + drag  
+- Shift + left-click + drag
+
+All interaction state is managed in `DrawingContext` - the canvas component itself is stateless and uses the `useCanvasNavigation` hook for event handlers.
+
+**Configuration:**
+- Zoom speed, min/max zoom levels, and button mappings are configured in `src/utils/canvas-constants.ts`
+
 ### Key files
 
 - `src/components/DimensionedPolygon.tsx`: Main canvas component. Holds state for rectangles, images ("sinks"), infinite divider lines, zoom/pan, context menu, and dialogs. Renders layers and delegates UI to subcomponents.

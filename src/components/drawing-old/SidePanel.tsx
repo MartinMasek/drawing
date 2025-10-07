@@ -20,7 +20,7 @@ const SidePanel: FC = () => {
             {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
                 <div
                     onClick={() => setOpen(!open)} // 👈 manually toggle
-                    className={`absolute top-3 z-50 flex h-[36px] cursor-pointer items-center gap-2 rounded-[10px] py-1 pr-3 pl-2 shadow-lg transition-all duration-300 ${
+                    className={`absolute top-3 z-50 flex h-[36px] cursor-pointer items-center gap-2 rounded-[10px] bg-white py-1 pr-3 pl-2 shadow-lg transition-all duration-300 ${
                         open ? "right-[396px]" : "right-3"
                     }`}
                 >
