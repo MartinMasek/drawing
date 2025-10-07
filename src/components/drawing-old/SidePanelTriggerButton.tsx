@@ -6,13 +6,18 @@ import { Icon } from "../header/header/Icon";
 import { CursorTypes, DrawingTab } from "../header/header/drawing-types";
 
 const SidePanelTriggerButton: FC = () => {
-  const { cursorType, isOpenSideDialog, setIsOpenSideDialog } = useDrawing()
+  const { cursorType, isOpenSideDialog, setIsOpenSideDialog, activeTab } = useDrawing()
   if (
     cursorType === CursorTypes.Text ||
     cursorType === CursorTypes.Select ||
     cursorType === CursorTypes.Package
   ) return null;
   
+  // This will be probably removed, but right now we dont have designs for these tabs
+  if (activeTab === DrawingTab.Layout || activeTab === DrawingTab.Quote ) {
+    return null
+  }
+
     return (
       <SheetTrigger>
         {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}

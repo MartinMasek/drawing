@@ -5,12 +5,20 @@ import { Divider } from './Divider'
 import Button from './Button'
 import { Icon } from './Icon'
 import { useDrawing } from '../context/DrawingContext'
+import { useRouter } from 'next/navigation'
+
 
 const DrawingHeaderInfo: FC = () => {
     const { totalArea } = useDrawing()
+    const router = useRouter()
+
+    const handleClick = () => {
+        router.push('/') // redirects to the homepage
+    }
+
     return (
         <div className='flex min-w-[320px] flex-1 items-center gap-2 pr-4 pl-2'>
-            <Button color='neutral' iconOnly size='sm' variant='text'>
+            <Button color='neutral' iconOnly size='sm' variant='text' onClick={handleClick}>
                 <Icon size='md'>
                     <IconArrowLeft />
                 </Icon>

@@ -45,7 +45,7 @@ export default function Home() {
 						</Link>
 						<Link
 							className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 text-white hover:bg-white/20"
-							href="/drawing"
+							href="/drawing/1234"
 						>
 							<h3 className="font-bold text-2xl">Drawing →</h3>
 							<div className="text-lg">Draw something</div>
