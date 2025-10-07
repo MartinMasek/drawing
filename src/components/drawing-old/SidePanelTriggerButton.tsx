@@ -6,14 +6,8 @@ import { Icon } from "../header/header/Icon";
 import { CursorTypes, DrawingTab } from "../header/header/drawing-types";
 
 const SidePanelTriggerButton: FC = () => {
-    const { activeTab, cursorType, isOpenSideDialog, setIsOpenSideDialog } = useDrawing()
+    const { cursorType, isOpenSideDialog, setIsOpenSideDialog } = useDrawing()
     
-    if (
-        cursorType === CursorTypes.Text ||
-        cursorType === CursorTypes.Select ||
-        cursorType === CursorTypes.Package
-      ) return null;
-      
       return (
         <SheetTrigger>
           {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
@@ -29,11 +23,11 @@ const SidePanelTriggerButton: FC = () => {
       
             {!isOpenSideDialog && (
               <p className="text-sm">
-                {activeTab === DrawingTab.Dimensions && "Materials"}
-                {activeTab === DrawingTab.Shape && cursorType === CursorTypes.Curves && "Curves & Bumps"}
-                {activeTab === DrawingTab.Shape && cursorType === CursorTypes.Corners && "Corners"}
-                {activeTab === DrawingTab.Edges && "Edges"}
-                {activeTab === DrawingTab.Cutouts && "Cutout Parameters"}
+                {cursorType === CursorTypes.Dimesions && "Materials"}
+                {cursorType === CursorTypes.Curves && "Curves & Bumps"}
+                {cursorType === CursorTypes.Corners && "Corners"}
+                {cursorType === CursorTypes.Egdes && "Edges"}
+                {cursorType === CursorTypes.Cutouts && "Cutout Parameters"}
               </p>
             )}
           </div>
