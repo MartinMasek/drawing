@@ -9,7 +9,7 @@ const DimensionedPolygon = dynamic(
 export default function Drawing() {
 	return (
     <DrawingProvider>
-      <main className="flex min-h-screen flex-col bg-gradient-to-b from-[#2e026d] to-[#15162c] overflow-hidden">
+      <main className="flex min-h-screen flex-col overflow-hidden bg-white">
         <DrawingHeader />
         <div className="w-full overflow-hidden" style={{ height: 'calc(100vh - 56px)' }}>
           <DimensionedPolygon />

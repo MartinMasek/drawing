@@ -12,7 +12,7 @@ const CursorPanel: FC = () => {
     return(
         <div className="absolute top-3 left-3 z-50 flex w-11 flex-col items-center gap-1 rounded-[10px] py-1 shadow-lg">
         {activeTab === DrawingTab.Dimensions && 
-            <Button color='neutral' iconOnly size='sm' variant={cursorType === CursorTypes.Dimesions ? 'outlined' : 'text'} className="h-[36px] w-[36px]" onClick={()=>setCursorType(CursorTypes.Dimesions)}>
+            <Button  color={cursorType === CursorTypes.Dimesions ? 'primary' : 'neutral'}  iconOnly size='sm' variant={cursorType === CursorTypes.Dimesions ? 'outlined' : 'text'} className="h-[36px] w-[36px]" onClick={()=>setCursorType(CursorTypes.Dimesions)}>
                 <Icon size='md'>
                     <IconDimensions />
                 </Icon>
@@ -20,15 +20,15 @@ const CursorPanel: FC = () => {
         }
         {activeTab === DrawingTab.Shape && 
             <>
-            <Button color='neutral' iconOnly size='sm' variant={cursorType === CursorTypes.Curves ? 'outlined' : 'text'} className="h-[36px] w-[36px]" onClick={()=>setCursorType(CursorTypes.Curves)}>
+            <Button color={cursorType === CursorTypes.Curves ? 'primary' : 'neutral'}  iconOnly size='sm' variant={cursorType === CursorTypes.Curves ? 'outlined' : 'text'} className="h-[36px] w-[36px]" onClick={()=>setCursorType(CursorTypes.Curves)}>
                 <Icon size='md'>
                     {/* biome-ignore lint/a11y/noSvgWithoutTitle: <explanation> */}
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M2.3999 19.2735L7.1999 19.2735C7.1999 19.2735 7.1999 14.4 11.9999 14.4C16.7999 14.4 16.7999 19.2735 16.7999 19.2735L21.5999 19.2735M2.3999 9.67349L7.1999 9.67349L7.1999 4.80002L16.7999 4.80002L16.7999 9.67349L21.5999 9.67349" stroke="#6B7280" stroke-width="1.67" stroke-linecap="round" stroke-linejoin="round"/>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" >
+                    <path d="M2.3999 19.2735L7.1999 19.2735C7.1999 19.2735 7.1999 14.4 11.9999 14.4C16.7999 14.4 16.7999 19.2735 16.7999 19.2735L21.5999 19.2735M2.3999 9.67349L7.1999 9.67349L7.1999 4.80002L16.7999 4.80002L16.7999 9.67349L21.5999 9.67349" stroke="#6B7280" stroke-width="1.67" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                 </Icon>
             </Button>
-            <Button color='neutral' iconOnly size='sm' variant={cursorType === CursorTypes.Corners ? 'outlined' : 'text'} className="h-[36px] w-[36px]" onClick={()=>setCursorType(CursorTypes.Corners)}>
+            <Button color={cursorType === CursorTypes.Corners ? 'primary' : 'neutral'}  iconOnly size='sm' variant={cursorType === CursorTypes.Corners ? 'outlined' : 'text'} className="h-[36px] w-[36px]" onClick={()=>setCursorType(CursorTypes.Corners)}>
                 <Icon size='md'>
                     <IconBorderRadius />
                 </Icon>
@@ -36,7 +36,7 @@ const CursorPanel: FC = () => {
             </>
         }
         {activeTab === DrawingTab.Edges && 
-            <Button color='neutral' iconOnly size='sm' variant={cursorType === CursorTypes.Egdes ? 'outlined' : 'text'} className="h-[36px] w-[36px]" onClick={()=>setCursorType(CursorTypes.Egdes)}>
+            <Button color={cursorType === CursorTypes.Egdes ? 'primary' : 'neutral'}  iconOnly size='sm' variant={cursorType === CursorTypes.Egdes ? 'outlined' : 'text'} className="h-[36px] w-[36px]" onClick={()=>setCursorType(CursorTypes.Egdes)}>
                 <Icon size='md'>
                     {/* biome-ignore lint/a11y/noSvgWithoutTitle: <explanation> */}
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -46,7 +46,7 @@ const CursorPanel: FC = () => {
             </Button>
         }
         {activeTab === DrawingTab.Cutouts && 
-         <Button color='neutral' iconOnly size='sm' variant={cursorType === CursorTypes.Cutouts ? 'outlined' : 'text'} className="h-[36px] w-[36px]" onClick={()=>setCursorType(CursorTypes.Cutouts)}>
+         <Button color={cursorType === CursorTypes.Cutouts ? 'primary' : 'neutral'}  iconOnly size='sm' variant={cursorType === CursorTypes.Cutouts ? 'outlined' : 'text'} className="h-[36px] w-[36px]" onClick={()=>setCursorType(CursorTypes.Cutouts)}>
             <Icon size='md'>
                 {/* biome-ignore lint/a11y/noSvgWithoutTitle: <explanation> */}
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -56,17 +56,17 @@ const CursorPanel: FC = () => {
         </Button>
         }
         <Divider />
-        <Button color='neutral' iconOnly size='sm' variant={cursorType === CursorTypes.Text ? 'outlined' : 'text'} className="h-[36px] w-[36px]" onClick={()=>setCursorType(CursorTypes.Text)}>
+        <Button color={cursorType === CursorTypes.Text ? 'primary' : 'neutral'}  iconOnly size='sm' variant={cursorType === CursorTypes.Text ? 'outlined' : 'text'} className="h-[36px] w-[36px]" onClick={()=>setCursorType(CursorTypes.Text)}>
             <Icon size='md'>
                 <IconTextSize />
             </Icon>
         </Button>
-        <Button color='neutral' iconOnly size='sm' variant={cursorType === CursorTypes.Select ? 'outlined' : 'text'} className="h-[36px] w-[36px]" onClick={()=>setCursorType(CursorTypes.Select)}>
+        <Button color={cursorType === CursorTypes.Select ? 'primary' : 'neutral'}  iconOnly size='sm' variant={cursorType === CursorTypes.Select ? 'outlined' : 'text'} className="h-[36px] w-[36px]" onClick={()=>setCursorType(CursorTypes.Select)}>
             <Icon size='md'>
                 <IconMarquee2 />
             </Icon>
         </Button>
-        <Button color='neutral' iconOnly size='sm' variant={cursorType === CursorTypes.Package ? 'outlined' : 'text'} className="h-[36px] w-[36px]" onClick={()=>setCursorType(CursorTypes.Package)}>
+        <Button color={cursorType === CursorTypes.Package ? 'primary' : 'neutral'} iconOnly size='sm' variant={cursorType === CursorTypes.Package ? 'outlined' : 'text'} className="h-[36px] w-[36px]" onClick={()=>setCursorType(CursorTypes.Package)}>
             <Icon size='md'>
                 {/* biome-ignore lint/a11y/noSvgWithoutTitle: <explanation> */}
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
