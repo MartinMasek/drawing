@@ -5,8 +5,6 @@ import { CursorTypes, defaultCursorByTab, DrawingTab, DrawingTabList } from '../
 import { CANVAS_DEFAULT_ZOOM } from '../../../utils/canvas-constants'
 
 
-
-
 type DrawingContextType = {
     activeTab: number
     setActiveTab: (tab: number) => void
@@ -24,6 +22,7 @@ type DrawingContextType = {
     setIsPanning: (panning: boolean) => void
     panStart: { x: number; y: number } | null
     setPanStart: (start: { x: number; y: number } | null) => void
+
     isOpenSideDialog: boolean
     setIsOpenSideDialog: (isOpen: boolean) => void
     totalArea: number
@@ -75,11 +74,15 @@ export const DrawingProvider = ({ children }: { children: React.ReactNode }) => 
     const [isPanning, setIsPanning] = useState(false)
     const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null)
 
+    // This will be used in future to display the total area of the canvas shapes
+    const [totalArea, setTotalArea] = useState(0);
+
     const containerRef = useCallback((node: HTMLDivElement | null) => {
         if (resizeObserverRef.current) {
             resizeObserverRef.current.disconnect()
         }
         
+        // Keep canvas size synced with page size
         if (node) {
             const updateSize = () => {
                 const rect = node.getBoundingClientRect()
@@ -94,7 +97,6 @@ export const DrawingProvider = ({ children }: { children: React.ReactNode }) => 
             resizeObserverRef.current.observe(node)
         }
     }, [])
-    const [totalArea, setTotalArea] = useState(0)
 
     // On tab change
     // Update cursorType
@@ -117,12 +119,6 @@ export const DrawingProvider = ({ children }: { children: React.ReactNode }) => 
     useEffect(() => {
         setIsOpenSideDialog(false)
     }, [cursorType])
-
-
-
-
-
-
 
     // ----- THIS IS JUST HELPERS, WILL NOT BE PROD CODE -------- // 
     const exportJpegRef = useRef<(() => void) | undefined>(undefined)
