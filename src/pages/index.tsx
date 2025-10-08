@@ -14,7 +14,8 @@ export default function Home() {
 	const utils = api.useUtils();
 	const { data: quotes, isLoading: isLoadingQuotes } =
 		api.design.getAll.useQuery();
-	const createDesign = api.design.create.useMutation({
+	
+		const createDesign = api.design.create.useMutation({
 		onSuccess: async (created) => {
 			await utils.design.getAll.invalidate();
 			void router.push(`/drawing/${created.id}`);
