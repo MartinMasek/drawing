@@ -8,4 +8,3 @@ export const CANVAS_DEFAULT_ZOOM = 100; // Default zoom level (100%)
 export const CANVAS_PAN_BUTTON_RIGHT = 2; // Right mouse button
 export const CANVAS_PAN_BUTTON_MIDDLE = 1; // Middle mouse button
 export const CANVAS_PAN_BUTTON_LEFT = 0; // Left mouse button
-

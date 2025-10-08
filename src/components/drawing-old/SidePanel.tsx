@@ -13,19 +13,19 @@ import SidePanelCorners from "../sidePanelContent/sidePanelCorners/SidePanelCorn
 
 
 const SidePanel: FC = () => {
-    const { isOpenSideDialog, setIsOpenSideDialog, cursorType } = useDrawing()
+	const { isOpenSideDialog, setIsOpenSideDialog, cursorType } = useDrawing();
 
-    return(
-        <Sheet open={isOpenSideDialog} onOpenChange={setIsOpenSideDialog}>
-            <SidePanelTriggerButton />
-            {cursorType === CursorTypes.Dimesions && <SidePanelDimensions />}
-            {cursorType === CursorTypes.Curves && <SidePanelCurvesAndBumps />}
-            {cursorType === CursorTypes.Corners && <SidePanelCorners />}
-            {cursorType === CursorTypes.Egdes && <SidePanelEdges />}
-            {cursorType === CursorTypes.Cutouts && <SidePanelCutouts />}
+	return (
+		<Sheet open={isOpenSideDialog} onOpenChange={setIsOpenSideDialog}>
+			<SidePanelTriggerButton />
+			{cursorType === CursorTypes.Dimesions && <SidePanelDimensions />}
+			{cursorType === CursorTypes.Curves && <SidePanelCurvesAndBumps />}
+			{cursorType === CursorTypes.Corners && <SidePanelCorners />}
+			{cursorType === CursorTypes.Egdes && <SidePanelEdges />}
+			{cursorType === CursorTypes.Cutouts && <SidePanelCutouts />}
 
-            {/* Missing last 2 tabs, no designs for now */}
-        </Sheet>
-    )
-} 
-export default SidePanel
+			{/* Missing last 2 tabs, no designs for now */}
+		</Sheet>
+	);
+};
+export default SidePanel;

@@ -19,24 +19,24 @@ PopoverCloseButton.displayName = "PopoverCloseButton";
  * anchor='bottom' is set by default
  */
 function PopoverPanel({
-  className,
-  ...props
+	className,
+	...props
 }: { className?: string } & Omit<
-  Headless.PopoverPanelProps,
-  "as" | "className"
+	Headless.PopoverPanelProps,
+	"as" | "className"
 >) {
-  return (
-    <Headless.PopoverPanel
-      anchor="bottom"
-      as="div"
-      className={cn(
-        "z-[100] rounded-xl bg-background-neutral-primary-default p-2 shadow-general-lg outline-none sm:p-2",
-        className
-      )}
-      modal={false}
-      {...props}
-    />
-  );
+	return (
+		<Headless.PopoverPanel
+			anchor="bottom"
+			as="div"
+			className={cn(
+				"z-[100] rounded-xl bg-background-neutral-primary-default p-2 shadow-general-lg outline-none sm:p-2",
+				className,
+			)}
+			modal={false}
+			{...props}
+		/>
+	);
 }
 
 export { Popover, PopoverButton, PopoverCloseButton, PopoverPanel };
