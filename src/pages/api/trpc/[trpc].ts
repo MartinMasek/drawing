@@ -18,7 +18,10 @@ const handler = createNextApiHandler({
 			: undefined,
 });
 
-export default function apiRoute(req: NextApiRequest, res: NextApiResponse): void | Promise<void> {
+export default function apiRoute(
+	req: NextApiRequest,
+	res: NextApiResponse,
+): void | Promise<void> {
 	const result = handler(req, res);
 	// handler may return void or Promise<void>; coerce unknown to expected union
 	return result as unknown as void | Promise<void>;

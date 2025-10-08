@@ -1,12 +1,25 @@
+import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
-import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
+import { useRouter } from "next/router";
+import { useState } from "react";
 
 import { api } from "~/utils/api";
 
 export default function Home() {
-	const hello = api.post.hello.useQuery({ text: "from tRPC" });
+	const router = useRouter();
+	// For now we create a new design when the user clicks the "Create design" button on this page
+	const [newName, setNewName] = useState("");
+	const utils = api.useUtils();
+	const { data: quotes, isLoading: isLoadingQuotes } =
+		api.design.getAll.useQuery();
+	const createDesign = api.design.create.useMutation({
+		onSuccess: async (created) => {
+			await utils.design.getAll.invalidate();
+			void router.push(`/drawing/${created.id}`);
+		},
+	});
 
 	return (
 		<>
@@ -18,81 +31,63 @@ export default function Home() {
 			<main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c]">
 				<div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
 					<h1 className="font-extrabold text-5xl text-white tracking-tight sm:text-[5rem]">
-						Create <span className="text-[hsl(280,100%,70%)]">T3</span> App
+						Drawing
 					</h1>
-					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
-						<Link
-							className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 text-white hover:bg-white/20"
-							href="https://create.t3.gg/en/usage/first-steps"
-							target="_blank"
+					<div className="flex max-w-xl flex-col gap-4 rounded-xl bg-white/10 p-4 text-white">
+						<form
+							onSubmit={(e) => {
+								e.preventDefault();
+								if (!newName.trim() || createDesign.isPending) return;
+								createDesign.mutate({ name: newName.trim() });
+							}}
+							className="flex items-center gap-2"
 						>
-							<h3 className="font-bold text-2xl">First Steps →</h3>
-							<div className="text-lg">
-								Just the basics - Everything you need to know to set up your
-								database and authentication.
+							<label htmlFor="designName" className="sr-only">
+								Design name
+							</label>
+							<input
+								id="designName"
+								type="text"
+								value={newName}
+								onChange={(e) => setNewName(e.target.value)}
+								placeholder="New design name"
+								className="w-full rounded-md bg-white/5 px-3 py-2 text-white placeholder-white/60 outline-none ring-1 ring-white/15 focus:ring-white/30"
+							/>
+							<button
+								type="submit"
+								disabled={!newName.trim() || createDesign.isPending}
+								className="rounded-md bg-white/20 px-3 py-2 font-semibold text-sm hover:bg-white/30 disabled:opacity-50"
+							>
+								{createDesign.isPending ? "Creating…" : "Create design"}
+							</button>
+						</form>
+						<h3 className="font-bold text-2xl">Designs</h3>
+						{isLoadingQuotes && (
+							<div className="text-sm text-white/80">Loading designs…</div>
+						)}
+						{!isLoadingQuotes && (quotes?.length ?? 0) === 0 && (
+							<div className="text-sm text-white/80">
+								No designs yet. Run the seed to create samples.
 							</div>
-						</Link>
-						<Link
-							className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 text-white hover:bg-white/20"
-							href="https://create.t3.gg/en/introduction"
-							target="_blank"
-						>
-							<h3 className="font-bold text-2xl">Documentation →</h3>
-							<div className="text-lg">
-								Learn more about Create T3 App, the libraries it uses, and how
-								to deploy it.
-							</div>
-						</Link>
-						<Link
-							className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 text-white hover:bg-white/20"
-							href="/drawing/1234"
-						>
-							<h3 className="font-bold text-2xl">Drawing →</h3>
-							<div className="text-lg">Draw something</div>
-						</Link>
-					</div>
-					<div className="flex flex-col items-center gap-2">
-						<p className="text-2xl text-white">
-							{hello.data ? hello.data.greeting : "Loading tRPC query..."}
-						</p>
-						<AuthShowcase />
-					</div>
-					<div className="flex flex-col items-center gap-2">
-						<p className="text-2xl text-white">Popover test</p>
-						<Popover>
-							<PopoverButton>Open</PopoverButton>
-							<PopoverPanel>
-								<p>Hello</p>
-							</PopoverPanel>
-						</Popover>
+						)}
+						{!isLoadingQuotes && (quotes?.length ?? 0) > 0 && (
+							<ul className="flex flex-col gap-2">
+								{(quotes ?? []).map((q) => (
+									<li key={q.id}>
+										<Link
+											className="block rounded-md bg-white/5 px-3 py-2 hover:bg-white/15"
+											href={`/drawing/${q.id}`}
+										>
+											<span className="font-semibold text-lg">{q.name}</span>
+											<span className="ml-2 text-white/70 text-xs">{q.id}</span>
+										</Link>
+									</li>
+								))}
+							</ul>
+						)}
 					</div>
 				</div>
 			</main>
 		</>
-	);
-}
-
-function AuthShowcase() {
-	const { data: sessionData } = useSession();
-
-	const { data: secretMessage } = api.post.getSecretMessage.useQuery(
-		undefined, // no input
-		{ enabled: sessionData?.user !== undefined },
-	);
-
-	return (
-		<div className="flex flex-col items-center justify-center gap-4">
-			<p className="text-center text-2xl text-white">
-				{sessionData && <span>Logged in as {sessionData.user?.name}</span>}
-				{secretMessage && <span> - {secretMessage}</span>}
-			</p>
-			<button
-				type="button"
-				className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
-				onClick={sessionData ? () => void signOut() : () => void signIn()}
-			>
-				{sessionData ? "Sign out" : "Sign in"}
-			</button>
-		</div>
 	);
 }
