@@ -28,6 +28,62 @@ You can check out the [create-t3-app GitHub repository](https://github.com/t3-os
 
 Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
 
+## Getting started (step-by-step)
+
+1. Install dependencies
+```bash
+npm install
+```
+
+2. Start the database (local Postgres)
+```bash
+./start-database.sh
+```
+Make sure your `.env` has `DATABASE_URL` pointing to this Postgres instance.
+
+3. Generate Prisma client
+```bash
+npx prisma generate
+```
+
+4. Seed sample data (optional)
+```bash
+npm run db:seed
+```
+
+5. Start the dev server
+```bash
+npm run dev
+```
+
+## Useful commands
+
+- Lint (check only) / auto-fix
+```bash
+npm run check
+npm run check:write
+```
+
+- Open Prisma Studio
+```bash
+npm run db:studio
+```
+
+- Reset database (drops, re-applies migrations, then seeds)
+```bash
+npm run db:reset
+```
+
+- Reset database without seeding
+```bash
+npm run db:reset:noseed
+```
+
+- Seed database only
+```bash
+npm run db:seed
+```
+
 ## Drawing Canvas (Konva) — Overview
 
 Right now we have 2 versions of the drawing canvas:
