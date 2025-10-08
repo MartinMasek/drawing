@@ -15,16 +15,21 @@ export const ZOOM_MAX = 10; // maximum scale (max zoom-in)
 export const LONG_PRESS_MS = 450;
 export const TAP_MOVE_TOLERANCE = 8; // px in container space
 
-export const EDGE_COLOR_OPTIONS = ["#ef4444", "#22c55e", "#3b82f6", "#f59e0b", "#000000", "#9ca3af"] as const;
+export const EDGE_COLOR_OPTIONS = [
+	"#ef4444",
+	"#22c55e",
+	"#3b82f6",
+	"#f59e0b",
+	"#000000",
+	"#9ca3af",
+] as const;
 
 export const IMAGE_OPTIONS = [
-  { label: "Favicon", src: "https://konvajs.org/assets/yoda.jpg" },
-  { label: "Avatar", src: "https://i.pravatar.cc/150?img=5" },
-  { label: "Landscape", src: "https://picsum.photos/seed/land/320/180" },
-  { label: "Pattern", src: "https://picsum.photos/seed/pat/200/200" },
+	{ label: "Favicon", src: "https://konvajs.org/assets/yoda.jpg" },
+	{ label: "Avatar", src: "https://i.pravatar.cc/150?img=5" },
+	{ label: "Landscape", src: "https://picsum.photos/seed/land/320/180" },
+	{ label: "Pattern", src: "https://picsum.photos/seed/pat/200/200" },
 ] as const;
 
 export const STAGE_WIDTH = 800;
 export const STAGE_HEIGHT = 600;
-
-
