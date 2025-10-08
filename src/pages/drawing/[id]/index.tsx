@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import DrawingLoading from "~/components/DrawingLoading";
 import DrawingHeader from "~/components/header/DrawingHeader";
 import { DrawingProvider } from "~/components/header/context/DrawingContext";
+import { ShapeProvider } from "~/components/header/context/ShapeContext";
 import { api } from "~/utils/api";
 
 const DrawingCanvas = dynamic(() => import("~/components/DrawingCanvas"), {
@@ -17,8 +18,7 @@ export default function Drawing() {
 	const { data: design, isLoading } = api.design.getById.useQuery(
 		{ id: designId ?? "" },
 		{ enabled: typeof designId === "string" },
-	);
-  
+	);  
 
 	return (
     <>
@@ -27,13 +27,16 @@ export default function Drawing() {
         :
         <DrawingProvider>
           <main className="flex min-h-screen flex-col overflow-hidden bg-white">
+            
             <DrawingHeader title={design?.name} />
-            <div
-              className="w-full overflow-hidden"
-              style={{ height: "calc(100vh - 56px)" }}
-            >
-              <DrawingCanvas shapes={design?.shapes} />
-            </div>
+            <ShapeProvider>
+              <div
+                className="w-full overflow-hidden"
+                style={{ height: "calc(100vh - 56px)" }}
+              >
+                <DrawingCanvas shapes={design?.shapes} />
+              </div>
+            </ShapeProvider>
           </main>
         </DrawingProvider>
       }

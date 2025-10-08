@@ -3,9 +3,12 @@ import { SheetContent } from "../../ui/sheet"
 import { useDrawing } from "../../header/context/DrawingContext"
 import SidePanelDimensionsGeneral from "./content/SidePanelDimensionsGeneral"
 import SidePanelAddMaterial from "./content/SidePanelAddMaterial"
+import { useShape } from "~/components/header/context/ShapeContext"
+import { CursorTypes } from "~/components/header/header/drawing-types"
 
 const SidePanelDimensions: FC = () => {
-    const { isOpenSideDialog }  = useDrawing()
+    const { isOpenSideDialog, setIsOpenSideDialog, cursorType }  = useDrawing()
+    const { selectedShape }  = useShape()
     const [view, setView] = useState<'general' | 'addMaterial'>('general')
         
     // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -13,6 +16,18 @@ const SidePanelDimensions: FC = () => {
         setView('general')
       }, [isOpenSideDialog])
 
+      // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+      useEffect(()=>{
+        // If clicked outside of shape, close side panel
+        if(cursorType === CursorTypes.Dimesions && !selectedShape) {
+          setIsOpenSideDialog(false)
+        }
+
+        // If shape is selected, open side panel
+        if (cursorType === CursorTypes.Dimesions && selectedShape) {
+          setIsOpenSideDialog(true)
+        } 
+      },[selectedShape])
       
       const renderContent = () => {
         switch (view) {

@@ -7,6 +7,7 @@ import {
 	CANVAS_ZOOM_SPEED,
 } from "../../../utils/canvas-constants";
 import { useDrawing } from "../../header/context/DrawingContext";
+import { useShape } from "~/components/header/context/ShapeContext";
 
 /**
  * Provides event handlers for canvas navigation (pan and zoom).
@@ -24,6 +25,7 @@ export function useCanvasNavigation() {
 		panStart,
 		setPanStart,
 	} = useDrawing();
+	const { setSelectedShape } = useShape();
 
 	/** Zoom towards cursor on mouse wheel */
 	const handleWheel = (e: KonvaEventObject<WheelEvent>) => {
@@ -82,11 +84,16 @@ export function useCanvasNavigation() {
 				x: e.evt.clientX - canvasPosition.x,
 				y: e.evt.clientY - canvasPosition.y,
 			});
-      // Change cursor to "grabbing"
-      const stage = e.target.getStage();
-      if (stage) {
-        stage.container().style.cursor = 'grabbing';
-      }
+		// Change cursor to "grabbing"
+		const stage = e.target.getStage();
+			if (stage) {
+				stage.container().style.cursor = 'grabbing';
+			}
+		}
+		
+		// If click target is the stage (background), clear selection
+		if (e.target === e.target.getStage()) {
+			setSelectedShape(null);
 		}
 	};
 
