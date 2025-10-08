@@ -12,7 +12,7 @@ export default function Drawing() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(()=> {
-    setTimeout(() => setIsLoading(false), 5000)
+    setTimeout(() => setIsLoading(false), 4000)
   })
 
 	return (
