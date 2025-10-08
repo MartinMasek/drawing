@@ -1,4 +1,5 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useDrawing } from "./DrawingContext";
 
 
 type Shape = {
@@ -10,22 +11,52 @@ type Shape = {
 type ShapeContextType = {
     selectedShape: Shape | null;
 	setSelectedShape: (shape: Shape | null) => void;
+	allShapes: Shape[],
+	setAllShapes: (shapes: Shape[]) => void
+	updateShape: (id: string, updates: Partial<Shape>) => void;
 }
 
 const ShapeContext = createContext<ShapeContextType | null>(null);
 export const ShapeProvider = ({
 	children,
 }: { children: React.ReactNode }) => {
+	
+	const { activeTab } = useDrawing()
+    const [allShapes, setAllShapes] = useState<Shape[]>([]);
     const [selectedShape, setSelectedShape] = useState<Shape | null>(null);
 
+	// When tab changes, reset selected shape
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+	useEffect(()=>{
+		setSelectedShape(null)
+	},[activeTab])
+		
 
+	// Function to update a shape by id
+	const updateShape = (selectedShapeId: string, updates: Partial<Shape>) => {
+		if (selectedShape?.id === selectedShapeId) {
+			setSelectedShape(prev => (prev ? { ...prev, ...updates } : prev));
+		
+			setAllShapes(prevShapes =>
+				prevShapes.map(shape =>
+					shape.id === selectedShapeId ? { ...shape, ...updates } : shape
+				)
+			);		
+		}
+	};
+
+    // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
     const value = useMemo<ShapeContextType>(
 		() => ({
             selectedShape,
-            setSelectedShape
+            setSelectedShape,
+			allShapes,
+			setAllShapes,
+			updateShape
 		}),
 		[
-            selectedShape
+            selectedShape,
+			allShapes,
 		],
 	);
 	return (

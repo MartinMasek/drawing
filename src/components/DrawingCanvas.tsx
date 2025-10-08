@@ -5,7 +5,7 @@ import SidePanel from "./drawing-old/SidePanel";
 import { useCanvasNavigation } from "./drawing-old/hooks/useCanvasNavigation";
 import { useDrawing } from "./header/context/DrawingContext";
 import { useShape } from "./header/context/ShapeContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface DrawingCanvasProps {
 	shapes?: ReadonlyArray<CanvasShape>;
@@ -13,7 +13,7 @@ interface DrawingCanvasProps {
 
 const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 	const { containerSize, containerRef, canvasPosition, zoom } = useDrawing();
-	const { selectedShape, setSelectedShape } = useShape();
+	const { selectedShape, setSelectedShape, setAllShapes } = useShape();
 
 	const [hoveredId, setHoveredId] = useState<string | null>(null);
 
@@ -21,6 +21,19 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 		useCanvasNavigation();
 
 	const scale = zoom / 100;
+
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+	useEffect(() => {
+		if (shapes.length) {
+			setAllShapes(
+				shapes.map((canvasShape) => ({
+				id: canvasShape.id,
+				area: 22,
+				}))
+			);
+		}
+	}, [shapes]);
 
 	return (
 		<div
@@ -72,6 +85,7 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 									  ? "#60A5FA" // hover light blue
 									  : "#111827" // default dark gray
 								  }
+								fill={isSelected ? "#EFF6FF" : "transparent"}
 								strokeWidth={2}
 								closed
 								listening={true}
