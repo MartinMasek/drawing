@@ -66,6 +66,11 @@ export function useCanvasNavigation() {
       e.evt.preventDefault();
       setIsPanning(true);
       setPanStart({ x: e.evt.clientX - canvasPosition.x, y: e.evt.clientY - canvasPosition.y });
+      // Change cursor to "grabbing"
+      const stage = e.target.getStage();
+      if (stage) {
+        stage.container().style.cursor = 'grabbing';
+      }
     }
   };
 
@@ -79,9 +84,14 @@ export function useCanvasNavigation() {
   };
 
   /** End panning on mouse release */
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: KonvaEventObject<MouseEvent>) => {
     setIsPanning(false);
     setPanStart(null);
+    // Reset cursor when panning ends
+    const stage = e.target.getStage();
+    if (stage) {
+      stage.container().style.cursor = 'default';
+    }
   };
 
   return {
