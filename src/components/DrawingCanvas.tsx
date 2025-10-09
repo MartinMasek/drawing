@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Layer, Line, Stage } from "react-konva";
-import type { CanvasShape } from "~/types/drawing";
+import type { CanvasShape, Shape } from "~/types/drawing";
 import CursorPanel from "./drawing-old/CursorPanel";
 import SidePanel from "./drawing-old/SidePanel";
 import { useCanvasNavigation } from "./drawing-old/hooks/useCanvasNavigation";
 import { useDrawing } from "./header/context/DrawingContext";
-import { type Shape, useShape } from "./header/context/ShapeContext";
+import {  useShape } from "./header/context/ShapeContext";
 
 interface DrawingCanvasProps {
 	shapes?: ReadonlyArray<CanvasShape>;
@@ -28,8 +28,8 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 
 	const scale = zoom / 100;
 
-	const handleSelectShape = ({ id, area }: Shape) => {
-		setSelectedShape({ id: id, area: area });
+	const handleSelectShape = (shape: CanvasShape) => {
+		setSelectedShape(shape);
 		setIsOpenSideDialog(true);
 	};
 
@@ -87,7 +87,7 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 								strokeWidth={2}
 								closed
 								listening={true}
-								onClick={() => handleSelectShape({ id: shape.id, area: 0 })}
+								onClick={() => handleSelectShape(shape)}
 								onMouseEnter={() => setHoveredId(shape.id)}
 								onMouseLeave={() => setHoveredId(null)}
 							/>

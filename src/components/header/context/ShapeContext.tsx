@@ -1,27 +1,20 @@
 import { createContext, useContext, useMemo, useState } from "react";
-
-export type Shape = {
-	id: string;
-	area: number;
-	materialId?: string;
-};
+import type { CanvasShape } from "~/types/drawing";
 
 type ShapeContextType = {
-	selectedShape: Shape | null;
-	setSelectedShape: (shape: Shape | null) => void;
+	selectedShape: CanvasShape | null;
+	setSelectedShape: (shape: CanvasShape | null) => void;
 };
 
 const ShapeContext = createContext<ShapeContextType | null>(null);
 export const ShapeProvider = ({ children }: { children: React.ReactNode }) => {
-	const [selectedShape, setSelectedShape] = useState<Shape | null>(null);
+	const [selectedShape, setSelectedShape] = useState<CanvasShape | null>(null);
 
-	const value = useMemo<ShapeContextType>(
-		() => ({
-			selectedShape,
-			setSelectedShape,
-		}),
-		[selectedShape],
-	);
+	const value = {
+		selectedShape,
+		setSelectedShape,
+	};
+
 	return (
 		<ShapeContext.Provider value={value}>{children}</ShapeContext.Provider>
 	);
