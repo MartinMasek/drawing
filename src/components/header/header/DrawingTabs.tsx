@@ -59,14 +59,14 @@ const DrawingTabs: FC = () => {
 						className={cn(
 							activeTab === id
 								? "border-icons-brand bg-background-checkboxes-selectedBorder text-text-colors-brand"
-								: "border-transparent",
+								: "border-transparent text-text-neutral-secondary",
 							"w-24 cursor-pointer border-b-4",
 						)}
 						key={id}
 						onClick={() => handleTabClick(id)}
 					>
 						<div className="flex flex-col items-center justify-center">
-							<Icon size="md">
+							<Icon size="md" color={activeTab === id ? 'brand' : 'subtle'}>
 								<IconComponent />
 							</Icon>
 							<p className="text-sm">{label}</p>
