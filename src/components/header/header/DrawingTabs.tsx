@@ -16,13 +16,13 @@ import React, { type FC } from "react";
 
 import { cn } from "~/utils/ui-utils";
 import { useDrawing } from "../context/DrawingContext";
+import { useShape } from "../context/ShapeContext";
 import { Icon } from "./Icon";
 import { DrawingTabList } from "./drawing-types";
-import { useShape } from "../context/ShapeContext";
 
 const DrawingTabs: FC = () => {
 	const { activeTab, setActiveTab } = useDrawing();
-	const { setSelectedShape } = useShape()
+	const { setSelectedShape } = useShape();
 
 	const tabIcons = {
 		1: IconSquareRoundedNumber1,
@@ -43,9 +43,9 @@ const DrawingTabs: FC = () => {
 	};
 
 	const handleTabClick = (id: number) => {
-		setActiveTab(id)
-		setSelectedShape(null)
-	}
+		setActiveTab(id);
+		setSelectedShape(null);
+	};
 
 	return (
 		<div className="flex h-full w-[576px]">

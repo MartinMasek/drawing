@@ -92,7 +92,7 @@ function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
 				className={cn("flex flex-col gap-1.5 p-4", className)}
 				{...props}
 			/>
-			<Divider className="border-[0.5px]"/>
+			<Divider className="border-[0.5px]" />
 		</>
 	);
 }

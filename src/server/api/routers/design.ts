@@ -47,7 +47,7 @@ export const designRouter = createTRPCRouter({
 				rotation: s.rotation,
 				points: s.points,
 			}));
-			
+
 			return { id: result.id, name: result.name, shapes };
 		}),
 

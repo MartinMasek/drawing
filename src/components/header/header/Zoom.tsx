@@ -1,11 +1,11 @@
 import { IconMinus, IconPlus } from "@tabler/icons-react";
 
 import { Select } from "@headlessui/react";
+import { SelectStyled } from "~/components/SelectStyled";
 import { CANVAS_MAX_ZOOM, CANVAS_MIN_ZOOM } from "~/utils/canvas-constants";
 import { cn } from "~/utils/ui-utils";
 import Button from "./Button";
 import { Icon } from "./Icon";
-import { SelectStyled } from "~/components/SelectStyled";
 
 type ZoomProps = {
 	min?: number;
@@ -42,8 +42,8 @@ const Zoom: React.FC<ZoomProps> = ({
 	const zoomOptions = zoomLevels.map((level) => ({
 		value: level,
 		label: `${level}%`,
-		}));
-		  
+	}));
+
 	return (
 		<div className={cn("flex", className)}>
 			<Button
@@ -59,11 +59,11 @@ const Zoom: React.FC<ZoomProps> = ({
 				</Icon>
 			</Button>
 
-			<SelectStyled 
-				className="w-[100px]" 	
+			<SelectStyled
+				className="w-[100px]"
 				inputSize="sm"
-				options={zoomOptions} 
-				value={{ value, label: `${value}%` }} 
+				options={zoomOptions}
+				value={{ value, label: `${value}%` }}
 				onChange={(selectedOption) => {
 					if (selectedOption) {
 						updateZoom(selectedOption.value);
