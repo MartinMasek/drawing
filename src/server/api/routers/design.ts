@@ -47,8 +47,6 @@ export const designRouter = createTRPCRouter({
 				rotation: s.rotation,
 				points: s.points,
 			}));
-
-			// await new Promise((resolve) => setTimeout(resolve, 3000))
 			
 			return { id: result.id, name: result.name, shapes };
 		}),

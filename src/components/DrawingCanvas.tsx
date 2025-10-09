@@ -4,7 +4,7 @@ import CursorPanel from "./drawing-old/CursorPanel";
 import SidePanel from "./drawing-old/SidePanel";
 import { useCanvasNavigation } from "./drawing-old/hooks/useCanvasNavigation";
 import { useDrawing } from "./header/context/DrawingContext";
-import { useShape } from "./header/context/ShapeContext";
+import { useShape, type Shape } from "./header/context/ShapeContext";
 import { useEffect, useState } from "react";
 
 interface DrawingCanvasProps {
@@ -12,8 +12,8 @@ interface DrawingCanvasProps {
 }
 
 const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
-	const { containerSize, containerRef, canvasPosition, zoom } = useDrawing();
-	const { selectedShape, setSelectedShape, setAllShapes } = useShape();
+	const { containerSize, containerRef, canvasPosition, zoom, setIsOpenSideDialog } = useDrawing();
+	const { selectedShape, setSelectedShape } = useShape();
 
 	const [hoveredId, setHoveredId] = useState<string | null>(null);
 
@@ -22,18 +22,10 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 
 	const scale = zoom / 100;
 
-
-	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-	useEffect(() => {
-		if (shapes.length) {
-			setAllShapes(
-				shapes.map((canvasShape) => ({
-				id: canvasShape.id,
-				area: 22,
-				}))
-			);
-		}
-	}, [shapes]);
+	const handleSelectShape = ({ id, area }: Shape) => {
+		setSelectedShape({id: id, area: area})
+		setIsOpenSideDialog(true)
+	} 
 
 	return (
 		<div
@@ -89,7 +81,7 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 								strokeWidth={2}
 								closed
 								listening={true}
-								onClick={(e) => setSelectedShape({id: shape.id, area: 0})}
+								onClick={() => handleSelectShape({id: shape.id, area: 0})}
 								onMouseEnter={() => setHoveredId(shape.id)}
                 				onMouseLeave={() => setHoveredId(null)}
 							/>

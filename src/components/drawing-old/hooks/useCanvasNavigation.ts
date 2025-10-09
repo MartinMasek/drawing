@@ -26,6 +26,7 @@ export function useCanvasNavigation() {
 		setPanStart,
 	} = useDrawing();
 	const { setSelectedShape } = useShape();
+	const { setIsOpenSideDialog } = useDrawing();
 
 	/** Zoom towards cursor on mouse wheel */
 	const handleWheel = (e: KonvaEventObject<WheelEvent>) => {
@@ -91,6 +92,7 @@ export function useCanvasNavigation() {
 		// If click target is the stage (background), clear selection
 		if (e.target === e.target.getStage()) {
 			setSelectedShape(null);
+			setIsOpenSideDialog(false)
 		}
 	};
 

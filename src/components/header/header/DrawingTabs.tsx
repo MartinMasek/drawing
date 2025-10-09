@@ -18,9 +18,11 @@ import { cn } from "~/utils/ui-utils";
 import { useDrawing } from "../context/DrawingContext";
 import { Icon } from "./Icon";
 import { DrawingTabList } from "./drawing-types";
+import { useShape } from "../context/ShapeContext";
 
 const DrawingTabs: FC = () => {
 	const { activeTab, setActiveTab } = useDrawing();
+	const { setSelectedShape } = useShape()
 
 	const tabIcons = {
 		1: IconSquareRoundedNumber1,
@@ -40,6 +42,11 @@ const DrawingTabs: FC = () => {
 		6: IconSquareRoundedNumber6Filled,
 	};
 
+	const handleTabClick = (id: number) => {
+		setActiveTab(id)
+		setSelectedShape(null)
+	}
+
 	return (
 		<div className="flex h-full w-[576px]">
 			{DrawingTabList.map(({ id, label }) => {
@@ -56,7 +63,7 @@ const DrawingTabs: FC = () => {
 							"w-24 cursor-pointer border-b-4",
 						)}
 						key={id}
-						onClick={() => setActiveTab(id)}
+						onClick={() => handleTabClick(id)}
 					>
 						<div className="flex flex-col items-center justify-center">
 							<Icon size="md">

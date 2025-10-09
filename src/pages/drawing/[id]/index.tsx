@@ -28,8 +28,8 @@ export default function Drawing() {
         <DrawingProvider>
           <main className="flex min-h-screen flex-col overflow-hidden bg-white">
             
-            <DrawingHeader title={design?.name} />
             <ShapeProvider>
+            <DrawingHeader title={design?.name} />
               <div
                 className="w-full overflow-hidden"
                 style={{ height: "calc(100vh - 56px)" }}
