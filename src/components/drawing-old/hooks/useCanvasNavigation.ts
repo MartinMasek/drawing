@@ -4,7 +4,7 @@ import {
 	CANVAS_MIN_ZOOM,
 	CANVAS_PAN_BUTTON_LEFT,
 	CANVAS_PAN_BUTTON_MIDDLE,
-	CANVAS_ZOOM_SPEED,
+	ZOOM_STEP,
 } from "../../../utils/canvas-constants";
 import { useDrawing } from "../../header/context/DrawingContext";
 import { useShape } from "~/components/header/context/ShapeContext";
@@ -44,11 +44,8 @@ export function useCanvasNavigation() {
 		};
 
 		const direction = e.evt.deltaY > 0 ? -1 : 1;
-		const newScale =
-			direction > 0
-				? oldScale * CANVAS_ZOOM_SPEED
-				: oldScale / CANVAS_ZOOM_SPEED;
-		const newZoom = Math.round(newScale * 100);
+		const oldZoom = Math.round(oldScale * 100);
+		const newZoom = oldZoom + direction * ZOOM_STEP;
 
 		// Clamp zoom to min/max limits
 		const clampedZoom = Math.min(

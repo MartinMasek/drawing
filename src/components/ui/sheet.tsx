@@ -63,7 +63,7 @@ function SheetContent({
 				className={cn(
 					"pointer-events-auto fixed z-50 flex flex-col gap-4 bg-background bg-white shadow-lg transition ease-in-out data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:duration-300 data-[state=open]:duration-500",
 					side === "right" &&
-						"data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right right-0 bottom-0 h-[calc(100vh-56px)] w-3/4 border-l sm:max-w-sm",
+						"data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right right-0 bottom-0 h-[calc(100vh-56px)] w-[337px] border-l sm:max-w-sm",
 					side === "left" &&
 						"data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm",
 					side === "top" &&
@@ -92,7 +92,7 @@ function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
 				className={cn("flex flex-col gap-1.5 p-4", className)}
 				{...props}
 			/>
-			<Divider />
+			<Divider className="border-[0.5px]"/>
 		</>
 	);
 }
