@@ -137,4 +137,5 @@ export type CanvasShape = {
 	yPos: number;
 	rotation: number;
 	points: ReadonlyArray<CanvasPoint>;
+	materialId?: string
 };

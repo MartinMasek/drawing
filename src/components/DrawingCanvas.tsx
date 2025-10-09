@@ -1,21 +1,37 @@
+import { useEffect, useState } from "react";
 import { Layer, Line, Stage } from "react-konva";
-import type { CanvasShape } from "~/types/drawing";
+import type { CanvasShape, Shape } from "~/types/drawing";
 import CursorPanel from "./drawing-old/CursorPanel";
 import SidePanel from "./drawing-old/SidePanel";
 import { useCanvasNavigation } from "./drawing-old/hooks/useCanvasNavigation";
 import { useDrawing } from "./header/context/DrawingContext";
+import {  useShape } from "./header/context/ShapeContext";
 
 interface DrawingCanvasProps {
 	shapes?: ReadonlyArray<CanvasShape>;
 }
 
 const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
-	const { containerSize, containerRef, canvasPosition, zoom } = useDrawing();
+	const {
+		containerSize,
+		containerRef,
+		canvasPosition,
+		zoom,
+		setIsOpenSideDialog,
+	} = useDrawing();
+	const { selectedShape, setSelectedShape } = useShape();
+
+	const [hoveredId, setHoveredId] = useState<string | null>(null);
 
 	const { handleWheel, handleMouseDown, handleMouseMove, handleMouseUp } =
 		useCanvasNavigation();
 
 	const scale = zoom / 100;
+
+	const handleSelectShape = (shape: CanvasShape) => {
+		setSelectedShape(shape);
+		setIsOpenSideDialog(true);
+	};
 
 	return (
 		<div
@@ -42,6 +58,7 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 				style={{
 					backgroundColor: "white",
 					touchAction: "none",
+					cursor: hoveredId ? "pointer" : "default",
 				}}
 			>
 				<Layer>
@@ -51,14 +68,28 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 							// Add shape origin to each point. Rotation is ignored for now.
 							flattenedPoints.push(p.xPos + shape.xPos, p.yPos + shape.yPos);
 						}
+
+						const isSelected = shape.id === selectedShape?.id;
+						const isHovered = shape.id === hoveredId;
+
 						return (
 							<Line
 								key={shape.id}
 								points={flattenedPoints}
-								stroke="#111827"
+								stroke={
+									isSelected
+										? "#2563EB" // selected blue
+										: isHovered
+											? "#60A5FA" // hover light blue
+											: "#111827" // default dark gray
+								}
+								fill={isSelected ? "#EFF6FF" : "transparent"}
 								strokeWidth={2}
 								closed
-								listening={false}
+								listening={true}
+								onClick={() => handleSelectShape(shape)}
+								onMouseEnter={() => setHoveredId(shape.id)}
+								onMouseLeave={() => setHoveredId(null)}
 							/>
 						);
 					})}

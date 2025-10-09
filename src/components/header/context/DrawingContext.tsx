@@ -106,7 +106,7 @@ export const DrawingProvider = ({
 		setIsOpenSideDialog(false);
 	}, [activeTab]);
 
-	// On curosr type change
+	// On cursor type change
 	// Close side dialog
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
 	useEffect(() => {

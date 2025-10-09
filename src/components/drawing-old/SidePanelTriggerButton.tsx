@@ -28,8 +28,8 @@ const SidePanelTriggerButton: FC = () => {
 			{/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
 			<div
 				onClick={() => setIsOpenSideDialog(!open)}
-				className={`absolute top-3 z-50 flex h-[36px] cursor-pointer items-center gap-2 rounded-[10px] py-1 pr-3 pl-2 shadow-lg transition-all duration-300 ${
-					isOpenSideDialog ? "right-[396px]" : "right-3"
+				className={`absolute top-3 z-50 flex h-[36px] cursor-pointer items-center gap-2 rounded-[10px] py-1 pr-3 pl-2 shadow-lg ${
+					isOpenSideDialog ? "right-[349px]" : "right-3"
 				}`}
 			>
 				<Icon size="md">

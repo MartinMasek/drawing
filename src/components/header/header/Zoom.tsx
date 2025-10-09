@@ -1,6 +1,7 @@
 import { IconMinus, IconPlus } from "@tabler/icons-react";
 
 import { Select } from "@headlessui/react";
+import { SelectStyled } from "~/components/SelectStyled";
 import { CANVAS_MAX_ZOOM, CANVAS_MIN_ZOOM } from "~/utils/canvas-constants";
 import { cn } from "~/utils/ui-utils";
 import Button from "./Button";
@@ -38,10 +39,15 @@ const Zoom: React.FC<ZoomProps> = ({
 		? baseLevels
 		: [...baseLevels, value].sort((a, b) => a - b);
 
+	const zoomOptions = zoomLevels.map((level) => ({
+		value: level,
+		label: `${level}%`,
+	}));
+
 	return (
 		<div className={cn("flex", className)}>
 			<Button
-				className="rounded-r-none"
+				className="rounded-r-none border-r-0"
 				color="neutral"
 				iconOnly
 				onClick={() => updateZoom(value - step)}
@@ -53,23 +59,20 @@ const Zoom: React.FC<ZoomProps> = ({
 				</Icon>
 			</Button>
 
-			<Select
-				value={value}
-				onChange={(e) => updateZoom(Number(e.target.value))}
-				className={cn(
-					"w-24 border-neutral-300 border-y bg-white px-2 py-1 text-black text-sm",
-					"focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2",
-				)}
-			>
-				{zoomLevels.map((level) => (
-					<option key={level} value={level}>
-						{level}%
-					</option>
-				))}
-			</Select>
+			<SelectStyled
+				className="w-[100px]"
+				inputSize="sm"
+				options={zoomOptions}
+				value={{ value, label: `${value}%` }}
+				onChange={(selectedOption) => {
+					if (selectedOption) {
+						updateZoom(selectedOption.value);
+					}
+				}}
+			/>
 
 			<Button
-				className="rounded-l-none"
+				className="rounded-l-none border-l-0"
 				color="neutral"
 				iconOnly
 				onClick={() => updateZoom(value + step)}

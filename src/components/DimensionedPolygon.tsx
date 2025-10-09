@@ -1,14 +1,12 @@
-import React from 'react'
+import React from "react";
 
 // This is old canvas, we will remove it in the future but we keep it commented here for reference
 
 const DimensionedPolygon = () => {
-  return (
-	<div>DimensionedPolygon</div>
-  )
-}
+	return <div>DimensionedPolygon</div>;
+};
 
-export default DimensionedPolygon
+export default DimensionedPolygon;
 
 // import { IconLayoutSidebarRightExpand } from "@tabler/icons-react";
 // import type Konva from "konva";

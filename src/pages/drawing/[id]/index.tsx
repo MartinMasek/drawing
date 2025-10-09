@@ -1,7 +1,9 @@
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
+import DrawingLoading from "~/components/DrawingLoading";
 import DrawingHeader from "~/components/header/DrawingHeader";
 import { DrawingProvider } from "~/components/header/context/DrawingContext";
+import { ShapeProvider } from "~/components/header/context/ShapeContext";
 import { api } from "~/utils/api";
 
 const DrawingCanvas = dynamic(() => import("~/components/DrawingCanvas"), {
@@ -19,22 +21,24 @@ export default function Drawing() {
 	);
 
 	return (
-		<DrawingProvider>
-			<main className="flex min-h-screen flex-col overflow-hidden bg-white">
-				<DrawingHeader title={design?.name} />
-				<div
-					className="w-full overflow-hidden"
-					style={{ height: "calc(100vh - 56px)" }}
-				>
-					{isLoading ? (
-						<div className="flex h-full items-center justify-center text-gray-500 text-sm">
-							Loading design…
-						</div>
-					) : (
-						<DrawingCanvas shapes={design?.shapes} />
-					)}
-				</div>
-			</main>
-		</DrawingProvider>
+		<>
+			{isLoading ? (
+				<DrawingLoading />
+			) : (
+				<DrawingProvider>
+					<main className="flex min-h-screen flex-col overflow-hidden bg-white">
+						<ShapeProvider>
+							<DrawingHeader title={design?.name} />
+							<div
+								className="w-full overflow-hidden"
+								style={{ height: "calc(100vh - 56px)" }}
+							>
+								<DrawingCanvas shapes={design?.shapes} />
+							</div>
+						</ShapeProvider>
+					</main>
+				</DrawingProvider>
+			)}
+		</>
 	);
 }

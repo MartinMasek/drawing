@@ -17,9 +17,9 @@ const DrawingHeaderActions: FC = () => {
 	const { zoom, setZoom } = useDrawing();
 
 	return (
-		<div className="flex h-full items-center">
+		<div className="flex h-full w-[509px] items-center">
 			<Zoom className="flex px-3" onChange={setZoom} value={zoom} />
-			<Divider className="h-full" orientation="vertical" />
+			<Divider className="h-full border-[0.5px]" orientation="vertical" />
 			{/* Undo / Redo */}
 			<div className="flex items-center gap-2 px-3">
 				<Button color="neutral" iconOnly size="sm" variant="outlined">
@@ -33,7 +33,7 @@ const DrawingHeaderActions: FC = () => {
 					</Icon>
 				</Button>
 			</div>
-			<Divider className="h-full" orientation="vertical" />
+			<Divider className="h-full border-[0.5px]" orientation="vertical" />
 			{/* Settings / Help / Save */}
 			<div className="flex items-center gap-2 px-3">
 				<Button color="neutral" iconOnly size="sm" variant="outlined">

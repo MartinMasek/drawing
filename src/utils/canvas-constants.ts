@@ -1,5 +1,5 @@
 // Canvas navigation constants
-export const CANVAS_ZOOM_SPEED = 1.1; // How fast zoom changes on scroll (10% per scroll)
+export const ZOOM_STEP = 10; // Increment of zoom
 export const CANVAS_MIN_ZOOM = 10; // Minimum zoom level (10%)
 export const CANVAS_MAX_ZOOM = 500; // Maximum zoom level (500%)
 export const CANVAS_DEFAULT_ZOOM = 100; // Default zoom level (100%)

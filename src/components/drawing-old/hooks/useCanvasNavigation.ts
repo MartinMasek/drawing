@@ -1,10 +1,11 @@
 import type { KonvaEventObject } from "konva/lib/Node";
+import { useShape } from "~/components/header/context/ShapeContext";
 import {
 	CANVAS_MAX_ZOOM,
 	CANVAS_MIN_ZOOM,
 	CANVAS_PAN_BUTTON_LEFT,
 	CANVAS_PAN_BUTTON_MIDDLE,
-	CANVAS_ZOOM_SPEED,
+	ZOOM_STEP,
 } from "../../../utils/canvas-constants";
 import { useDrawing } from "../../header/context/DrawingContext";
 
@@ -24,6 +25,8 @@ export function useCanvasNavigation() {
 		panStart,
 		setPanStart,
 	} = useDrawing();
+	const { setSelectedShape } = useShape();
+	const { setIsOpenSideDialog } = useDrawing();
 
 	/** Zoom towards cursor on mouse wheel */
 	const handleWheel = (e: KonvaEventObject<WheelEvent>) => {
@@ -42,11 +45,8 @@ export function useCanvasNavigation() {
 		};
 
 		const direction = e.evt.deltaY > 0 ? -1 : 1;
-		const newScale =
-			direction > 0
-				? oldScale * CANVAS_ZOOM_SPEED
-				: oldScale / CANVAS_ZOOM_SPEED;
-		const newZoom = Math.round(newScale * 100);
+		const oldZoom = Math.round(oldScale * 100);
+		const newZoom = oldZoom + direction * ZOOM_STEP;
 
 		// Clamp zoom to min/max limits
 		const clampedZoom = Math.min(
@@ -82,6 +82,17 @@ export function useCanvasNavigation() {
 				x: e.evt.clientX - canvasPosition.x,
 				y: e.evt.clientY - canvasPosition.y,
 			});
+			// Change cursor to "grabbing"
+			const stage = e.target.getStage();
+			if (stage) {
+				stage.container().style.cursor = "grabbing";
+			}
+		}
+
+		// If click target is the stage (background), clear selection
+		if (e.target === e.target.getStage()) {
+			setSelectedShape(null);
+			setIsOpenSideDialog(false);
 		}
 	};
 
@@ -95,9 +106,14 @@ export function useCanvasNavigation() {
 	};
 
 	/** End panning on mouse release */
-	const handleMouseUp = () => {
+	const handleMouseUp = (e: KonvaEventObject<MouseEvent>) => {
 		setIsPanning(false);
 		setPanStart(null);
+		// Reset cursor when panning ends
+		const stage = e.target.getStage();
+		if (stage) {
+			stage.container().style.cursor = "default";
+		}
 	};
 
 	return {
