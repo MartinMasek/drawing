@@ -60,8 +60,8 @@ const Zoom: React.FC<ZoomProps> = ({
 			</Button>
 
 			<SelectStyled 
-				className="w-24" 	
-				inputSize="sm"			
+				className="w-[100px]" 	
+				inputSize="sm"
 				options={zoomOptions} 
 				value={{ value, label: `${value}%` }} 
 				onChange={(selectedOption) => {

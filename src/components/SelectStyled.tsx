@@ -148,6 +148,7 @@ function ReactSelectStyledInner<
                 inputId={inputId}
                 onChange={onOptionChange}
                 onMenuOpen={onMenuOpen}
+                blurInputOnSelect
             />
         </div>
     )
