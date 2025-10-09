@@ -41,7 +41,7 @@ const DrawingTabs: FC = () => {
 	};
 
 	return (
-		<div className="flex h-full">
+		<div className="flex h-full w-[576px]">
 			{DrawingTabList.map(({ id, label }) => {
 				const IconComponent =
 					activeTab === id ? tabIconsFilled[id] : tabIcons[id];
