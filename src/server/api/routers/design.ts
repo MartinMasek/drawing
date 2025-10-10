@@ -1,7 +1,8 @@
+import { IconXPowerY } from "@tabler/icons-react";
 import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import type { CanvasShape } from "~/types/drawing";
+import type { CanvasShape, CanvasText } from "~/types/drawing";
 
 export const designRouter = createTRPCRouter({
 	// Get all designs
@@ -35,6 +36,19 @@ export const designRouter = createTRPCRouter({
 							points: { select: { xPos: true, yPos: true } },
 						},
 					},
+					texts: {
+						select: {
+							id: true,
+							xPos: true,
+							yPos: true,
+							text: true,
+							fontSize: true,
+							isBold: true,
+							isItalic: true,
+							textColor: true,
+							backgroundColor: true,
+						},
+					},
 				},
 			});
 
@@ -48,7 +62,19 @@ export const designRouter = createTRPCRouter({
 				points: s.points,
 			}));
 
-			return { id: result.id, name: result.name, shapes };
+			const texts: CanvasText[] = result.texts.map((t) => ({
+				id: t.id,
+				xPos: t.xPos,
+				yPos: t.yPos,
+				text: t.text,
+				fontSize: t.fontSize,
+				isBold: t.isBold,
+				isItalic: t.isItalic,
+				textColor: t.textColor,
+				backgroundColor: t.backgroundColor,
+			}));
+
+			return { id: result.id, name: result.name, shapes, texts };
 		}),
 
 	// Create a new design
@@ -87,6 +113,93 @@ export const designRouter = createTRPCRouter({
 		.mutation(async ({ ctx, input }) => {
 			return ctx.db.design.delete({
 				where: { id: input.id },
+			});
+		}),
+
+	// Create text
+	createText: publicProcedure
+		.input(
+			z.object({
+				designId: z.string().min(1),
+				xPos: z.number(),
+				yPos: z.number(),
+				text: z.string().min(1),
+				fontSize: z.number().min(1),
+				isBold: z.boolean(),
+				isItalic: z.boolean(),
+				textColor: z.string().min(1),
+				backgroundColor: z.string().min(1),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return ctx.db.text.create({
+				data: {
+					xPos: input.xPos,
+					yPos: input.yPos,
+					text: input.text,
+					fontSize: input.fontSize,
+					isBold: input.isBold,
+					isItalic: input.isItalic,
+					textColor: input.textColor,
+					backgroundColor: input.backgroundColor,
+					designId: input.designId,
+				},
+			});
+		}),
+	updateText: publicProcedure
+		.input(
+			z.object({
+				id: z.string().min(1),
+				xPos: z.number(),
+				yPos: z.number(),
+				text: z.string().min(1),
+				fontSize: z.number().min(1),
+				isBold: z.boolean(),
+				isItalic: z.boolean(),
+				textColor: z.string().min(1),
+				backgroundColor: z.string().min(1),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return ctx.db.text.update({
+				where: { id: input.id },
+				data: {
+					xPos: input.xPos,
+					yPos: input.yPos,
+					text: input.text,
+					fontSize: input.fontSize,
+					isBold: input.isBold,
+					isItalic: input.isItalic,
+					textColor: input.textColor,
+					backgroundColor: input.backgroundColor,
+				},
+			});
+		}),
+
+	getAllTexts: publicProcedure
+		.input(z.object({ id: z.string() }))
+		.query(async ({ ctx, input }) => {
+			return ctx.db.text.findMany({
+				where: { designId: input.id },
+			});
+		}),
+
+	deleteText: publicProcedure
+		.input(z.object({ id: z.string() }))
+		.mutation(async ({ ctx, input }) => {
+			return ctx.db.text.delete({
+				where: { id: input.id },
+			});
+		}),
+	changeTextPosition: publicProcedure
+		.input(z.object({ id: z.string(), xPos: z.number(), yPos: z.number() }))
+		.mutation(async ({ ctx, input }) => {
+			return ctx.db.text.update({
+				where: { id: input.id },
+				data: {
+					xPos: input.xPos,
+					yPos: input.yPos,
+				},
 			});
 		}),
 });

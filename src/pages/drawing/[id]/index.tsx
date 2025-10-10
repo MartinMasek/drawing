@@ -20,6 +20,11 @@ export default function Drawing() {
 		{ enabled: typeof designId === "string" },
 	);
 
+	const { data: texts } = api.design.getAllTexts.useQuery(
+		{ id: designId ?? "" },
+		{ enabled: typeof designId === "string" },
+	);
+
 	return (
 		<>
 			{isLoading ? (
@@ -33,7 +38,12 @@ export default function Drawing() {
 								className="w-full overflow-hidden"
 								style={{ height: "calc(100vh - 56px)" }}
 							>
-								<DrawingCanvas shapes={design?.shapes} />
+								<DrawingCanvas
+									shapes={design?.shapes}
+									texts={texts}
+									// texts={design?.texts}
+									designId={designId ?? ""}
+								/>
 							</div>
 						</ShapeProvider>
 					</main>

@@ -131,7 +131,7 @@ const CursorPanel: FC = () => {
 					</Icon>
 				</Button>
 			)}
-			<Divider />
+			<Divider className="border-[0.5px]" />
 			<Button
 				color={cursorType === CursorTypes.Text ? "primary" : "neutral"}
 				iconOnly
