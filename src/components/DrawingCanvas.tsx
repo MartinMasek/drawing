@@ -1,28 +1,21 @@
 import { useState } from "react";
 import { Layer, Line, Stage, Text } from "react-konva";
-import type { CanvasShape, CanvasText, CanvasTextData } from "~/types/drawing";
+import type { CanvasShape } from "~/types/drawing";
 import CursorPanel from "./drawing-old/CursorPanel";
 import SidePanel from "./drawing-old/SidePanel";
 import { useCanvasNavigation } from "./drawing-old/hooks/useCanvasNavigation";
 import { useDrawing } from "./header/context/DrawingContext";
 import { useShape } from "./header/context/ShapeContext";
 import { CursorTypes } from "./header/header/drawing-types";
-import { api } from "~/utils/api";
 import CanvasTextInput from "./canvasTextInput/CanvasTextInput";
-import type { KonvaEventObject } from "konva/lib/Node";
 import { useText } from "./drawing-old/hooks/useText";
 
 interface DrawingCanvasProps {
 	shapes?: ReadonlyArray<CanvasShape>;
-	texts?: CanvasText[];
 	designId: string;
 }
 
-const DrawingCanvas = ({
-	shapes = [],
-	texts = [],
-	designId,
-}: DrawingCanvasProps) => {
+const DrawingCanvas = ({ shapes = [], designId }: DrawingCanvasProps) => {
 	const {
 		containerSize,
 		containerRef,
@@ -48,6 +41,7 @@ const DrawingCanvas = ({
 		handleTextDragEnd,
 		currentTextPos,
 		setNewTextPos,
+		allTexts,
 	} = useText(designId);
 
 	const scale = zoom / 100;
@@ -171,8 +165,8 @@ const DrawingCanvas = ({
 						);
 					})}
 
-					{/* Render saved texts */}
-					{texts.map((t) =>
+					{/* Render saved texts with optimistic updates */}
+					{allTexts.map((t) =>
 						editingText && editingText.id === t.id ? null : ( // hide the one being edited
 							<Text
 								key={t.id}

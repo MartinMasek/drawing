@@ -20,11 +20,6 @@ export default function Drawing() {
 		{ enabled: typeof designId === "string" },
 	);
 
-	const { data: texts } = api.design.getAllTexts.useQuery(
-		{ id: designId ?? "" },
-		{ enabled: typeof designId === "string" },
-	);
-
 	return (
 		<>
 			{isLoading ? (
@@ -40,8 +35,6 @@ export default function Drawing() {
 							>
 								<DrawingCanvas
 									shapes={design?.shapes}
-									texts={texts}
-									// texts={design?.texts}
 									designId={designId ?? ""}
 								/>
 							</div>
