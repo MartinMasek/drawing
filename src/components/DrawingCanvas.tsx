@@ -201,7 +201,6 @@ const DrawingCanvas = ({
 					initialText={editingText}
 					onSave={handleSave}
 					onDelete={handleDelete}
-					onBlur={() => {}}
 					onEscape={handleEscape}
 				/>
 			)}

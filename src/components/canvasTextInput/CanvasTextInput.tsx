@@ -7,7 +7,6 @@ interface CanvasTextInputProps {
 	initialText: CanvasText | null;
 	onSave: (text: CanvasTextData) => void;
 	onDelete: () => void;
-	onBlur: () => void;
 	onEscape: () => void;
 }
 
