@@ -52,7 +52,6 @@ const DrawingCanvas = ({ shapes = [], designId }: DrawingCanvasProps) => {
 	const isCursorCorners = cursorType === CursorTypes.Corners;
 	const isCursorEdges = cursorType === CursorTypes.Egdes;
 	const isCursorText = cursorType === CursorTypes.Text;
-	const isCursorSelect = cursorType === CursorTypes.Select;
 
 	const handleSelectShape = (shape: CanvasShape) => {
 		if (
@@ -68,8 +67,7 @@ const DrawingCanvas = ({ shapes = [], designId }: DrawingCanvasProps) => {
 
 	const handleCursor = () => {
 		if (isPanning) return "grabbing";
-		if (isCursorText) return "text";
-		if (isCursorSelect) return "crosshair";
+		if (isCursorText && !hoveredId) return "text";
 
 		if (isCursorDimesions && !hoveredId) {
 			return 'url("/cursors/pencil.svg") 0 0, crosshair';
@@ -77,7 +75,11 @@ const DrawingCanvas = ({ shapes = [], designId }: DrawingCanvasProps) => {
 
 		if (
 			hoveredId &&
-			(isCursorDimesions || isCursorCurves || isCursorCorners || isCursorEdges)
+			(isCursorDimesions ||
+				isCursorCurves ||
+				isCursorCorners ||
+				isCursorEdges ||
+				isCursorText)
 		)
 			return "pointer";
 
@@ -105,7 +107,7 @@ const DrawingCanvas = ({ shapes = [], designId }: DrawingCanvasProps) => {
 				onWheel={handleWheel}
 				// onMouseDown={handleMouseDown}
 				onMouseDown={(e) => {
-					if (isCursorText) {
+					if (isCursorText && !hoveredId) {
 						const stage = e.target.getStage();
 						const pointerPosition = stage?.getPointerPosition();
 						if (pointerPosition && newTextPos === null) {
@@ -139,7 +141,8 @@ const DrawingCanvas = ({ shapes = [], designId }: DrawingCanvasProps) => {
 							(isCursorDimesions ||
 								isCursorCurves ||
 								isCursorCorners ||
-								isCursorEdges);
+								isCursorEdges ||
+								isCursorText);
 
 						return (
 							<Line

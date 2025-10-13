@@ -148,6 +148,7 @@ const CursorPanel: FC = () => {
 				color={cursorType === CursorTypes.Select ? "primary" : "neutral"}
 				iconOnly
 				size="sm"
+				disabled={true}
 				variant={cursorType === CursorTypes.Select ? "outlined" : "text"}
 				className="h-[36px] w-[36px]"
 				onClick={() => setCursorType(CursorTypes.Select)}
@@ -160,6 +161,7 @@ const CursorPanel: FC = () => {
 				color={cursorType === CursorTypes.Package ? "primary" : "neutral"}
 				iconOnly
 				size="sm"
+				disabled={true}
 				variant={cursorType === CursorTypes.Package ? "outlined" : "text"}
 				className="h-[36px] w-[36px]"
 				onClick={() => setCursorType(CursorTypes.Package)}
