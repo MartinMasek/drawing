@@ -1,6 +1,5 @@
 import { IconMinus, IconPlus } from "@tabler/icons-react";
 
-import { Select } from "@headlessui/react";
 import { SelectStyled } from "~/components/SelectStyled";
 import { CANVAS_MAX_ZOOM, CANVAS_MIN_ZOOM } from "~/utils/canvas-constants";
 import { cn } from "~/utils/ui-utils";
