@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Layer, Line, Stage, Text } from "react-konva";
+import type { Stage as KonvaStage } from "konva/lib/Stage";
 import type { CanvasShape } from "~/types/drawing";
 import CursorPanel from "./drawing-old/CursorPanel";
 import SidePanel from "./drawing-old/SidePanel";
@@ -36,13 +37,20 @@ const DrawingCanvas = ({ shapes = [], designId }: DrawingCanvasProps) => {
 		editingText,
 		setEditingText,
 		handleSave,
-		handleDelete,
+		handleDelete: originalHandleDelete,
 		handleEscape,
 		handleTextDragEnd,
 		currentTextPos,
 		setNewTextPos,
 		allTexts,
 	} = useText(designId);
+
+	// Wrap handleDelete to clear hoveredId when text is deleted
+	// to get rid of 'pointer' cursor when text is deleted
+	const handleDelete = () => {
+		originalHandleDelete();
+		setHoveredId(null);
+	};
 
 	const scale = zoom / 100;
 
@@ -53,37 +61,41 @@ const DrawingCanvas = ({ shapes = [], designId }: DrawingCanvasProps) => {
 	const isCursorEdges = cursorType === CursorTypes.Egdes;
 	const isCursorText = cursorType === CursorTypes.Text;
 
-	const handleSelectShape = (shape: CanvasShape) => {
-		if (
-			isCursorDimesions ||
-			isCursorCurves ||
-			isCursorCorners ||
-			isCursorEdges
-		) {
-			setSelectedShape(shape);
-			setIsOpenSideDialog(true);
-		}
+	// Helper function to check if cursor is interactive (can select shapes)
+	const isInteractiveCursor = () => {
+		return (
+			isCursorDimesions || isCursorCurves || isCursorCorners || isCursorEdges
+		);
 	};
 
-	const handleCursor = () => {
+	const getCursor = () => {
 		if (isPanning) return "grabbing";
-		if (isCursorText && !hoveredId) return "text";
 
+		// Text cursor: show pointer only when hovering over existing text, text cursor otherwise
+		if (isCursorText) {
+			const isHoveringOverText =
+				hoveredId && allTexts.some((t) => t.id === hoveredId);
+			return isHoveringOverText ? "pointer" : "text";
+		}
+
+		// Pencil cursor
 		if (isCursorDimesions && !hoveredId) {
 			return 'url("/cursors/pencil.svg") 0 0, crosshair';
 		}
 
-		if (
-			hoveredId &&
-			(isCursorDimesions ||
-				isCursorCurves ||
-				isCursorCorners ||
-				isCursorEdges ||
-				isCursorText)
-		)
+		// Pointer cursor
+		if (hoveredId && isInteractiveCursor()) {
 			return "pointer";
+		}
 
 		return "default";
+	};
+
+	const handleSelectShape = (shape: CanvasShape) => {
+		if (isInteractiveCursor()) {
+			setSelectedShape(shape);
+			setIsOpenSideDialog(true);
+		}
 	};
 
 	return (
@@ -105,15 +117,34 @@ const DrawingCanvas = ({ shapes = [], designId }: DrawingCanvasProps) => {
 				scaleX={scale}
 				scaleY={scale}
 				onWheel={handleWheel}
-				// onMouseDown={handleMouseDown}
 				onMouseDown={(e) => {
-					if (isCursorText && !hoveredId) {
-						const stage = e.target.getStage();
-						const pointerPosition = stage?.getPointerPosition();
-						if (pointerPosition && newTextPos === null) {
-							setNewTextPos(pointerPosition);
+					// Always handle panning first (middle click or shift+left click)
+					const isMiddleClick = e.evt.button === 1; // middle mouse button
+					const isShiftLeftClick = e.evt.button === 0 && e.evt.shiftKey;
+
+					if (isMiddleClick || isShiftLeftClick) {
+						handleMouseDown(e);
+						return;
+					}
+
+					// Handle text cursor logic for left clicks only
+					if (isCursorText && e.evt.button === 0) {
+						// Only add new text if not hovering over existing text
+						// Allow adding text over shapes or empty space
+						const isHoveringOverText =
+							hoveredId && allTexts.some((t) => t.id === hoveredId);
+
+						if (!isHoveringOverText) {
+							const stage = e.target.getStage();
+							const pointerPosition = stage?.getPointerPosition();
+							if (pointerPosition && newTextPos === null) {
+								setNewTextPos(pointerPosition);
+							} else {
+								setNewTextPos(null);
+							}
 						} else {
-							setNewTextPos(null);
+							// If hovering over text, let the text handle the click
+							handleMouseDown(e);
 						}
 					} else {
 						handleMouseDown(e);
@@ -124,7 +155,7 @@ const DrawingCanvas = ({ shapes = [], designId }: DrawingCanvasProps) => {
 				style={{
 					backgroundColor: "white",
 					touchAction: "none",
-					cursor: handleCursor(),
+					cursor: getCursor(),
 				}}
 			>
 				<Layer>
@@ -136,13 +167,7 @@ const DrawingCanvas = ({ shapes = [], designId }: DrawingCanvasProps) => {
 						}
 
 						const isSelected = shape.id === selectedShape?.id;
-						const isHovered =
-							shape.id === hoveredId &&
-							(isCursorDimesions ||
-								isCursorCurves ||
-								isCursorCorners ||
-								isCursorEdges ||
-								isCursorText);
+						const isHovered = shape.id === hoveredId && isInteractiveCursor();
 
 						return (
 							<Line

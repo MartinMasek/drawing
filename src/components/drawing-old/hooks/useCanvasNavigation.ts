@@ -103,11 +103,6 @@ export function useCanvasNavigation() {
 	const handleMouseUp = (e: KonvaEventObject<MouseEvent>) => {
 		setIsPanning(false);
 		setPanStart(null);
-		// Reset cursor when panning ends
-		const stage = e.target.getStage();
-		if (stage) {
-			stage.container().style.cursor = "default";
-		}
 	};
 
 	return {
