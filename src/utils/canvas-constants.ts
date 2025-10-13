@@ -8,3 +8,7 @@ export const CANVAS_DEFAULT_ZOOM = 100; // Default zoom level (100%)
 export const CANVAS_PAN_BUTTON_RIGHT = 2; // Right mouse button
 export const CANVAS_PAN_BUTTON_MIDDLE = 1; // Middle mouse button
 export const CANVAS_PAN_BUTTON_LEFT = 0; // Left mouse button
+
+// Shape drawing
+export const SHAPE_DRAWING_MIN_DISTANCE = 300; // Minimum distance before we can change direction
+export const SHAPE_DRAWING_DEFAULT_HEIGHT = 100; // Default height for the shape

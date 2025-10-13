@@ -89,4 +89,91 @@ export const designRouter = createTRPCRouter({
 				where: { id: input.id },
 			});
 		}),
+
+	// Create a new shape for a design
+	createShape: publicProcedure
+		.input(
+			z.object({
+				designId: z.string(),
+				xPos: z.number(),
+				yPos: z.number(),
+				rotation: z.number().default(0),
+				points: z.array(
+					z.object({
+						xPos: z.number(),
+						yPos: z.number(),
+					}),
+				),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const shape = await ctx.db.shape.create({
+				data: {
+					designId: input.designId,
+					xPos: input.xPos,
+					yPos: input.yPos,
+					rotation: input.rotation,
+					points: {
+						create: input.points.map((p) => ({
+							xPos: p.xPos,
+							yPos: p.yPos,
+						})),
+					},
+				},
+				select: {
+					id: true,
+					xPos: true,
+					yPos: true,
+					rotation: true,
+					points: { select: { xPos: true, yPos: true } },
+				},
+			});
+
+			return shape;
+		}),
+
+	// Update shape position and points
+	updateShape: publicProcedure
+		.input(
+			z.object({
+				shapeId: z.string(),
+				xPos: z.number(),
+				yPos: z.number(),
+				points: z.array(
+					z.object({
+						xPos: z.number(),
+						yPos: z.number(),
+					}),
+				),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			// Delete existing points and create new ones
+			await ctx.db.point.deleteMany({
+				where: { shapeId: input.shapeId },
+			});
+
+			const shape = await ctx.db.shape.update({
+				where: { id: input.shapeId },
+				data: {
+					xPos: input.xPos,
+					yPos: input.yPos,
+					points: {
+						create: input.points.map((p) => ({
+							xPos: p.xPos,
+							yPos: p.yPos,
+						})),
+					},
+				},
+				select: {
+					id: true,
+					xPos: true,
+					yPos: true,
+					rotation: true,
+					points: { select: { xPos: true, yPos: true } },
+				},
+			});
+
+			return shape;
+		}),
 });

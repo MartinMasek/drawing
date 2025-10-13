@@ -6,8 +6,8 @@ import {
 	CANVAS_PAN_BUTTON_LEFT,
 	CANVAS_PAN_BUTTON_MIDDLE,
 	ZOOM_STEP,
-} from "../../../utils/canvas-constants";
-import { useDrawing } from "../../header/context/DrawingContext";
+} from "../utils/canvas-constants";
+import { useDrawing } from "../components/header/context/DrawingContext";
 
 /**
  * Provides event handlers for canvas navigation (pan and zoom).
@@ -82,11 +82,6 @@ export function useCanvasNavigation() {
 				x: e.evt.clientX - canvasPosition.x,
 				y: e.evt.clientY - canvasPosition.y,
 			});
-			// Change cursor to "grabbing"
-			const stage = e.target.getStage();
-			if (stage) {
-				stage.container().style.cursor = "grabbing";
-			}
 		}
 
 		// If click target is the stage (background), clear selection
