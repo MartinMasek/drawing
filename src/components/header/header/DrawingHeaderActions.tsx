@@ -17,7 +17,7 @@ const DrawingHeaderActions: FC = () => {
 	const { zoom, setZoom } = useDrawing();
 
 	return (
-		<div className="flex h-full w-[509px] items-center">
+		<div className="flex h-full shrink-0 items-center">
 			<Zoom className="flex px-3" onChange={setZoom} value={zoom} />
 			<Divider className="h-full border-[0.5px]" orientation="vertical" />
 			{/* Undo / Redo */}

@@ -6,8 +6,8 @@ import {
 	CANVAS_PAN_BUTTON_LEFT,
 	CANVAS_PAN_BUTTON_MIDDLE,
 	ZOOM_STEP,
-} from "../../../utils/canvas-constants";
-import { useDrawing } from "../../header/context/DrawingContext";
+} from "../utils/canvas-constants";
+import { useDrawing } from "../components/header/context/DrawingContext";
 
 /**
  * Provides event handlers for canvas navigation (pan and zoom).

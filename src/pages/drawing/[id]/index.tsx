@@ -33,10 +33,7 @@ export default function Drawing() {
 								className="w-full overflow-hidden"
 								style={{ height: "calc(100vh - 56px)" }}
 							>
-								<DrawingCanvas
-									shapes={design?.shapes}
-									designId={designId ?? ""}
-								/>
+								<DrawingCanvas shapes={design?.shapes} />
 							</div>
 						</ShapeProvider>
 					</main>
