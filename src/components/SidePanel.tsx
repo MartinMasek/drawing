@@ -1,14 +1,13 @@
 import type { FC } from "react";
-import { useDrawing } from "../header/context/DrawingContext";
-import { CursorTypes } from "../header/header/drawing-types";
-import SidePanelCurvesAndBumps from "../sidePanelContent/sidePanelCurvesAndBumps/SidePanelCurvesAndBumps";
-import SidePanelDimensions from "../sidePanelContent/sidePanelDimensions/SidePanelDimensions";
-import { Sheet } from "../ui/sheet";
-import SidePanelTriggerButton from "./SidePanelTriggerButton";
-
-import SidePanelCutouts from "../sidePanelContent/SidePanelCutouts";
-import SidePanelEdges from "../sidePanelContent/SidePanelEdges";
-import SidePanelCorners from "../sidePanelContent/sidePanelCorners/SidePanelCorners";
+import { useDrawing } from "./header/context/DrawingContext";
+import { Sheet } from "./ui/sheet";
+import SidePanelTriggerButton from "./drawing-old/SidePanelTriggerButton";
+import { CursorTypes } from "./header/header/drawing-types";
+import SidePanelCorners from "./sidePanelContent/sidePanelCorners/SidePanelCorners";
+import SidePanelCurvesAndBumps from "./sidePanelContent/sidePanelCurvesAndBumps/SidePanelCurvesAndBumps";
+import SidePanelCutouts from "./sidePanelContent/SidePanelCutouts";
+import SidePanelDimensions from "./sidePanelContent/sidePanelDimensions/SidePanelDimensions";
+import SidePanelEdges from "./sidePanelContent/SidePanelEdges";
 
 const SidePanel: FC = () => {
 	const { isOpenSideDialog, setIsOpenSideDialog, cursorType } = useDrawing();

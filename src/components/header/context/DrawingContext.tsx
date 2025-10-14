@@ -96,7 +96,7 @@ export const DrawingProvider = ({
 	// Update browser tab name
 	// Close side dialog
 	useEffect(() => {
-		const defaultCursor = defaultCursorByTab[activeTab] ?? CursorTypes.Select;
+		const defaultCursor = defaultCursorByTab[activeTab] ?? CursorTypes.Area;
 		setCursorType(defaultCursor);
 
 		const currentTab = DrawingTabList.find((tab) => tab.id === activeTab);

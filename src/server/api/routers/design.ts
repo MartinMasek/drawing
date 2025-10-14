@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { textCreateSchema, textUpdateSchema } from "~/server/types/text-types";
 import type { CanvasShape } from "~/types/drawing";
 
 export const designRouter = createTRPCRouter({
@@ -179,61 +180,18 @@ export const designRouter = createTRPCRouter({
 
 	// Create text
 	createText: publicProcedure
-		.input(
-			z.object({
-				designId: z.string().min(1),
-				xPos: z.number(),
-				yPos: z.number(),
-				text: z.string().min(1),
-				fontSize: z.number().min(1),
-				isBold: z.boolean(),
-				isItalic: z.boolean(),
-				textColor: z.string().min(1),
-				backgroundColor: z.string().min(1),
-			}),
-		)
+		.input(textCreateSchema)
 		.mutation(async ({ ctx, input }) => {
 			return ctx.db.text.create({
-				data: {
-					xPos: input.xPos,
-					yPos: input.yPos,
-					text: input.text,
-					fontSize: input.fontSize,
-					isBold: input.isBold,
-					isItalic: input.isItalic,
-					textColor: input.textColor,
-					backgroundColor: input.backgroundColor,
-					designId: input.designId,
-				},
+				data: input,
 			});
 		}),
 	updateText: publicProcedure
-		.input(
-			z.object({
-				id: z.string().min(1),
-				xPos: z.number(),
-				yPos: z.number(),
-				text: z.string().min(1),
-				fontSize: z.number().min(1),
-				isBold: z.boolean(),
-				isItalic: z.boolean(),
-				textColor: z.string().min(1),
-				backgroundColor: z.string().min(1),
-			}),
-		)
+		.input(textUpdateSchema)
 		.mutation(async ({ ctx, input }) => {
 			return ctx.db.text.update({
 				where: { id: input.id },
-				data: {
-					xPos: input.xPos,
-					yPos: input.yPos,
-					text: input.text,
-					fontSize: input.fontSize,
-					isBold: input.isBold,
-					isItalic: input.isItalic,
-					textColor: input.textColor,
-					backgroundColor: input.backgroundColor,
-				},
+				data: input,
 			});
 		}),
 

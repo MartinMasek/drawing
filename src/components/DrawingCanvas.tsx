@@ -7,15 +7,15 @@ import { useCanvasNavigation } from "../hooks/useCanvasNavigation";
 import { useCreateShape } from "../hooks/useCreateShape";
 import { useUpdateShape } from "../hooks/useUpdateShape";
 import { useState } from "react";
-import CursorPanel from "./drawing-old/CursorPanel";
-import DebugSidePanel from "./drawing-old/DebugSidePanel";
-import SidePanel from "./drawing-old/SidePanel";
-import { useCursorLogic } from "./drawing-old/hooks/useCursorLogic";
+import CursorPanel from "./CursorPanel";
+import DebugSidePanel from "./DebugSidePanel";
+import SidePanel from "./SidePanel";
+import { useCursorLogic } from "../hooks/useCursorLogic";
 import { useDrawing } from "./header/context/DrawingContext";
 import { useShape } from "./header/context/ShapeContext";
 import { CursorTypes } from "./header/header/drawing-types";
 import CanvasTextInput from "./canvasTextInput/CanvasTextInput";
-import { useText } from "./drawing-old/hooks/useText";
+import { useText } from "../hooks/useText";
 
 interface DrawingCanvasProps {
 	shapes?: ReadonlyArray<CanvasShape>;
@@ -156,7 +156,7 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 		currentTextPos,
 		setNewTextPos,
 		allTexts,
-	} = useText(designId);
+	} = useText(designId ?? "");
 
 	// Cursor logic and state
 	const { isInteractiveCursor, getCursor: getCursorFromHook } = useCursorLogic({

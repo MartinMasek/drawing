@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { CursorTypes } from "../../header/header/drawing-types";
+import { CursorTypes } from "../components/header/header/drawing-types";
 import type { CanvasText } from "~/types/drawing";
 
 interface UseCursorLogicProps {

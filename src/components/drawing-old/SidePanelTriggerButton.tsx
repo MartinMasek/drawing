@@ -13,7 +13,7 @@ const SidePanelTriggerButton: FC = () => {
 		useDrawing();
 	if (
 		cursorType === CursorTypes.Text ||
-		cursorType === CursorTypes.Select ||
+		cursorType === CursorTypes.Area ||
 		cursorType === CursorTypes.Package
 	)
 		return null;

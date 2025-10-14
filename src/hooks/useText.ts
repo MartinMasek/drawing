@@ -3,30 +3,17 @@ import { useState, useCallback } from "react";
 import type { CanvasTextData, CanvasText } from "~/types/drawing";
 import { api } from "~/utils/api";
 
-export const useText = (designId?: string) => {
+export const useText = (designId: string) => {
 	const utils = api.useUtils();
 
-	const { data: serverTexts = [] } = api.design.getAllTexts.useQuery(
-		{ id: designId ?? "" },
-		{ enabled: !!designId },
-	);
+	const { data: serverTexts = [] } = api.design.getAllTexts.useQuery({
+		id: designId,
+	});
 
-	const allTexts: CanvasText[] = serverTexts.map((text) => ({
-		id: text.id,
-		xPos: text.xPos,
-		yPos: text.yPos,
-		text: text.text,
-		fontSize: text.fontSize,
-		isBold: text.isBold,
-		isItalic: text.isItalic,
-		textColor: text.textColor,
-		backgroundColor: text.backgroundColor,
-	}));
+	const allTexts = serverTexts;
 
 	const createText = api.design.createText.useMutation({
 		onMutate: async (variables) => {
-			if (!designId) return;
-
 			await utils.design.getAllTexts.cancel();
 
 			const previousTexts = utils.design.getAllTexts.getData({ id: designId });
@@ -47,8 +34,6 @@ export const useText = (designId?: string) => {
 			return { previousTexts, optimisticText };
 		},
 		onError: (error, variables, context) => {
-			if (!designId) return;
-
 			if (context?.previousTexts) {
 				utils.design.getAllTexts.setData(
 					{ id: designId },
@@ -57,8 +42,6 @@ export const useText = (designId?: string) => {
 			}
 		},
 		onSuccess: (data, variables, context) => {
-			if (!designId) return;
-
 			// Update the optimistic text with the real ID from server
 			utils.design.getAllTexts.setData(
 				{ id: designId },
@@ -77,8 +60,6 @@ export const useText = (designId?: string) => {
 
 	const updateText = api.design.updateText.useMutation({
 		onMutate: async (variables) => {
-			if (!designId) return;
-
 			await utils.design.getAllTexts.cancel();
 
 			const previousTexts = utils.design.getAllTexts.getData({ id: designId });
@@ -94,8 +75,6 @@ export const useText = (designId?: string) => {
 			return { previousTexts };
 		},
 		onError: (error, variables, context) => {
-			if (!designId) return;
-
 			if (context?.previousTexts) {
 				utils.design.getAllTexts.setData(
 					{ id: designId },
@@ -110,8 +89,6 @@ export const useText = (designId?: string) => {
 
 	const deleteText = api.design.deleteText.useMutation({
 		onMutate: async (variables) => {
-			if (!designId) return;
-
 			await utils.design.getAllTexts.cancel();
 
 			const previousTexts = utils.design.getAllTexts.getData({ id: designId });
@@ -124,8 +101,6 @@ export const useText = (designId?: string) => {
 			return { previousTexts };
 		},
 		onError: (error, variables, context) => {
-			if (!designId) return;
-
 			if (context?.previousTexts) {
 				utils.design.getAllTexts.setData(
 					{ id: designId },
@@ -140,8 +115,6 @@ export const useText = (designId?: string) => {
 
 	const changeTextPosition = api.design.changeTextPosition.useMutation({
 		onMutate: async (variables) => {
-			if (!designId) return;
-
 			await utils.design.getAllTexts.cancel();
 
 			const previousTexts = utils.design.getAllTexts.getData({ id: designId });
@@ -159,8 +132,6 @@ export const useText = (designId?: string) => {
 			return { previousTexts };
 		},
 		onError: (error, variables, context) => {
-			if (!designId) return;
-
 			if (context?.previousTexts) {
 				utils.design.getAllTexts.setData(
 					{ id: designId },
@@ -203,13 +174,11 @@ export const useText = (designId?: string) => {
 				updateText.mutate({ id: editingText.id, ...textData });
 				setEditingText(null);
 			} else {
-				if (designId) {
-					createText.mutate({ designId, ...textData });
-					setNewTextPos(null);
-				}
+				createText.mutate({ designId, ...textData });
+				setNewTextPos(null);
 			}
 		},
-		[editingText, designId, updateText, createText],
+		[editingText, updateText, createText, designId],
 	);
 
 	const handleTextDragEnd = useCallback(

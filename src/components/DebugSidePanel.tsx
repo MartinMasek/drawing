@@ -2,8 +2,8 @@ import { IconBug } from "@tabler/icons-react";
 import { XIcon } from "lucide-react";
 import { type FC, useState } from "react";
 import type { Point } from "~/types/drawing";
-import { Icon } from "../header/header/Icon";
-import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
+import { Icon } from "./header/header/Icon";
 
 type DraftShape = {
 	startX: number;
@@ -19,7 +19,7 @@ interface DebugSidePanelProps {
 	draftShape: DraftShape | null;
 	canChangeDirectionNow: boolean;
 	actualyChangingDirectionNow: boolean;
-	lastDirection: 'up' | 'down' | 'left' | 'right' | null;
+	lastDirection: "up" | "down" | "left" | "right" | null;
 	onDebugModeChange: (enabled: boolean) => void;
 }
 
@@ -101,7 +101,7 @@ const DebugSidePanel: FC<DebugSidePanelProps> = ({
 								<div className="flex items-center justify-between rounded bg-white px-3 py-2">
 									<span className="font-medium text-sm">Last Direction:</span>
 									<span className="font-mono text-sm">
-										{lastDirection ?? 'N/A'}
+										{lastDirection ?? "N/A"}
 									</span>
 								</div>
 								<div className="flex items-center justify-between rounded bg-white px-3 py-2">
@@ -117,13 +117,17 @@ const DebugSidePanel: FC<DebugSidePanelProps> = ({
 									</span>
 								</div>
 								<div className="flex items-center justify-between rounded bg-white px-3 py-2">
-									<span className="font-medium text-sm">Direction Changes:</span>
+									<span className="font-medium text-sm">
+										Direction Changes:
+									</span>
 									<span className="font-mono text-sm">
 										{draftShape.changedDirectionPoints.length}
 									</span>
 								</div>
 								<div className="flex items-center justify-between rounded bg-white px-3 py-2">
-									<span className="font-medium text-sm">Can Change Direction:</span>
+									<span className="font-medium text-sm">
+										Can Change Direction:
+									</span>
 									<span
 										className={`font-mono text-sm ${canChangeDirectionNow ? "text-green-600" : "text-red-600"}`}
 									>
@@ -131,7 +135,9 @@ const DebugSidePanel: FC<DebugSidePanelProps> = ({
 									</span>
 								</div>
 								<div className="flex items-center justify-between rounded bg-white px-3 py-2">
-									<span className="font-medium text-sm">Actually Changing:</span>
+									<span className="font-medium text-sm">
+										Actually Changing:
+									</span>
 									<span
 										className={`font-mono text-sm ${actualyChangingDirectionNow ? "text-green-600" : "text-red-600"}`}
 									>
