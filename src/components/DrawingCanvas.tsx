@@ -241,7 +241,7 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 	const getCombinedCursor = (e?: KonvaEventObject<MouseEvent>) => {
 		// Drawing takes priority
 		if (isDrawing) {
-			return "crosshair";
+			return 'url("/cursors/draw_small.svg") 16 16, crosshair';
 		}
 
 		// Use our cursor logic for non-drawing states
