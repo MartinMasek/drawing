@@ -1,388 +1,230 @@
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useState } from "react";
-import type { CanvasShape, Point } from "~/types/drawing";
+import {
+	CardinalDirection,
+	type Coordinate,
+	DrawingAxis,
+} from "~/types/drawing";
 import {
 	SHAPE_DRAWING_DEFAULT_HEIGHT,
 	SHAPE_DRAWING_MIN_DISTANCE,
 } from "~/utils/canvas-constants";
 
-type DraftShape = {
+export type PreviewShape = {
 	startX: number;
 	startY: number;
 	currentX: number;
 	currentY: number;
-	changedDirectionPoints: Array<{ xPos: number; yPos: number }>;
-	direction: "horizontal" | "vertical";
+	changedDirectionPoints: Coordinate[];
+	direction: DrawingAxis;
 };
 
-const canChangeDirection = (
-	point1: { xPos: number; yPos: number },
-	point2: { xPos: number; yPos: number },
-	direction: "horizontal" | "vertical",
-) => {
-	if (direction === "horizontal") {
-		return Math.abs(point1.xPos - point2.xPos) > SHAPE_DRAWING_MIN_DISTANCE;
-	}
-	return Math.abs(point1.yPos - point2.yPos) > SHAPE_DRAWING_MIN_DISTANCE;
+type CanvasPoint = {
+	x: number;
+	y: number;
 };
 
-const actualyChangingDirection = (
-	canChangeDirection: boolean,
-	direction: "horizontal" | "vertical",
-	currentX: number,
-	currentY: number,
-	lastX: number,
-	lastY: number,
-) => {
-	if (!canChangeDirection) return false;
 
-	// is current distance out of minimal height?
-	if (direction === "vertical") {
-		return Math.abs(currentX - lastX) >= SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-	}
-	return Math.abs(currentY - lastY) >= SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
+const HALF_HEIGHT = SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
+
+/**
+ * Get the perpendicular axis for the given axis
+ */
+const getPerpendicularAxis = (axis: DrawingAxis): DrawingAxis => {
+	return axis === DrawingAxis.Horizontal
+		? DrawingAxis.Vertical
+		: DrawingAxis.Horizontal;
 };
 
-const returnedFromChangedDirection = (
-	shape: DraftShape,
-	lastX: number,
-	lastY: number,
-) => {
-	if (shape.changedDirectionPoints.length > 0) {
-		if (shape.direction === "horizontal") {
-			return (
-				Math.abs(getLastChangedStartPoint(shape).xPos - lastX) <
-				SHAPE_DRAWING_DEFAULT_HEIGHT / 2
-			);
-		}
-		return (
-			Math.abs(getLastChangedStartPoint(shape).yPos - lastY) <
-			SHAPE_DRAWING_DEFAULT_HEIGHT / 2
-		);
+/**
+ * Get the last direction change point, or the starting point if no changes yet
+ */
+const getLastDirectionPoint = (shape: PreviewShape): Coordinate => {
+	const lastPoint = shape.changedDirectionPoints[shape.changedDirectionPoints.length - 1];
+	
+	if (lastPoint) {
+		return lastPoint;
 	}
-	return false;
-};
-
-const getLastChangedStartPoint = (shape: DraftShape) => {
-	if (shape.changedDirectionPoints.length > 0) {
-		const lastChangedDirectionPoint =
-			shape.changedDirectionPoints[shape.changedDirectionPoints.length - 1];
-		return {
-			xPos: lastChangedDirectionPoint?.xPos || shape.startX,
-			yPos: lastChangedDirectionPoint?.yPos || shape.startY,
-		};
-	}
+	
 	return {
 		xPos: shape.startX,
 		yPos: shape.startY,
 	};
 };
 
-const getCurrentStartPointForDirectionChange = (shape: DraftShape) => {
-	if (shape.changedDirectionPoints.length > 0) {
-		const lastChangedDirectionPoint =
-			shape.changedDirectionPoints[shape.changedDirectionPoints.length - 2];
-		return {
-			xPos: lastChangedDirectionPoint?.xPos || shape.startX,
-			yPos: lastChangedDirectionPoint?.yPos || shape.startY,
-		};
-	}
-	return {
-		xPos: shape.startX,
-		yPos: shape.startY,
-	};
+/**
+ * Check if the minimum distance has been traveled to allow a direction change
+ */
+const hasMinimumDistanceForDirectionChange = (
+	from: Coordinate,
+	to: Coordinate,
+	currentAxis: DrawingAxis,
+): boolean => {
+	const distance = currentAxis === DrawingAxis.Horizontal
+		? Math.abs(from.xPos - to.xPos)
+		: Math.abs(from.yPos - to.yPos);
+	
+	return distance > SHAPE_DRAWING_MIN_DISTANCE;
 };
 
-const getDraftShapeDirectionChangedPoints = (shape: DraftShape) => {
-	// for each point return two points with default height on x or y based on index, if index is even then drawinf is horizontal, if index is odd then drawing is vertical
-	return shape.changedDirectionPoints.map((point, index) => {
-		return [
-			{
-				id: `draft${point.xPos}-${point.yPos}`,
-				xPos: point.xPos + SHAPE_DRAWING_DEFAULT_HEIGHT / 2,
-				yPos:
-					getCurrentStartPointForDirectionChange(shape).yPos +
-					SHAPE_DRAWING_DEFAULT_HEIGHT / 2,
-			},
-			{
-				id: `draft${point.xPos}-${point.yPos}-2`,
-				xPos: point.xPos + SHAPE_DRAWING_DEFAULT_HEIGHT / 2,
-				yPos:
-					getCurrentStartPointForDirectionChange(shape).yPos -
-					SHAPE_DRAWING_DEFAULT_HEIGHT / 2,
-			},
-		];
-	});
+/**
+ * Check if user has moved far enough perpendicular to current axis to trigger direction change
+ */
+const shouldTriggerDirectionChange = (
+	hasMinDistance: boolean,
+	currentAxis: DrawingAxis,
+	currentPoint: CanvasPoint,
+	lastPoint: Coordinate,
+): boolean => {
+	if (!hasMinDistance) return false;
+
+	// Check perpendicular axis movement (the axis we'd switch to)
+	const perpendicularDistance = currentAxis === DrawingAxis.Vertical
+		? Math.abs(currentPoint.x - lastPoint.xPos)
+		: Math.abs(currentPoint.y - lastPoint.yPos);
+	
+	return perpendicularDistance > HALF_HEIGHT;
 };
 
-const getFixingPointsUp = (
-	shape: DraftShape,
-	currentX: number,
-	currentY: number,
-) => {
-	return shape.changedDirectionPoints.map((point, index) => {
-		const moveDirection: "up" | "down" =
-			currentY < point.yPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2 ? "up" : "down";
-		if (moveDirection === "up") {
-			return [
-				{
-					id: `Fixing point ${index}`,
-					xPos: point.xPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2,
-					yPos:
-						getCurrentStartPointForDirectionChange(shape).yPos -
-						SHAPE_DRAWING_DEFAULT_HEIGHT / 2,
-				},
-			];
-		}
-	});
+/**
+ * Check if user has backtracked close enough to undo the last direction change
+ */
+const shouldRevertDirectionChange = (
+	shape: PreviewShape,
+	currentPoint: CanvasPoint,
+): boolean => {
+	if (shape.changedDirectionPoints.length === 0) return false;
+
+	const lastPoint = getLastDirectionPoint(shape);
+	const distance = shape.direction === DrawingAxis.Horizontal
+		? Math.abs(lastPoint.xPos - currentPoint.x)
+		: Math.abs(lastPoint.yPos - currentPoint.y);
+	
+	return distance < HALF_HEIGHT;
 };
 
-const getFixingPointsDown = (
-	shape: DraftShape,
-	currentX: number,
-	currentY: number,
-) => {
-	return shape.changedDirectionPoints.map((point, index) => {
-		const moveDirection: "up" | "down" =
-			currentY < point.yPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2 ? "up" : "down";
-		if (moveDirection === "down") {
-			return [
-				{
-					id: `Fixing point ${index}`,
-					xPos: point.xPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2,
-					yPos:
-						getCurrentStartPointForDirectionChange(shape).yPos +
-						SHAPE_DRAWING_DEFAULT_HEIGHT / 2,
-				},
-			];
-		}
-	});
-};
-
+/**
+ * Determine the cardinal direction from one point to another based on segment index
+ * Even indices = horizontal segments, odd indices = vertical segments
+ */
 const getPointDirection = (
-	currentPoint: { xPos: number; yPos: number },
-	nextPoint: { xPos: number; yPos: number },
+	currentPoint: Coordinate,
+	nextPoint: Coordinate,
 	index: number,
-): "up" | "down" | "left" | "right" | null => {
+): CardinalDirection | null => {
 	if (!currentPoint || !nextPoint) return null;
+	
+	// Even indices are horizontal segments, odd indices are vertical
 	if (index % 2 === 0) {
-		return currentPoint.xPos > nextPoint.xPos ? "left" : "right";
+		return currentPoint.xPos > nextPoint.xPos
+			? CardinalDirection.Left
+			: CardinalDirection.Right;
 	}
-	return currentPoint.yPos > nextPoint.yPos ? "up" : "down";
+	
+	return currentPoint.yPos > nextPoint.yPos
+		? CardinalDirection.Up
+		: CardinalDirection.Down;
 };
 
-const getOuterXPos = (
-	currentPoint: { xPos: number; yPos: number },
-	nextPoint: { xPos: number; yPos: number },
-	previousPoint: { xPos: number; yPos: number },
+/**
+ * Calculate offset position for inner/outer edge points based on direction transitions
+ * This creates the perpendicular offset needed to form the shape's width
+ */
+const calculateOffsetPoint = (
+	current: Coordinate,
+	next: Coordinate,
+	previous: Coordinate,
 	index: number,
-) => {
-	const nextDirection = getPointDirection(currentPoint, nextPoint, index + 1);
-	const previousDirection = getPointDirection(
-		previousPoint,
-		currentPoint,
-		index,
-	);
-	console.log(nextDirection, previousDirection, index);
-	// return index % 2 === 0
-	// 	? point.xPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2
-	// 	: point.xPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-	if (previousDirection === "right") {
-		if (nextDirection === "up") {
-			return currentPoint.xPos + SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-		}
-		return currentPoint.xPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
+	isOuter: boolean,
+): Coordinate => {
+	const nextDir = getPointDirection(current, next, index + 1);
+	const prevDir = getPointDirection(previous, current, index);
+	
+	const sign = isOuter ? 1 : -1;
+	
+	// Calculate X offset based on direction transitions
+	let xMultiplier = 1;
+	if (
+		prevDir === CardinalDirection.Right ||
+		prevDir === CardinalDirection.Left
+	) {
+		xMultiplier = nextDir === CardinalDirection.Up ? 1 : -1;
+	} else if (prevDir === CardinalDirection.Down) {
+		xMultiplier = -1;
+	}
+	
+	// Calculate Y offset based on direction transitions
+	let yMultiplier = -1;
+	if (prevDir === CardinalDirection.Right) {
+		yMultiplier = 1;
+	} else if (prevDir === CardinalDirection.Left) {
+		yMultiplier = -1;
+	} else if (
+		prevDir === CardinalDirection.Down ||
+		prevDir === CardinalDirection.Up
+	) {
+		yMultiplier = nextDir === CardinalDirection.Right ? 1 : -1;
 	}
 
-	if (previousDirection === "left") {
-		if (nextDirection === "up") {
-			return currentPoint.xPos + SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-		}
-		return currentPoint.xPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-	}
-
-	if (previousDirection === "down") {
-		if (nextDirection === "right") {
-			return currentPoint.xPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-		}
-		return currentPoint.xPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-	}
-
-	return currentPoint.xPos + SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-};
-
-const getOuterYPos = (
-	currentPoint: { xPos: number; yPos: number },
-	nextPoint: { xPos: number; yPos: number },
-	previousPoint: { xPos: number; yPos: number },
-	index: number,
-) => {
-	const nextDirection = getPointDirection(currentPoint, nextPoint, index + 1);
-	const previousDirection = getPointDirection(
-		previousPoint,
-		currentPoint,
-		index,
-	);
-	// return index % 2 === 0
-	// 	? point.yPos + SHAPE_DRAWING_DEFAULT_HEIGHT / 2
-	// 	: point.yPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-	if (previousDirection === "right") {
-		if (nextDirection === "up") {
-			return currentPoint.yPos + SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-		}
-		return currentPoint.yPos + SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-	}
-
-	if (previousDirection === "left") {
-		if (nextDirection === "up") {
-			return currentPoint.yPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-		}
-		return currentPoint.yPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-	}
-
-	if (previousDirection === "down") {
-		if (nextDirection === "right") {
-			return currentPoint.yPos + SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-		}
-		return currentPoint.yPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-	}
-
-	if (previousDirection === "up") {
-		if (nextDirection === "right") {
-			return currentPoint.yPos + SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-		}
-		return currentPoint.yPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-	}
-	return currentPoint.yPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-};
-
-const getInnerXPos = (
-	currentPoint: { xPos: number; yPos: number },
-	nextPoint: { xPos: number; yPos: number },
-	previousPoint: { xPos: number; yPos: number },
-	index: number,
-) => {
-	const nextDirection = getPointDirection(currentPoint, nextPoint, index + 1);
-	const previousDirection = getPointDirection(
-		previousPoint,
-		currentPoint,
-		index,
-	);
-	console.log(nextDirection, previousDirection, index);
-	// return index % 2 === 0
-	// 	? point.xPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2
-	// 	: point.xPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-	if (previousDirection === "right") {
-		if (nextDirection === "up") {
-			return currentPoint.xPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-		}
-		return currentPoint.xPos + SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-	}
-
-	if (previousDirection === "left") {
-		if (nextDirection === "up") {
-			return currentPoint.xPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-		}
-		return currentPoint.xPos + SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-	}
-
-	if (previousDirection === "down") {
-		if (nextDirection === "right") {
-			return currentPoint.xPos + SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-		}
-		return currentPoint.xPos + SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-	}
-
-	return currentPoint.xPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-};
-
-const getInnerYPos = (
-	currentPoint: { xPos: number; yPos: number },
-	nextPoint: { xPos: number; yPos: number },
-	previousPoint: { xPos: number; yPos: number },
-	index: number,
-) => {
-	const nextDirection = getPointDirection(currentPoint, nextPoint, index + 1);
-	const previousDirection = getPointDirection(
-		previousPoint,
-		currentPoint,
-		index,
-	);
-	// return index % 2 === 0
-	// 	? point.yPos + SHAPE_DRAWING_DEFAULT_HEIGHT / 2
-	// 	: point.yPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-	if (previousDirection === "right") {
-		if (nextDirection === "up") {
-			return currentPoint.yPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-		}
-		return currentPoint.yPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-	}
-
-	if (previousDirection === "left") {
-		if (nextDirection === "up") {
-			return currentPoint.yPos + SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-		}
-		return currentPoint.yPos + SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-	}
-
-	if (previousDirection === "down") {
-		if (nextDirection === "right") {
-			return currentPoint.yPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-		}
-		return currentPoint.yPos + SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-	}
-
-	if (previousDirection === "up") {
-		if (nextDirection === "right") {
-			return currentPoint.yPos - SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-		}
-		return currentPoint.yPos + SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-	}
-	return currentPoint.yPos + SHAPE_DRAWING_DEFAULT_HEIGHT / 2;
-};
-
-const getOuterPoints = (
-	currentPoint: { xPos: number; yPos: number },
-	nextPoint: { xPos: number; yPos: number },
-	previousPoint: { xPos: number; yPos: number },
-	index: number,
-) => {
 	return {
-		xPos: getOuterXPos(currentPoint, nextPoint, previousPoint, index),
-		yPos: getOuterYPos(currentPoint, nextPoint, previousPoint, index),
+		xPos: current.xPos + sign * xMultiplier * HALF_HEIGHT,
+		yPos: current.yPos + sign * yMultiplier * HALF_HEIGHT,
 	};
 };
 
-const getInnerPoints = (
-	currentPoint: { xPos: number; yPos: number },
-	nextPoint: { xPos: number; yPos: number },
-	previousPoint: { xPos: number; yPos: number },
-	index: number,
-) => {
-	return {
-		xPos: getInnerXPos(currentPoint, nextPoint, previousPoint, index),
-		yPos: getInnerYPos(currentPoint, nextPoint, previousPoint, index),
-	};
+/**
+ * Calculate the end cap points for the trailing edge of the shape
+ * Forms the perpendicular termination at the current drawing position
+ */
+const getEndCapPoints = (
+	currentX: number,
+	currentY: number,
+	direction: DrawingAxis,
+	lastDirection: CardinalDirection | null,
+): Coordinate[] => {
+	if (direction === DrawingAxis.Horizontal) {
+		const yOffset = lastDirection === CardinalDirection.Left ? -HALF_HEIGHT : HALF_HEIGHT;
+		return [
+			{ xPos: currentX, yPos: currentY + yOffset },
+			{ xPos: currentX, yPos: currentY - yOffset },
+		];
+	}
+
+	// Vertical direction
+	const xOffset = lastDirection === CardinalDirection.Down ? -HALF_HEIGHT : HALF_HEIGHT;
+	return [
+		{ xPos: currentX + xOffset, yPos: currentY },
+		{ xPos: currentX - xOffset, yPos: currentY },
+	];
 };
 
+/**
+ * Hook for interactive orthogonal shape drawing on a canvas
+ * 
+ * Enables users to draw shapes with alternating horizontal/vertical segments.
+ * The shape automatically switches between axes when the user moves perpendicular
+ * to the current drawing direction, creating smooth L-shaped or zigzag patterns.
+ * 
+ * @param zoom - Current zoom level as a percentage (100 = 1x)
+ * @param canvasPosition - Current pan offset of the canvas {x, y}
+ * @param onComplete - Callback invoked when drawing completes with final shape data
+ * @returns Drawing state and event handlers for canvas integration
+ */
 export function useShapeDrawing(
-	shapes: ReadonlyArray<CanvasShape>,
 	zoom: number,
 	canvasPosition: { x: number; y: number },
 	onComplete?: (shape: {
 		xPos: number;
 		yPos: number;
-		points: Array<{ xPos: number; yPos: number }>;
+		points: Coordinate[];
 	}) => void,
 ) {
-	const [draftShape, setDraftShape] = useState<DraftShape | null>(null);
+	const [previewShape, setPreviewShape] = useState<PreviewShape | null>(null);
 	const [isDrawing, setIsDrawing] = useState(false);
 	const [canChangeDirectionNow, setCanChangeDirectionNow] = useState(false);
-	const [actualyChangingDirectionNow, setActualyChangingDirectionNow] =
-		useState(false);
 
-	/** Convert screen coordinates to canvas coordinates */
-	const screenToCanvas = (screenX: number, screenY: number) => {
+	/** Convert screen coordinates to canvas coordinates accounting for zoom and pan */
+	const screenToCanvas = (screenX: number, screenY: number): CanvasPoint => {
 		const scale = zoom / 100;
 		return {
 			x: (screenX - canvasPosition.x) / scale,
@@ -404,17 +246,109 @@ export function useShapeDrawing(
 
 		// Start drawing new rectangle
 		setIsDrawing(true);
-		setDraftShape({
+		setPreviewShape({
 			startX: canvasPoint.x,
 			startY: canvasPoint.y,
 			currentX: canvasPoint.x,
 			currentY: canvasPoint.y,
 			changedDirectionPoints: [],
-			direction: "horizontal",
+			direction: DrawingAxis.Horizontal,
 		});
 	};
 
+	/**
+	 * Add a new direction change point and switch to perpendicular axis
+	 * Locks the change point to the current axis for clean orthogonal transitions
+	 */
+	const applyDirectionChange = (
+		shape: PreviewShape,
+		canvasPoint: CanvasPoint,
+	): PreviewShape => {
+		const lastPoint = getLastDirectionPoint(shape);
+		
+		// Lock change point to current axis
+		const changePoint: Coordinate = {
+			xPos: shape.direction === DrawingAxis.Horizontal
+				? canvasPoint.x
+				: lastPoint.xPos,
+			yPos: shape.direction === DrawingAxis.Vertical
+				? canvasPoint.y
+				: lastPoint.yPos,
+		};
+		
+		const newDirection = getPerpendicularAxis(shape.direction);
+		
+		// Position on new axis follows mouse, locked axis uses change point
+		const newPosition: CanvasPoint = {
+			x: newDirection === DrawingAxis.Horizontal ? canvasPoint.x : changePoint.xPos,
+			y: newDirection === DrawingAxis.Vertical ? canvasPoint.y : changePoint.yPos,
+		};
+		
+		return {
+			...shape,
+			changedDirectionPoints: [...shape.changedDirectionPoints, changePoint],
+			direction: newDirection,
+			currentX: newPosition.x,
+			currentY: newPosition.y,
+		};
+	};
+
+	/**
+	 * Remove the last direction change point and revert to previous axis
+	 * Triggered when user backtracks close to the last change point
+	 */
+	const revertLastDirectionChange = (
+		shape: PreviewShape,
+		canvasPoint: CanvasPoint,
+	): PreviewShape => {
+		const newChangedPoints = shape.changedDirectionPoints.slice(0, -1);
+		const newDirection = getPerpendicularAxis(shape.direction);
+		
+		// Find the anchor point after removing the last direction change
+		const anchorPoint: Coordinate = newChangedPoints[newChangedPoints.length - 1] ?? {
+			xPos: shape.startX,
+			yPos: shape.startY,
+		};
+		
+		// Position on reverted axis follows mouse, locked axis uses anchor
+		const newPosition: CanvasPoint = {
+			x: newDirection === DrawingAxis.Horizontal ? canvasPoint.x : anchorPoint.xPos,
+			y: newDirection === DrawingAxis.Vertical ? canvasPoint.y : anchorPoint.yPos,
+		};
+		
+		return {
+			...shape,
+			direction: newDirection,
+			changedDirectionPoints: newChangedPoints,
+			currentX: newPosition.x,
+			currentY: newPosition.y,
+		};
+	};
+
+	/**
+	 * Update current position while continuing in the same direction
+	 * Follows mouse on active axis, remains locked on perpendicular axis
+	 */
+	const updatePositionInCurrentDirection = (
+		shape: PreviewShape,
+		canvasPoint: CanvasPoint,
+	): PreviewShape => {
+		const anchorPoint = getLastDirectionPoint(shape);
+		
+		return {
+			...shape,
+			currentX: shape.direction === DrawingAxis.Horizontal
+				? canvasPoint.x
+				: anchorPoint.xPos,
+			currentY: shape.direction === DrawingAxis.Vertical
+				? canvasPoint.y
+				: anchorPoint.yPos,
+		};
+	};
+
 	const handleDrawMove = (e: KonvaEventObject<MouseEvent>) => {
+		if (!previewShape) return;
+		
 		const stage = e.target.getStage();
 		if (!stage) return;
 
@@ -422,84 +356,56 @@ export function useShapeDrawing(
 		if (!pointer) return;
 
 		const canvasPoint = screenToCanvas(pointer.x, pointer.y);
+		const lastPoint = getLastDirectionPoint(previewShape);
 
-		if (!draftShape) return;
-
-		const canChangeDirectionNowValue = canChangeDirection(
-			{
-				xPos: getLastChangedStartPoint(draftShape).xPos,
-				yPos: getLastChangedStartPoint(draftShape).yPos,
-			},
+		// Check if minimum distance traveled to allow direction change
+		const hasMinDistance = hasMinimumDistanceForDirectionChange(
+			lastPoint,
 			{ xPos: canvasPoint.x, yPos: canvasPoint.y },
-			draftShape.direction,
+			previewShape.direction,
 		);
-		setCanChangeDirectionNow(canChangeDirectionNowValue);
+		setCanChangeDirectionNow(hasMinDistance);
 
-		const actualyChangingDirectionNowValue = actualyChangingDirection(
-			canChangeDirectionNowValue,
-			draftShape.direction,
-			canvasPoint.x,
-			canvasPoint.y,
-			getLastChangedStartPoint(draftShape).xPos,
-			getLastChangedStartPoint(draftShape).yPos,
+		// Check if user is triggering a direction change
+		const shouldChange = shouldTriggerDirectionChange(
+			hasMinDistance,
+			previewShape.direction,
+			canvasPoint,
+			lastPoint,
 		);
-		setActualyChangingDirectionNow(actualyChangingDirectionNowValue);
 
-		if (actualyChangingDirectionNowValue) {
-			const xPos =
-				draftShape.direction === "horizontal"
-					? canvasPoint.x
-					: getLastChangedStartPoint(draftShape).xPos;
-			const yPos =
-				draftShape.direction === "vertical"
-					? canvasPoint.y
-					: getLastChangedStartPoint(draftShape).yPos;
-			setDraftShape({
-				...draftShape,
-				changedDirectionPoints: [
-					...draftShape.changedDirectionPoints,
-					{ xPos, yPos },
-				],
-				direction:
-					draftShape.direction === "horizontal" ? "vertical" : "horizontal",
-			});
-		} else if (
-			returnedFromChangedDirection(draftShape, canvasPoint.x, canvasPoint.y)
-		) {
-			setDraftShape({
-				...draftShape,
-				direction:
-					draftShape.direction === "horizontal" ? "vertical" : "horizontal",
-				changedDirectionPoints: draftShape.changedDirectionPoints.slice(0, -1),
-			});
+		// Check if user is reverting the last direction change
+		const shouldRevert = shouldRevertDirectionChange(previewShape, canvasPoint);
+
+		// Apply appropriate state update based on user action
+		if (shouldChange) {
+			setPreviewShape(applyDirectionChange(previewShape, canvasPoint));
+		} else if (shouldRevert) {
+			setPreviewShape(revertLastDirectionChange(previewShape, canvasPoint));
 		} else {
-			setDraftShape({
-				...draftShape,
-				currentX:
-					draftShape.direction === "horizontal"
-						? canvasPoint.x
-						: getLastChangedStartPoint(draftShape).xPos,
-				currentY:
-					draftShape.direction === "vertical"
-						? canvasPoint.y
-						: getLastChangedStartPoint(draftShape).yPos,
-			});
+			setPreviewShape(updatePositionInCurrentDirection(previewShape, canvasPoint));
 		}
 	};
 
 	const handleDrawEnd = () => {
-		// If we have a valid draft shape, call onComplete before clearing
-		if (draftShape && onComplete) {
-			const draftBounds = getDraftBounds();
-			if (draftBounds && draftBounds.length > 0) {
-				// Find the bounding box to determine shape position
-				const xPositions = draftBounds.map((p) => p.xPos);
-				const yPositions = draftBounds.map((p) => p.yPos);
+		if (!previewShape) {
+			setIsDrawing(false);
+			setCanChangeDirectionNow(false);
+			return;
+		}
+
+		// Finalize shape if we have valid bounds and a completion callback
+		if (onComplete) {
+			const bounds = getPreviewBounds();
+			if (bounds && bounds.length > 0) {
+				// Calculate bounding box to determine shape origin
+				const xPositions = bounds.map((p) => p.xPos);
+				const yPositions = bounds.map((p) => p.yPos);
 				const minX = Math.min(...xPositions);
 				const minY = Math.min(...yPositions);
 
-				// Convert absolute points to relative points (relative to shape origin)
-				const relativePoints = draftBounds.map((p) => ({
+				// Convert absolute coordinates to relative coordinates
+				const relativePoints = bounds.map((p) => ({
 					xPos: p.xPos - minX,
 					yPos: p.yPos - minY,
 				}));
@@ -512,181 +418,105 @@ export function useShapeDrawing(
 			}
 		}
 
-		setDraftShape(null);
+		// Reset drawing state
+		setPreviewShape(null);
 		setIsDrawing(false);
 		setCanChangeDirectionNow(false);
-		setActualyChangingDirectionNow(false);
 	};
 
-	const getCursor = (e: KonvaEventObject<MouseEvent>): string => {
-		if (isDrawing) return "crosshair";
-		return "default";
+
+	/** Get the appropriate cursor style based on drawing state */
+	const getCursor = (): string => {
+		return isDrawing ? "crosshair" : "default";
 	};
 
-	const getLastDirection = (): "up" | "down" | "left" | "right" | null => {
-		if (!draftShape) return null;
+	/** Determine the cardinal direction of the current drawing segment */
+	const getLastDirection = (): CardinalDirection | null => {
+		if (!previewShape) return null;
 
-		if (draftShape.direction === "horizontal") {
-			return draftShape.currentX > getLastChangedStartPoint(draftShape).xPos
-				? "right"
-				: "left";
+		const anchorPoint = getLastDirectionPoint(previewShape);
+
+		if (previewShape.direction === DrawingAxis.Horizontal) {
+			return previewShape.currentX > anchorPoint.xPos
+				? CardinalDirection.Right
+				: CardinalDirection.Left;
 		}
-		return draftShape.currentY > getLastChangedStartPoint(draftShape).yPos
-			? "down"
-			: "up";
+		
+		return previewShape.currentY > anchorPoint.yPos
+			? CardinalDirection.Down
+			: CardinalDirection.Up;
 	};
 
-	const getDraftBounds = (): Array<Point> | null => {
-		if (!draftShape) return null;
+	/**
+	 * Calculate the polygon boundary points for the current preview shape
+	 * Forms a closed polygon with proper winding order for rendering
+	 */
+	const getPreviewBounds = (): Coordinate[] | null => {
+		if (!previewShape) return null;
 
 		const lastDirection = getLastDirection();
 
-		const isFirstShape = draftShape.changedDirectionPoints.length === 0;
+		// Calculate offset points along outer and inner edges at each direction change
+		const { outerPoints, innerPoints } = previewShape.changedDirectionPoints.reduce(
+			(acc, point, index) => {
+				// Next point is either the next direction change or current cursor position
+				const nextPoint = previewShape.changedDirectionPoints[index + 1] ?? {
+					xPos: previewShape.currentX,
+					yPos: previewShape.currentY,
+				};
+				
+				// Previous point is either the previous direction change or start position
+				const prevPoint = previewShape.changedDirectionPoints[index - 1] ?? {
+					xPos: previewShape.startX,
+					yPos: previewShape.startY,
+				};
 
-		const horizontalPoints = [
-			{
-				id: "draft3",
-				xPos: draftShape.currentX,
-				yPos:
-					draftShape.currentY +
-					(lastDirection === "left"
-						? -SHAPE_DRAWING_DEFAULT_HEIGHT / 2
-						: SHAPE_DRAWING_DEFAULT_HEIGHT / 2),
+				const outer = calculateOffsetPoint(point, nextPoint, prevPoint, index, true);
+				const inner = calculateOffsetPoint(point, nextPoint, prevPoint, index, false);
+
+				acc.outerPoints.push(outer);
+				acc.innerPoints.push(inner);
+
+				return acc;
 			},
-			{
-				id: "draft4",
-				xPos: draftShape.currentX,
-				yPos:
-					draftShape.currentY -
-					(lastDirection === "left"
-						? -SHAPE_DRAWING_DEFAULT_HEIGHT / 2
-						: SHAPE_DRAWING_DEFAULT_HEIGHT / 2),
-			},
+			{ outerPoints: [] as Coordinate[], innerPoints: [] as Coordinate[] },
+		);
+
+		// Calculate the end cap at the current cursor position
+		const endCapPoints = getEndCapPoints(
+			previewShape.currentX,
+			previewShape.currentY,
+			previewShape.direction,
+			lastDirection,
+		);
+
+		// Build closed polygon: start cap → outer edge → end cap → inner edge (reversed)
+		// Inner points are reversed to maintain counter-clockwise winding for proper rendering
+		const coordinates: Coordinate[] = [
+			{ xPos: previewShape.startX, yPos: previewShape.startY - HALF_HEIGHT },
+			{ xPos: previewShape.startX, yPos: previewShape.startY + HALF_HEIGHT },
+			...outerPoints,
+			...endCapPoints,
+			...innerPoints.reverse(),
 		];
 
-		const verticalPoints = [
-			{
-				id: "draft3",
-				xPos:
-					draftShape.currentX +
-					(lastDirection === "down"
-						? -SHAPE_DRAWING_DEFAULT_HEIGHT / 2
-						: SHAPE_DRAWING_DEFAULT_HEIGHT / 2),
-				yPos: draftShape.currentY,
-			},
-			{
-				id: "draft4",
-				xPos:
-					draftShape.currentX -
-					(lastDirection === "down"
-						? -SHAPE_DRAWING_DEFAULT_HEIGHT / 2
-						: SHAPE_DRAWING_DEFAULT_HEIGHT / 2),
-				yPos: draftShape.currentY,
-			},
-		];
-
-		const calculateAllPoints = (draftShape: DraftShape) => {
-			// connect each point and on each connect change direction from horizontal to vertical and vice versa. In end use current position and start connecting again backwards
-			const outerPoints = draftShape.changedDirectionPoints.map(
-				(point, index) => {
-					const outerPoint = getOuterPoints(
-						point,
-						draftShape.changedDirectionPoints[index + 1] || {
-							xPos: draftShape.currentX,
-							yPos: draftShape.currentY,
-						},
-						draftShape.changedDirectionPoints[index - 1] || {
-							xPos: draftShape.startX,
-							yPos: draftShape.startY,
-						},
-						index,
-					);
-					return {
-						id: `draft${point.xPos}-${point.yPos}`,
-						xPos: outerPoint.xPos,
-						yPos: outerPoint.yPos,
-					};
-				},
-			);
-
-			const innerPoints = draftShape.changedDirectionPoints.map(
-				(point, index) => {
-					const innerPoint = getInnerPoints(
-						point,
-						draftShape.changedDirectionPoints[index + 1] || {
-							xPos: draftShape.currentX,
-							yPos: draftShape.currentY,
-						},
-						draftShape.changedDirectionPoints[index - 1] || {
-							xPos: draftShape.startX,
-							yPos: draftShape.startY,
-						},
-						index,
-					);
-					return {
-						id: `draft${point.xPos}-${point.yPos}`,
-						xPos: innerPoint.xPos,
-						yPos: innerPoint.yPos,
-					};
-				},
-			);
-
-			const currentPoints =
-				draftShape.direction === "horizontal"
-					? horizontalPoints
-					: verticalPoints;
-			return [...outerPoints, ...currentPoints, ...innerPoints.reverse()];
-		};
-
-		const testPoints = [
-			{
-				id: "draft",
-				xPos: draftShape.startX,
-				yPos: draftShape.startY - SHAPE_DRAWING_DEFAULT_HEIGHT / 2,
-			},
-			{
-				id: "draft2",
-				xPos: draftShape.startX,
-				yPos: draftShape.startY + SHAPE_DRAWING_DEFAULT_HEIGHT / 2,
-			},
-			...calculateAllPoints(draftShape),
-
-			// const testPoints = [
-			// 	{
-			// 		id: "draft",
-			// 		xPos: draftShape.startX,
-			// 		yPos: draftShape.startY - SHAPE_DRAWING_DEFAULT_HEIGHT / 2,
-			// 	},
-			// 	{
-			// 		id: "draft2",
-			// 		xPos: draftShape.startX,
-			// 		yPos: draftShape.startY + SHAPE_DRAWING_DEFAULT_HEIGHT / 2,
-			// 	},
-			// 	...getDraftShapeDirectionChangedPoints(draftShape).flat(),
-			// 	...(draftShape.direction === "horizontal"
-			// 		? horizontalPoints
-			// 		: verticalPoints),
-			// 	...getFixingPointsUp(
-			// 		draftShape,
-			// 		draftShape.currentX,
-			// 		draftShape.currentY,
-			// 	).flat(),
-			// ].filter((point) => point !== undefined);
-		].filter((point) => point !== undefined);
-
-		return testPoints;
+		return coordinates;
 	};
 
 	return {
+		// Event handlers for Konva stage integration
 		handleDrawStart,
 		handleDrawMove,
 		handleDrawEnd,
+		
+		// Drawing state
 		isDrawing,
-		getCursor,
-		getDraftBounds,
-		draftShape,
+		previewShape,
 		canChangeDirectionNow,
-		actualyChangingDirectionNow,
+		
+		// Derived values
+		getCursor,
+		getPreviewBounds,
 		lastDirection: getLastDirection(),
 	};
 }
