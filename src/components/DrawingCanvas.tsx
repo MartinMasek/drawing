@@ -173,6 +173,12 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 		setHoveredId(null);
 	};
 
+	// Wrap handleEscape to clear hoveredId when text editing is cancelled
+	const handleEscapeWrapper = () => {
+		handleEscape();
+		setHoveredId(null);
+	};
+
 	const scale = zoom / 100;
 
 	const handleSelectShape = (shape: CanvasShape) => {
@@ -184,6 +190,13 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 
 	// Combined mouse handlers
 	const handleMouseDown = (e: KonvaEventObject<MouseEvent>) => {
+		// Reset text editing if clicking on empty canvas
+		if (editingText !== null && e.target === e.target.getStage()) {
+			setEditingText(null);
+			setHoveredId(null); // Clear hover state to reset cursor
+			return;
+		}
+
 		// Handle text cursor logic first
 		if (cursorType === CursorTypes.Text) {
 			handleTextMouseDown(e);
@@ -402,7 +415,7 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 					initialText={editingText}
 					onSave={handleSave}
 					onDelete={handleDelete}
-					onEscape={handleEscape}
+					onEscape={handleEscapeWrapper}
 				/>
 			)}
 		</div>
