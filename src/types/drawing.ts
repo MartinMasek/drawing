@@ -21,10 +21,30 @@ export interface Shape {
 	cutouts: Cutout[];
 }
 
+// Lightweight coordinate type without ID (for calculations and intermediate data)
+export type Coordinate = {
+	xPos: number;
+	yPos: number;
+};
+
+// Point with ID (for rendering and final data structures)
 export interface Point {
 	id: string;
 	xPos: number;
 	yPos: number;
+}
+
+// Drawing direction enums
+export enum DrawingAxis {
+	Horizontal = "horizontal",
+	Vertical = "vertical",
+}
+
+export enum CardinalDirection {
+	Up = "up",
+	Down = "down",
+	Left = "left",
+	Right = "right",
 }
 
 export interface Edge {
@@ -130,12 +150,11 @@ export interface Product {
 // Lightweight types for rendering on the canvas
 // Only fields required by the Konva layer are included
 // This will probably be removed when we need every field for the canvas at some point
-export type CanvasPoint = { xPos: number; yPos: number };
 export type CanvasShape = {
 	id: string;
 	xPos: number;
 	yPos: number;
 	rotation: number;
-	points: ReadonlyArray<CanvasPoint>;
-	materialId?: string
+	points: ReadonlyArray<Coordinate>;
+	materialId?: string;
 };

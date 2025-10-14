@@ -20,25 +20,29 @@ export default function Drawing() {
 		{ enabled: typeof designId === "string" },
 	);
 
+	if (isLoading) {
+		return <DrawingLoading />;
+	}
+
+	if (!design) {
+		return <div>Design not found</div>;
+	}
+
 	return (
 		<>
-			{isLoading ? (
-				<DrawingLoading />
-			) : (
-				<DrawingProvider>
-					<main className="flex min-h-screen flex-col overflow-hidden bg-white">
-						<ShapeProvider>
-							<DrawingHeader title={design?.name} />
-							<div
-								className="w-full overflow-hidden"
-								style={{ height: "calc(100vh - 56px)" }}
-							>
-								<DrawingCanvas shapes={design?.shapes} />
-							</div>
-						</ShapeProvider>
-					</main>
-				</DrawingProvider>
-			)}
+			<DrawingProvider>
+				<main className="flex min-h-screen flex-col overflow-hidden bg-white">
+					<ShapeProvider>
+						<DrawingHeader title={design.name} />
+						<div
+							className="w-full overflow-hidden"
+							style={{ height: "calc(100vh - 56px)" }}
+						>
+							<DrawingCanvas shapes={design.shapes} />
+						</div>
+					</ShapeProvider>
+				</main>
+			</DrawingProvider>
 		</>
 	);
 }

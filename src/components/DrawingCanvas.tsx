@@ -1,14 +1,14 @@
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import { Circle, Layer, Line, Rect, Stage } from "react-konva";
+import { Layer, Line, Stage } from "react-konva";
 import { useShapeDrawing } from "~/hooks/useShapeDrawing";
-import type { CanvasShape } from "~/types/drawing";
+import type { CanvasShape, Coordinate } from "~/types/drawing";
 import { useCanvasNavigation } from "../hooks/useCanvasNavigation";
 import { useCreateShape } from "../hooks/useCreateShape";
-import { useUpdateShape } from "../hooks/useUpdateShape";
 import CursorPanel from "./drawing-old/CursorPanel";
 import DebugSidePanel from "./drawing-old/DebugSidePanel";
+import DrawingPreview from "./canvasShapes/DrawingPreview";
 import SidePanel from "./drawing-old/SidePanel";
 import { useDrawing } from "./header/context/DrawingContext";
 import { useShape } from "./header/context/ShapeContext";
@@ -35,27 +35,10 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 	const [hoveredId, setHoveredId] = useState<string | null>(null);
 	const [dynamicCursor, setDynamicCursor] = useState<string>("default");
 	const [isDebugMode, setIsDebugMode] = useState(false);
-	// Track temporary shape updates during resize (before persisting to DB)
-	const [tempShapeUpdates, setTempShapeUpdates] = useState<
-		Map<
-			string,
-			{
-				xPos: number;
-				yPos: number;
-				points: Array<{ xPos: number; yPos: number }>;
-			}
-		>
-	>(new Map());
 
 	// Shape mutations
 	const createShapeMutation = useCreateShape(designId);
-	const updateShapeMutation = useUpdateShape(designId);
-
-	// Merge temporary updates with shapes for rendering
-	const displayShapes = shapes.map((shape) => {
-		const tempUpdate = tempShapeUpdates.get(shape.id);
-		return tempUpdate ? { ...shape, ...tempUpdate } : shape;
-	});
+	// const updateShapeMutation = useUpdateShape(designId);
 
 	const {
 		handleWheel,
@@ -67,7 +50,7 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 	const handleShapeComplete = (shape: {
 		xPos: number;
 		yPos: number;
-		points: Array<{ xPos: number; yPos: number }>;
+		points: Coordinate[];
 	}) => {
 		if (!designId) return;
 
@@ -80,59 +63,17 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 		});
 	};
 
-	const handleShapeUpdate = (
-		shapeId: string,
-		updates: {
-			xPos: number;
-			yPos: number;
-			points: Array<{ xPos: number; yPos: number }>;
-		},
-	) => {
-		// Update temporary state during drag for smooth visual feedback
-		setTempShapeUpdates((prev) => {
-			const newMap = new Map(prev);
-			newMap.set(shapeId, updates);
-			return newMap;
-		});
-	};
-
-	const handleShapeUpdateComplete = (
-		shapeId: string,
-		updates: {
-			xPos: number;
-			yPos: number;
-			points: Array<{ xPos: number; yPos: number }>;
-		},
-	) => {
-		// Clear temporary state and persist to database
-		setTempShapeUpdates((prev) => {
-			const newMap = new Map(prev);
-			newMap.delete(shapeId);
-			return newMap;
-		});
-
-		updateShapeMutation.mutate({
-			shapeId,
-			xPos: updates.xPos,
-			yPos: updates.yPos,
-			points: updates.points,
-		});
-	};
-
-
 	const {
 		handleDrawStart,
 		handleDrawMove,
 		handleDrawEnd,
 		getCursor,
-		getDraftBounds,
+		getPreviewBounds,
 		isDrawing,
-		draftShape,
+		previewShape,
 		canChangeDirectionNow,
-		actualyChangingDirectionNow,
 		lastDirection,
 	} = useShapeDrawing(
-		displayShapes,
 		zoom,
 		canvasPosition,
 		handleShapeComplete,
@@ -141,7 +82,7 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 	);
 
 	// Log draftBounds whenever it changes
-	const draftBounds = getDraftBounds();
+	const previewBounds = getPreviewBounds();
 
 	const scale = zoom / 100;
 
@@ -162,7 +103,7 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 
 	const handleMouseMove = (e: KonvaEventObject<MouseEvent>) => {
 		// Update cursor based on drawing state
-		const cursor = getCursor(e);
+		const cursor = getCursor();
 		setDynamicCursor(cursor);
 
 		// Handle drawing
@@ -189,10 +130,9 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 
 			{/* Debug Panel */}
 			<DebugSidePanel
-				draftBounds={draftBounds}
-				draftShape={draftShape}
+				previewBounds={previewBounds}
+				previewShape={previewShape}
 				canChangeDirectionNow={canChangeDirectionNow}
-				actualyChangingDirectionNow={actualyChangingDirectionNow}
 				lastDirection={lastDirection}
 				onDebugModeChange={setIsDebugMode}
 			/>
@@ -221,7 +161,7 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 				}}
 			>
 				<Layer>
-					{displayShapes.map((shape) => {
+					{shapes.map((shape) => {
 						const flattenedPoints: number[] = [];
 						for (const p of shape.points) {
 							// Add shape origin to each point. Rotation is ignored for now.
@@ -253,56 +193,11 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 						);
 					})}
 
-					{/* Draft rectangle preview */}
-					{(() => {
-						const draftBounds = getDraftBounds();
-						if (!draftBounds) return null;
-
-						return (
-							<>
-								<Line
-									key="draft"
-									points={draftBounds.flatMap((point) => [
-										point.xPos,
-										point.yPos,
-									])}
-									stroke="#2563EB"
-									strokeWidth={2}
-									dash={[5, 5]}
-									listening={false}
-									closed
-								/>
-
-								{/* Debug mode: Draw individual points in red */}
-								{isDebugMode &&
-									draftBounds.map((point) => (
-										<Circle
-											key={point.id}
-											x={point.xPos}
-											y={point.yPos}
-											radius={5}
-											fill="red"
-											listening={false}
-										/>
-									))}
-
-								{/* Debug mode: Draw direction change points in green */}
-								{isDebugMode &&
-									draftShape?.changedDirectionPoints.map((point) => (
-										<Circle
-											key={`direction-${point.xPos}-${point.yPos}`}
-											x={point.xPos}
-											y={point.yPos}
-											radius={8}
-											fill="green"
-											stroke="darkgreen"
-											strokeWidth={2}
-											listening={false}
-										/>
-									))}
-							</>
-						);
-					})()}
+				<DrawingPreview
+					bounds={previewBounds}
+					directionChangingPoints={previewShape?.changedDirectionPoints}
+					isDebugMode={isDebugMode}
+				/>
 				</Layer>
 			</Stage>
 		</div>
