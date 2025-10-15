@@ -15,6 +15,7 @@ import { useText } from "../hooks/useText";
 import CursorPanel from "./CursorPanel";
 import DebugSidePanel from "./DebugSidePanel";
 import DrawingPreview from "./canvasShapes/DrawingPreview";
+import ShapeEdgeMeasurements from "./canvasShapes/ShapeEdgeMeasurements";
 import SidePanel from "./SidePanel";
 import { useDrawing } from "./header/context/DrawingContext";
 import { useShape } from "./header/context/ShapeContext";
@@ -187,35 +188,50 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 				<Layer>
 					{shapes.map((shape) => {
 						const flattenedPoints: number[] = [];
+						const absolutePoints: Coordinate[] = [];
 						for (const p of shape.points) {
 							// Add shape origin to each point. Rotation is ignored for now.
-							flattenedPoints.push(p.xPos + shape.xPos, p.yPos + shape.yPos);
+							const absX = p.xPos + shape.xPos;
+							const absY = p.yPos + shape.yPos;
+							flattenedPoints.push(absX, absY);
+							absolutePoints.push({ xPos: absX, yPos: absY });
 						}
 
 						const isSelected = shape.id === selectedShape?.id;
 						const isHovered = shape.id === hoveredId && isInteractiveCursor;
 
 						return (
-							<Line
-								key={shape.id}
-								points={flattenedPoints}
-								stroke={
-									isSelected
-										? "#2563EB" // selected blue
-										: isHovered
-											? "#374151" // hover light blue
-											: "#9CA3AF" // default gray
-								}
-								fill={
-									isSelected ? "#EFF6FF" : isHovered ? "#F3F4F6" : "transparent"
-								}
-								strokeWidth={2}
-								closed
-								listening={!isDrawing}
-								onClick={() => !isDrawing && handleSelectShape(shape)}
-								onMouseEnter={() => !isDrawing && setHoveredId(shape.id)}
-								onMouseLeave={() => setHoveredId(null)}
-							/>
+							<>
+								<Line
+									key={shape.id}
+									points={flattenedPoints}
+									stroke={
+										isSelected
+											? "#2563EB" // selected blue
+											: isHovered
+												? "#374151" // hover light blue
+												: "#9CA3AF" // default gray
+									}
+									fill={
+										isSelected
+											? "#EFF6FF"
+											: isHovered
+												? "#F3F4F6"
+												: "transparent"
+									}
+									strokeWidth={2}
+									closed
+									listening={!isDrawing}
+									onClick={() => !isDrawing && handleSelectShape(shape)}
+									onMouseEnter={() => !isDrawing && setHoveredId(shape.id)}
+									onMouseLeave={() => setHoveredId(null)}
+								/>
+								{/* Edge measurements for each shape */}
+								<ShapeEdgeMeasurements
+									key={`measurements-${shape.id}`}
+									points={absolutePoints}
+								/>
+							</>
 						);
 					})}
 					{/* Render saved texts with optimistic updates */}

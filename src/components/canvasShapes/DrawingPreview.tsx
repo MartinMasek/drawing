@@ -1,11 +1,12 @@
 import { Circle, Line } from "react-konva";
 import type { Coordinate, Point } from "~/types/drawing";
+import ShapeEdgeMeasurements from "./ShapeEdgeMeasurements";
 
 type DrawingPreviewProps = {
 	bounds: Coordinate[] | null;
 	directionChangingPoints?: Coordinate[];
 	isDebugMode: boolean;
-}
+};
 
 /**
  * Renders the draft shape preview while drawing,
@@ -57,9 +58,11 @@ const DrawingPreview = ({
 						listening={false}
 					/>
 				))}
+
+			{/* Edge measurements for the preview shape */}
+			<ShapeEdgeMeasurements points={bounds} />
 		</>
 	);
 };
 
 export default DrawingPreview;
-
