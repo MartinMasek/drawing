@@ -78,24 +78,25 @@ model Design {
     id     String  @id @default(cuid())
     name   String
     shapes Shape[]
+    texts  Text[]
 }
 
 // A shape is a polygon with an origin and a set of points
 model Shape {
-    id         String   @id @default(cuid())
-    xPos       Float
-    yPos       Float
-    rotation   Float
-    designId   String
-    design     Design   @relation(fields: [designId], references: [id], onDelete: Cascade)
+    id       String @id @default(cuid())
+    xPos     Float
+    yPos     Float
+    rotation Float
+    designId String
+    design   Design @relation(fields: [designId], references: [id], onDelete: Cascade)
 
     // Points are allways ordered and on normalized coordinates. Position of shape is defined by xPos and yPos.
-    points     Point[] 
+    points  Point[]
     // When we defined some modification on edges we store them here
-    edges      Edge[]
+    edges   Edge[]
     // When we defined some modification on corners we store them here
-    corners    Corner[]
-    cutouts    Cutout[]
+    corners Corner[]
+    cutouts Cutout[]
 
     // We have to remember where we started and ended drawing the shape because from there we can start reshaping the shape
     startEdgeId String?
@@ -114,16 +115,31 @@ model Point {
 // #########################################################
 // IMPORTANT: Everything bellow this will be changed to match correct data model. We dont need it for now, Right now we only need to store points somewhere for demo
 // #########################################################
+
+model Text {
+    id              String  @id @default(cuid())
+    xPos            Float
+    yPos            Float
+    text            String
+    fontSize        Int
+    isBold          Boolean
+    isItalic        Boolean
+    textColor       String
+    backgroundColor String
+    designId        String
+    design          Design  @relation(fields: [designId], references: [id], onDelete: Cascade)
+}
+
 model Edge {
-    id                   String             @id @default(cuid())
-    shapeId              String
-    shape                Shape              @relation(fields: [shapeId], references: [id], onDelete: Cascade)
-    point1Id             String
-    point2Id             String
-    linkedService        String?
-    edgeShapes           EdgeShape[]
-    backsplashConfig     BacksplashConfig?
-    waterfallConfig      WaterfallConfig?
+    id               String            @id @default(cuid())
+    shapeId          String
+    shape            Shape             @relation(fields: [shapeId], references: [id], onDelete: Cascade)
+    point1Id         String
+    point2Id         String
+    linkedService    String?
+    edgeShapes       EdgeShape[]
+    backsplashConfig BacksplashConfig?
+    waterfallConfig  WaterfallConfig?
 }
 
 model EdgeShape {
@@ -140,56 +156,56 @@ model EdgeShape {
 }
 
 model Corner {
-    id                   String  @id @default(cuid())
-    pointId              String  @unique
-    point                Point   @relation(fields: [pointId], references: [id], onDelete: Cascade)
-    cornerModification   String
-    type                 String  // "Clip" | "BumpOut" | "None"
-    clip                 Float?
-    radius               Float
-    bumpInLength         Float?
-    bumpOutLength        Float?
-    bumpOutDepth         Float?
-    linkedService        String?
-    shapeId              String
-    shape                Shape   @relation(fields: [shapeId], references: [id], onDelete: Cascade)
+    id                 String  @id @default(cuid())
+    pointId            String  @unique
+    point              Point   @relation(fields: [pointId], references: [id], onDelete: Cascade)
+    cornerModification String
+    type               String // "Clip" | "BumpOut" | "None"
+    clip               Float?
+    radius             Float
+    bumpInLength       Float?
+    bumpOutLength      Float?
+    bumpOutDepth       Float?
+    linkedService      String?
+    shapeId            String
+    shape              Shape   @relation(fields: [shapeId], references: [id], onDelete: Cascade)
 }
 
 model Cutout {
-    id         String         @id @default(cuid())
+    id         String          @id @default(cuid())
     posX       Float
     posY       Float
     shapeId    String
-    shape      Shape          @relation(fields: [shapeId], references: [id], onDelete: Cascade)
-    configId   String         @unique
-    config     CutoutConfig   @relation(fields: [configId], references: [id], onDelete: Cascade)
+    shape      Shape           @relation(fields: [shapeId], references: [id], onDelete: Cascade)
+    configId   String          @unique
+    config     CutoutConfig    @relation(fields: [configId], references: [id], onDelete: Cascade)
     templateId String?
     template   CutoutTemplate? @relation(fields: [templateId], references: [id])
 }
 
 model CutoutTemplate {
-    id       String        @id @default(cuid())
+    id       String       @id @default(cuid())
     name     String
-    configId String        @unique
-    config   CutoutConfig  @relation(fields: [configId], references: [id], onDelete: Cascade)
+    configId String       @unique
+    config   CutoutConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
     cutouts  Cutout[]
 }
 
 model CutoutConfig {
-    id             String           @id @default(cuid())
-    sinkType       String           // "Undermount" | "Drop-in" | "Oval" | "Double"
-    shape          String           // "Rectangle" | "Oval" | "Double"
-    length         Float
-    width          Float
-    holeCount      Int
-    centerRules    String?          // TODO: JSON or separate model
-    faucetRules    String?          // TODO: JSON or separate model
-    productId      String
-    product        Product          @relation(fields: [productId], references: [id])
-    serviceId      String
-    service        Service          @relation(fields: [serviceId], references: [id])
-    cutout         Cutout?
-    template       CutoutTemplate?
+    id          String          @id @default(cuid())
+    sinkType    String // "Undermount" | "Drop-in" | "Oval" | "Double"
+    shape       String // "Rectangle" | "Oval" | "Double"
+    length      Float
+    width       Float
+    holeCount   Int
+    centerRules String? // TODO: JSON or separate model
+    faucetRules String? // TODO: JSON or separate model
+    productId   String
+    product     Product         @relation(fields: [productId], references: [id])
+    serviceId   String
+    service     Service         @relation(fields: [serviceId], references: [id])
+    cutout      Cutout?
+    template    CutoutTemplate?
 }
 
 model BacksplashConfig {

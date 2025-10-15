@@ -5,11 +5,11 @@ import {
 	IconTextSize,
 } from "@tabler/icons-react";
 import type { FC } from "react";
-import { useDrawing } from "../header/context/DrawingContext";
-import Button from "../header/header/Button";
-import { Divider } from "../header/header/Divider";
-import { Icon } from "../header/header/Icon";
-import { CursorTypes, DrawingTab } from "../header/header/drawing-types";
+import { useDrawing } from "./header/context/DrawingContext";
+import { CursorTypes, DrawingTab } from "./header/header/drawing-types";
+import Button from "./header/header/Button";
+import { Icon } from "./header/header/Icon";
+import { Divider } from "./header/header/Divider";
 
 const CursorPanel: FC = () => {
 	const { activeTab, cursorType, setCursorType } = useDrawing();
@@ -131,7 +131,7 @@ const CursorPanel: FC = () => {
 					</Icon>
 				</Button>
 			)}
-			<Divider />
+			<Divider className="border-[0.5px]" />
 			<Button
 				color={cursorType === CursorTypes.Text ? "primary" : "neutral"}
 				iconOnly
@@ -145,12 +145,13 @@ const CursorPanel: FC = () => {
 				</Icon>
 			</Button>
 			<Button
-				color={cursorType === CursorTypes.Select ? "primary" : "neutral"}
+				color={cursorType === CursorTypes.Area ? "primary" : "neutral"}
 				iconOnly
 				size="sm"
-				variant={cursorType === CursorTypes.Select ? "outlined" : "text"}
+				disabled={true}
+				variant={cursorType === CursorTypes.Area ? "outlined" : "text"}
 				className="h-[36px] w-[36px]"
-				onClick={() => setCursorType(CursorTypes.Select)}
+				onClick={() => setCursorType(CursorTypes.Area)}
 			>
 				<Icon size="md">
 					<IconMarquee2 />
@@ -160,6 +161,7 @@ const CursorPanel: FC = () => {
 				color={cursorType === CursorTypes.Package ? "primary" : "neutral"}
 				iconOnly
 				size="sm"
+				disabled={true}
 				variant={cursorType === CursorTypes.Package ? "outlined" : "text"}
 				className="h-[36px] w-[36px]"
 				onClick={() => setCursorType(CursorTypes.Package)}

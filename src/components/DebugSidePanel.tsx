@@ -3,8 +3,9 @@ import { XIcon } from "lucide-react";
 import { type FC, useState } from "react";
 import type { CardinalDirection, Coordinate } from "~/types/drawing";
 import type { PreviewShape } from "~/hooks/useShapeDrawing";
-import { Icon } from "../header/header/Icon";
-import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
+
+import { Icon } from "./header/header/Icon";
+import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 
 interface DebugSidePanelProps {
 	previewBounds: Coordinate[] | null;
@@ -91,7 +92,7 @@ const DebugSidePanel: FC<DebugSidePanelProps> = ({
 								<div className="flex items-center justify-between rounded bg-white px-3 py-2">
 									<span className="font-medium text-sm">Last Direction:</span>
 									<span className="font-mono text-sm">
-										{lastDirection ?? 'N/A'}
+										{lastDirection ?? "N/A"}
 									</span>
 								</div>
 								<div className="flex items-center justify-between rounded bg-white px-3 py-2">
@@ -107,13 +108,17 @@ const DebugSidePanel: FC<DebugSidePanelProps> = ({
 									</span>
 								</div>
 								<div className="flex items-center justify-between rounded bg-white px-3 py-2">
-									<span className="font-medium text-sm">Direction Changes:</span>
+									<span className="font-medium text-sm">
+										Direction Changes:
+									</span>
 									<span className="font-mono text-sm">
 										{previewShape.changedDirectionPoints.length}
 									</span>
 								</div>
 								<div className="flex items-center justify-between rounded bg-white px-3 py-2">
-									<span className="font-medium text-sm">Can Change Direction:</span>
+									<span className="font-medium text-sm">
+										Can Change Direction:
+									</span>
 									<span
 										className={`font-mono text-sm ${canChangeDirectionNow ? "text-green-600" : "text-red-600"}`}
 									>

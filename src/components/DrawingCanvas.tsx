@@ -1,26 +1,39 @@
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import { Layer, Line, Stage } from "react-konva";
+import { Layer, Stage, Text } from "react-konva";
 import { useShapeDrawing } from "~/hooks/useShapeDrawing";
-import type { CanvasShape, Coordinate } from "~/types/drawing";
-import { useCanvasNavigation } from "../hooks/useCanvasNavigation";
-import { useCreateShape } from "../hooks/useCreateShape";
-import CursorPanel from "./drawing-old/CursorPanel";
-import DebugSidePanel from "./drawing-old/DebugSidePanel";
+import type {
+	CanvasShape,
+	Coordinate,
+	CanvasText,
+	CanvasTextData,
+} from "~/types/drawing";
+import { useCreateShape } from "../hooks/mutations/useCreateShape";
+import { useMouseInteractions } from "../hooks/useMouseInteractions";
+import { useText } from "../hooks/useText";
+import CursorPanel from "./CursorPanel";
+import DebugSidePanel from "./DebugSidePanel";
 import DrawingPreview from "./canvasShapes/DrawingPreview";
-import SidePanel from "./drawing-old/SidePanel";
+import Shape from "./canvasShapes/Shape";
+import SidePanel from "./SidePanel";
 import { useDrawing } from "./header/context/DrawingContext";
 import { useShape } from "./header/context/ShapeContext";
+import CanvasTextInput from "./canvasTextInput/CanvasTextInput";
 
 interface DrawingCanvasProps {
 	shapes?: ReadonlyArray<CanvasShape>;
+	texts?: ReadonlyArray<CanvasText>;
 }
 
-const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
+const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 	const router = useRouter();
 	const idParam = router.query.id;
 	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
+
+	const { selectedShape, setSelectedShape } = useShape();
+	const [hoveredId, setHoveredId] = useState<string | null>(null);
+	const [isDebugMode, setIsDebugMode] = useState(false);
 
 	const {
 		containerSize,
@@ -28,24 +41,26 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 		canvasPosition,
 		zoom,
 		setIsOpenSideDialog,
+		cursorType,
 		isPanning,
 	} = useDrawing();
-	const { selectedShape, setSelectedShape } = useShape();
 
-	const [hoveredId, setHoveredId] = useState<string | null>(null);
-	const [dynamicCursor, setDynamicCursor] = useState<string>("default");
-	const [isDebugMode, setIsDebugMode] = useState(false);
+	// Text handling
+	const {
+		editingText,
+		setEditingText,
+		newTextPos,
+		setNewTextPos,
+		currentTextPos,
+		handleSave,
+		handleDelete,
+		handleEscape,
+		handleTextDragEnd,
+	} = useText(designId ?? "");
 
 	// Shape mutations
 	const createShapeMutation = useCreateShape(designId);
 	// const updateShapeMutation = useUpdateShape(designId);
-
-	const {
-		handleWheel,
-		handleMouseDown: handleNavMouseDown,
-		handleMouseMove: handleNavMouseMove,
-		handleMouseUp: handleNavMouseUp,
-	} = useCanvasNavigation();
 
 	const handleShapeComplete = (shape: {
 		xPos: number;
@@ -67,7 +82,6 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 		handleDrawStart,
 		handleDrawMove,
 		handleDrawEnd,
-		getCursor,
 		getPreviewBounds,
 		isDrawing,
 		previewShape,
@@ -81,40 +95,57 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 		// handleShapeUpdateComplete,
 	);
 
+	const handleSelectShape = (shape: CanvasShape) => {
+		if (isInteractiveCursor) {
+			setSelectedShape(shape);
+			setIsOpenSideDialog(true);
+		}
+	};
+
+	// Mouse interactions
+	const {
+		handleMouseDown,
+		handleMouseMove,
+		handleMouseUp,
+		handleWheel,
+		getCombinedCursor,
+		isInteractiveCursor,
+	} = useMouseInteractions({
+		cursorType,
+		hoveredId,
+		setHoveredId,
+		texts,
+		isPanning,
+		isDrawing,
+		editingText,
+		setEditingText,
+		newTextPos,
+		setNewTextPos,
+		handleDrawStart,
+		handleDrawMove,
+		handleDrawEnd,
+		handleSelectShape,
+	});
+
 	// Log draftBounds whenever it changes
 	const previewBounds = getPreviewBounds();
 
 	const scale = zoom / 100;
 
-	const handleSelectShape = (shape: CanvasShape) => {
-		setSelectedShape(shape);
-		setIsOpenSideDialog(true);
+	// Wrapper functions for text operations that clear hover state
+	const handleEscapeTextWrapper = () => {
+		handleEscape();
+		setHoveredId(null);
 	};
 
-	// Combined mouse handlers
-	const handleMouseDown = (e: KonvaEventObject<MouseEvent>) => {
-		// Drawing takes priority unless panning
-		if (!isPanning && !e.evt.shiftKey && e.evt.button === 0 && !hoveredId) {
-			handleDrawStart(e);
-		}
-		// Navigation handling
-		handleNavMouseDown(e);
+	const handleSaveTextWrapper = (textData: CanvasTextData) => {
+		handleSave(textData);
+		setHoveredId(null);
 	};
 
-	const handleMouseMove = (e: KonvaEventObject<MouseEvent>) => {
-		// Update cursor based on drawing state
-		const cursor = getCursor();
-		setDynamicCursor(cursor);
-
-		// Handle drawing
-		handleDrawMove(e);
-		// Handle navigation
-		handleNavMouseMove(e);
-	};
-
-	const handleMouseUp = (e: KonvaEventObject<MouseEvent>) => {
-		handleDrawEnd();
-		handleNavMouseUp(e);
+	const handleDeleteTextWrapper = () => {
+		handleDelete();
+		setHoveredId(null);
 	};
 
 	return (
@@ -151,55 +182,66 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 				style={{
 					backgroundColor: "white",
 					touchAction: "none",
-					cursor: isPanning
-						? "grabbing"
-						: isDrawing
-							? "crosshair"
-							: hoveredId
-								? "pointer"
-								: dynamicCursor,
+					cursor: getCombinedCursor(),
 				}}
 			>
 				<Layer>
 					{shapes.map((shape) => {
-						const flattenedPoints: number[] = [];
-						for (const p of shape.points) {
-							// Add shape origin to each point. Rotation is ignored for now.
-							flattenedPoints.push(p.xPos + shape.xPos, p.yPos + shape.yPos);
-						}
-
 						const isSelected = shape.id === selectedShape?.id;
-						const isHovered = shape.id === hoveredId;
+						const isHovered = shape.id === hoveredId && isInteractiveCursor;
 
 						return (
-							<Line
+							<Shape
 								key={shape.id}
-								points={flattenedPoints}
-								stroke={
-									isSelected
-										? "#2563EB" // selected blue
-										: isHovered
-											? "#60A5FA" // hover light blue
-											: "#111827" // default dark gray
-								}
-								fill={isSelected ? "#EFF6FF" : "transparent"}
-								strokeWidth={2}
-								closed
-								listening={!isDrawing}
-								onClick={() => !isDrawing && handleSelectShape(shape)}
-								onMouseEnter={() => !isDrawing && setHoveredId(shape.id)}
+								shape={shape}
+								isSelected={isSelected}
+								isHovered={isHovered}
+								isDrawing={isDrawing}
+								onClick={() => handleSelectShape(shape)}
+								onMouseEnter={() => setHoveredId(shape.id)}
 								onMouseLeave={() => setHoveredId(null)}
 							/>
 						);
 					})}
 
-				<DrawingPreview
-					bounds={previewBounds}
-					directionChangingPoints={previewShape?.changedDirectionPoints}
-					isDebugMode={isDebugMode}
-				/>
+					<DrawingPreview
+						bounds={previewBounds}
+						directionChangingPoints={previewShape?.changedDirectionPoints}
+						isDebugMode={isDebugMode}
+					/>
+					{/* Render saved texts with optimistic updates */}
+					{texts.map((t) =>
+						editingText && editingText.id === t.id ? null : ( // hide the one being edited
+							<Text
+								key={t.id}
+								x={t.xPos}
+								y={t.yPos}
+								text={t.text}
+								fontSize={t.fontSize}
+								fontStyle={`${t.isBold ? "bold" : ""} ${t.isItalic ? "italic" : ""}`}
+								fill={t.textColor}
+								onMouseEnter={() => setHoveredId(t.id)}
+								onMouseLeave={() => setHoveredId(null)}
+								onClick={() => setEditingText(t)}
+								draggable
+								onDragEnd={(e) => handleTextDragEnd(e, t)}
+							/>
+						),
+					)}
 				</Layer>
 			</Stage>
+
+			{/* Add text input */}
+			{(newTextPos !== null || editingText !== null) && (
+				<CanvasTextInput
+					key={editingText?.id || `${currentTextPos.x}-${currentTextPos.y}`}
+					position={currentTextPos}
+					initialText={editingText}
+					onSave={handleSaveTextWrapper}
+					onDelete={handleDeleteTextWrapper}
+					onEscape={handleEscapeTextWrapper}
+				/>
+			)}
 		</div>
 	);
 };

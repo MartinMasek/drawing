@@ -24,7 +24,7 @@ export enum CursorTypes {
 	Layout = 6,
 	Quote = 7,
 	Text = 8,
-	Select = 9,
+	Area = 9,
 	Package = 10,
 }
 

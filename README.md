@@ -138,3 +138,43 @@ This is an initial cut of the data model focused on getting drawings onto the ca
   
   
   - Undo / Redo buttons, where is the stack? 
+
+### Cursors overview
+  - Tab 1 - Dimensions
+    - Default cursor -> custom pencil
+    - On shape / text hover -> cursor pointer
+    - On edge hover -> cursor resize
+
+  - Tab 2 - Shape
+    - Default cursor –> normal arrow
+    - On text hover -> cursor pointer
+    - On corner hover -> cursor pointer
+    - Inside shape -> move shape
+
+  - Tab 3 - Edges
+    - Default cursor –> normal arrow
+    - On text hover -> cursor pointer
+    - On edge hover -> cursor pointer
+    - Inside shape -> move shape
+
+  - Tab 4 - Cutouts
+    - Default cursor –> normal arrow
+    - On text hover -> cursor pointer
+    - Inside shape -> 'add' cursor
+      - Inside sink etc.. -> move cursor
+    
+  - Tab 5 - Layout
+    - TBD.
+
+  - Tab 6 - Quote
+    - TBD.
+
+  - Text cursor 
+    - Ignore all shapes 
+    - On text hover -> pointer
+
+  - Area cursor
+    - TBD.
+
+  - Package cursor
+    - TBD.

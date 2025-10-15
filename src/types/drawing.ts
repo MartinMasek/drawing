@@ -158,3 +158,26 @@ export type CanvasShape = {
 	points: ReadonlyArray<Coordinate>;
 	materialId?: string;
 };
+
+export type CanvasText = {
+	id: string;
+	xPos: number;
+	yPos: number;
+	text: string;
+	fontSize: number;
+	isBold: boolean;
+	isItalic: boolean;
+	textColor: string;
+	backgroundColor: string;
+};
+
+export type CanvasTextData = {
+	text: string;
+	fontSize: number;
+	isBold: boolean;
+	isItalic: boolean;
+	textColor: string;
+	backgroundColor: string;
+	xPos: number;
+	yPos: number;
+};
