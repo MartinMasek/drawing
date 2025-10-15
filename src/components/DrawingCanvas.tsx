@@ -9,7 +9,7 @@ import type {
 	CanvasText,
 	CanvasTextData,
 } from "~/types/drawing";
-import { useCreateShape } from "../hooks/useCreateShape";
+import { useCreateShape } from "../hooks/mutations/useCreateShape";
 import { useMouseInteractions } from "../hooks/useMouseInteractions";
 import { useText } from "../hooks/useText";
 import CursorPanel from "./CursorPanel";
