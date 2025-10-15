@@ -1,5 +1,11 @@
 import { Group, Line, Rect, Text } from "react-konva";
 import type { Coordinate } from "~/types/drawing";
+import {
+	DPI,
+	MEASUREMENT_LINE_STROKE,
+	MEASUREMENT_TEXT_BACKGROUND_COLOR,
+	MEASUREMENT_TEXT_COLOR,
+} from "~/utils/canvas-constants";
 
 interface EdgeMeasurementProps {
 	startPoint: Coordinate;
@@ -62,8 +68,8 @@ const EdgeMeasurement = ({
 	const rightHead2X = arrowEndX + Math.cos(rightHeadAngle2) * headLength;
 	const rightHead2Y = arrowEndY + Math.sin(rightHeadAngle2) * headLength;
 
-	// Convert pixels to inches (96 DPI standard)
-	const inches = length / 96;
+	// Convert pixels to inches (DPI standard)
+	const inches = length / DPI;
 	const lengthText = `${Math.round(inches)}"`;
 
 	return (
@@ -71,7 +77,7 @@ const EdgeMeasurement = ({
 			{/* Main arrow line spanning the full edge length */}
 			<Line
 				points={[arrowStartX, arrowStartY, arrowEndX, arrowEndY]}
-				stroke="#D1D5DB"
+				stroke={MEASUREMENT_LINE_STROKE}
 				strokeWidth={2}
 				listening={false}
 			/>
@@ -79,13 +85,13 @@ const EdgeMeasurement = ({
 			{/* Left arrow head (pointing towards start) */}
 			<Line
 				points={[arrowStartX, arrowStartY, leftHead1X, leftHead1Y]}
-				stroke="#D1D5DB"
+				stroke={MEASUREMENT_LINE_STROKE}
 				strokeWidth={2}
 				listening={false}
 			/>
 			<Line
 				points={[arrowStartX, arrowStartY, leftHead2X, leftHead2Y]}
-				stroke="#D1D5DB"
+				stroke={MEASUREMENT_LINE_STROKE}
 				strokeWidth={2}
 				listening={false}
 			/>
@@ -93,13 +99,13 @@ const EdgeMeasurement = ({
 			{/* Right arrow head (pointing towards end) */}
 			<Line
 				points={[arrowEndX, arrowEndY, rightHead1X, rightHead1Y]}
-				stroke="#D1D5DB"
+				stroke={MEASUREMENT_LINE_STROKE}
 				strokeWidth={2}
 				listening={false}
 			/>
 			<Line
 				points={[arrowEndX, arrowEndY, rightHead2X, rightHead2Y]}
-				stroke="#D1D5DB"
+				stroke={MEASUREMENT_LINE_STROKE}
 				strokeWidth={2}
 				listening={false}
 			/>
@@ -110,7 +116,7 @@ const EdgeMeasurement = ({
 				y={midY - 8}
 				width={lengthText.length * 6 + 8}
 				height={16}
-				fill="#FFFFFF"
+				fill={MEASUREMENT_TEXT_BACKGROUND_COLOR}
 				cornerRadius={2}
 				listening={false}
 			/>
@@ -121,7 +127,7 @@ const EdgeMeasurement = ({
 				y={midY}
 				text={lengthText}
 				fontSize={12}
-				fill="#6B7280"
+				fill={MEASUREMENT_TEXT_COLOR}
 				align="center"
 				verticalAlign="middle"
 				offsetX={lengthText.length * 3} // Approximate text width offset

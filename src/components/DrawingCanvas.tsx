@@ -20,6 +20,14 @@ import SidePanel from "./SidePanel";
 import { useDrawing } from "./header/context/DrawingContext";
 import { useShape } from "./header/context/ShapeContext";
 import CanvasTextInput from "./canvasTextInput/CanvasTextInput";
+import {
+	SHAPE_DEFAULT_COLOR,
+	SHAPE_DEFAULT_FILL_COLOR,
+	SHAPE_HOVERED_COLOR,
+	SHAPE_HOVERED_FILL_COLOR,
+	SHAPE_SELECTED_COLOR,
+	SHAPE_SELECTED_FILL_COLOR,
+} from "~/utils/canvas-constants";
 
 interface DrawingCanvasProps {
 	shapes?: ReadonlyArray<CanvasShape>;
@@ -207,17 +215,17 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 									points={flattenedPoints}
 									stroke={
 										isSelected
-											? "#2563EB" // selected blue
+											? SHAPE_SELECTED_COLOR
 											: isHovered
-												? "#374151" // hover light blue
-												: "#9CA3AF" // default gray
+												? SHAPE_HOVERED_COLOR
+												: SHAPE_DEFAULT_COLOR
 									}
 									fill={
 										isSelected
-											? "#EFF6FF"
+											? SHAPE_SELECTED_FILL_COLOR
 											: isHovered
-												? "#F3F4F6"
-												: "transparent"
+												? SHAPE_HOVERED_FILL_COLOR
+												: SHAPE_DEFAULT_FILL_COLOR
 									}
 									strokeWidth={2}
 									closed

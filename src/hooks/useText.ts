@@ -1,95 +1,16 @@
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useState, useCallback } from "react";
 import type { CanvasTextData, CanvasText } from "~/types/drawing";
-import { api } from "~/utils/api";
+import { useCreateText } from "./useCreateText";
+import { useUpdateText } from "./useUpdateText";
+import { useDeleteText } from "./useDeleteText";
+import { useChangeTextPosition } from "./useChangeTextPosition";
 
 export const useText = (designId: string) => {
-	const utils = api.useUtils();
-
-	const createText = api.design.createText.useMutation({
-		onMutate: async (variables) => {
-			await utils.design.getById.cancel();
-
-			const previousData = utils.design.getById.getData({ id: designId });
-
-			// Generate temporary ID for optimistic update
-			const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-			const optimisticText: CanvasText = {
-				id: tempId,
-				...variables,
-			};
-
-			utils.design.getById.setData({ id: designId }, (old) => {
-				if (!old) return null;
-				return {
-					...old,
-					texts: [...old.texts, optimisticText],
-				};
-			});
-
-			return { previousData };
-		},
-	});
-
-	const updateText = api.design.updateText.useMutation({
-		onMutate: async (variables) => {
-			await utils.design.getById.cancel();
-
-			const previousData = utils.design.getById.getData({ id: designId });
-
-			utils.design.getById.setData({ id: designId }, (old) => {
-				if (!old) return null;
-				return {
-					...old,
-					texts: old.texts.map((text) =>
-						text.id === variables.id ? { ...text, ...variables } : text,
-					),
-				};
-			});
-
-			return { previousData };
-		},
-	});
-
-	const deleteText = api.design.deleteText.useMutation({
-		onMutate: async (variables) => {
-			await utils.design.getById.cancel();
-
-			const previousData = utils.design.getById.getData({ id: designId });
-
-			utils.design.getById.setData({ id: designId }, (old) => {
-				if (!old) return null;
-				return {
-					...old,
-					texts: old.texts.filter((text) => text.id !== variables.id),
-				};
-			});
-
-			return { previousData };
-		},
-	});
-
-	const changeTextPosition = api.design.changeTextPosition.useMutation({
-		onMutate: async (variables) => {
-			await utils.design.getById.cancel();
-
-			const previousData = utils.design.getById.getData({ id: designId });
-
-			utils.design.getById.setData({ id: designId }, (old) => {
-				if (!old) return null;
-				return {
-					...old,
-					texts: old.texts.map((text) =>
-						text.id === variables.id
-							? { ...text, xPos: variables.xPos, yPos: variables.yPos }
-							: text,
-					),
-				};
-			});
-
-			return { previousData };
-		},
-	});
+	const createText = useCreateText(designId);
+	const updateText = useUpdateText(designId);
+	const deleteText = useDeleteText(designId);
+	const changeTextPosition = useChangeTextPosition(designId);
 
 	const [newTextPos, setNewTextPos] = useState<{ x: number; y: number } | null>(
 		null,
