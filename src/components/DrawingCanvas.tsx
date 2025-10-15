@@ -3,7 +3,12 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import { Layer, Line, Stage, Text } from "react-konva";
 import { useShapeDrawing } from "~/hooks/useShapeDrawing";
-import type { CanvasShape, Coordinate, CanvasText } from "~/types/drawing";
+import type {
+	CanvasShape,
+	Coordinate,
+	CanvasText,
+	CanvasTextData,
+} from "~/types/drawing";
 import { useCanvasNavigation } from "../hooks/useCanvasNavigation";
 import { useCreateShape } from "../hooks/useCreateShape";
 import CursorPanel from "./CursorPanel";
@@ -193,6 +198,11 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		setHoveredId(null);
 	};
 
+	const handleSaveWrapper = (textData: CanvasTextData) => {
+		handleSave(textData);
+		setHoveredId(null);
+	};
+
 	return (
 		<div
 			ref={containerRef}
@@ -299,7 +309,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 					key={editingText?.id || `${currentTextPos.x}-${currentTextPos.y}`}
 					position={currentTextPos}
 					initialText={editingText}
-					onSave={handleSave}
+					onSave={handleSaveWrapper}
 					onDelete={handleDelete}
 					onEscape={handleEscapeWrapper}
 				/>
