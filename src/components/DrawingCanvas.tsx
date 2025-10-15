@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import { Layer, Line, Stage, Text } from "react-konva";
 import { useShapeDrawing } from "~/hooks/useShapeDrawing";
-import type { CanvasShape, Coordinate } from "~/types/drawing";
+import type { CanvasShape, Coordinate, CanvasText } from "~/types/drawing";
 import { useCanvasNavigation } from "../hooks/useCanvasNavigation";
 import { useCreateShape } from "../hooks/useCreateShape";
 import CursorPanel from "./CursorPanel";
@@ -19,9 +19,10 @@ import { useCursorLogic } from "~/hooks/useCursorLogic";
 
 interface DrawingCanvasProps {
 	shapes?: ReadonlyArray<CanvasShape>;
+	texts?: ReadonlyArray<CanvasText>;
 }
 
-const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
+const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 	const router = useRouter();
 	const idParam = router.query.id;
 	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
@@ -44,7 +45,6 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 		setEditingText,
 		newTextPos,
 		setNewTextPos,
-		allTexts,
 		currentTextPos,
 		handleSave,
 		handleDelete,
@@ -56,7 +56,7 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 		cursorType,
 		hoveredId,
 		isPanning,
-		allTexts,
+		texts,
 	});
 
 	// Shape mutations
@@ -146,7 +146,7 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 			// Only add new text if not hovering over existing text
 			// Allow adding text over shapes or empty space
 			const isHoveringOverText =
-				hoveredId && allTexts.some((t) => t.id === hoveredId);
+				hoveredId && texts.some((t) => t.id === hoveredId);
 
 			if (!isHoveringOverText) {
 				const stage = e.target.getStage();
@@ -266,7 +266,7 @@ const DrawingCanvas = ({ shapes = [] }: DrawingCanvasProps) => {
 						);
 					})}
 					{/* Render saved texts with optimistic updates */}
-					{allTexts.map((t) =>
+					{texts.map((t) =>
 						editingText && editingText.id === t.id ? null : ( // hide the one being edited
 							<Text
 								key={t.id}

@@ -6,141 +6,88 @@ import { api } from "~/utils/api";
 export const useText = (designId: string) => {
 	const utils = api.useUtils();
 
-	const { data: serverTexts = [] } = api.design.getAllTexts.useQuery({
-		id: designId,
-	});
-
-	const allTexts = serverTexts;
-
 	const createText = api.design.createText.useMutation({
 		onMutate: async (variables) => {
-			await utils.design.getAllTexts.cancel();
+			await utils.design.getById.cancel();
 
-			const previousTexts = utils.design.getAllTexts.getData({ id: designId });
+			const previousData = utils.design.getById.getData({ id: designId });
 
 			// Generate temporary ID for optimistic update
 			const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-			const optimisticText = {
+			const optimisticText: CanvasText = {
 				id: tempId,
 				...variables,
-				designId,
 			};
 
-			utils.design.getAllTexts.setData({ id: designId }, (old) => [
-				...(old || []),
-				optimisticText,
-			]);
+			utils.design.getById.setData({ id: designId }, (old) => {
+				if (!old) return null;
+				return {
+					...old,
+					texts: [...old.texts, optimisticText],
+				};
+			});
 
-			return { previousTexts, optimisticText };
-		},
-		onError: (error, variables, context) => {
-			if (context?.previousTexts) {
-				utils.design.getAllTexts.setData(
-					{ id: designId },
-					context.previousTexts,
-				);
-			}
-		},
-		onSuccess: (data, variables, context) => {
-			// Update the optimistic text with the real ID from server
-			utils.design.getAllTexts.setData(
-				{ id: designId },
-				(old) =>
-					old?.map((text) =>
-						text.id === context?.optimisticText.id
-							? { ...text, id: data.id }
-							: text,
-					) || [],
-			);
-		},
-		onSettled: () => {
-			utils.design.getAllTexts.invalidate();
+			return { previousData };
 		},
 	});
 
 	const updateText = api.design.updateText.useMutation({
 		onMutate: async (variables) => {
-			await utils.design.getAllTexts.cancel();
+			await utils.design.getById.cancel();
 
-			const previousTexts = utils.design.getAllTexts.getData({ id: designId });
+			const previousData = utils.design.getById.getData({ id: designId });
 
-			utils.design.getAllTexts.setData(
-				{ id: designId },
-				(old) =>
-					old?.map((text) =>
+			utils.design.getById.setData({ id: designId }, (old) => {
+				if (!old) return null;
+				return {
+					...old,
+					texts: old.texts.map((text) =>
 						text.id === variables.id ? { ...text, ...variables } : text,
-					) || [],
-			);
+					),
+				};
+			});
 
-			return { previousTexts };
-		},
-		onError: (error, variables, context) => {
-			if (context?.previousTexts) {
-				utils.design.getAllTexts.setData(
-					{ id: designId },
-					context.previousTexts,
-				);
-			}
-		},
-		onSettled: () => {
-			utils.design.getAllTexts.invalidate();
+			return { previousData };
 		},
 	});
 
 	const deleteText = api.design.deleteText.useMutation({
 		onMutate: async (variables) => {
-			await utils.design.getAllTexts.cancel();
+			await utils.design.getById.cancel();
 
-			const previousTexts = utils.design.getAllTexts.getData({ id: designId });
+			const previousData = utils.design.getById.getData({ id: designId });
 
-			utils.design.getAllTexts.setData(
-				{ id: designId },
-				(old) => old?.filter((text) => text.id !== variables.id) || [],
-			);
+			utils.design.getById.setData({ id: designId }, (old) => {
+				if (!old) return null;
+				return {
+					...old,
+					texts: old.texts.filter((text) => text.id !== variables.id),
+				};
+			});
 
-			return { previousTexts };
-		},
-		onError: (error, variables, context) => {
-			if (context?.previousTexts) {
-				utils.design.getAllTexts.setData(
-					{ id: designId },
-					context.previousTexts,
-				);
-			}
-		},
-		onSettled: () => {
-			utils.design.getAllTexts.invalidate();
+			return { previousData };
 		},
 	});
 
 	const changeTextPosition = api.design.changeTextPosition.useMutation({
 		onMutate: async (variables) => {
-			await utils.design.getAllTexts.cancel();
+			await utils.design.getById.cancel();
 
-			const previousTexts = utils.design.getAllTexts.getData({ id: designId });
+			const previousData = utils.design.getById.getData({ id: designId });
 
-			utils.design.getAllTexts.setData(
-				{ id: designId },
-				(old) =>
-					old?.map((text) =>
+			utils.design.getById.setData({ id: designId }, (old) => {
+				if (!old) return null;
+				return {
+					...old,
+					texts: old.texts.map((text) =>
 						text.id === variables.id
 							? { ...text, xPos: variables.xPos, yPos: variables.yPos }
 							: text,
-					) || [],
-			);
+					),
+				};
+			});
 
-			return { previousTexts };
-		},
-		onError: (error, variables, context) => {
-			if (context?.previousTexts) {
-				utils.design.getAllTexts.setData(
-					{ id: designId },
-					context.previousTexts,
-				);
-			}
-		},
-		onSettled: () => {
-			utils.design.getAllTexts.invalidate();
+			return { previousData };
 		},
 	});
 
@@ -201,6 +148,5 @@ export const useText = (designId: string) => {
 		handleEscape,
 		handleTextDragEnd,
 		currentTextPos,
-		allTexts,
 	};
 };

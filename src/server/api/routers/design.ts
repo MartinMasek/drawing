@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { textCreateSchema, textUpdateSchema } from "~/server/types/text-types";
-import type { CanvasShape } from "~/types/drawing";
+import type { CanvasShape, CanvasText } from "~/types/drawing";
 
 export const designRouter = createTRPCRouter({
 	// Get all designs
@@ -36,6 +36,19 @@ export const designRouter = createTRPCRouter({
 							points: { select: { xPos: true, yPos: true } },
 						},
 					},
+					texts: {
+						select: {
+							id: true,
+							xPos: true,
+							yPos: true,
+							text: true,
+							fontSize: true,
+							isBold: true,
+							isItalic: true,
+							textColor: true,
+							backgroundColor: true,
+						},
+					},
 				},
 			});
 
@@ -49,7 +62,19 @@ export const designRouter = createTRPCRouter({
 				points: s.points,
 			}));
 
-			return { id: result.id, name: result.name, shapes };
+			const texts: CanvasText[] = result.texts.map((t) => ({
+				id: t.id,
+				xPos: t.xPos,
+				yPos: t.yPos,
+				text: t.text,
+				fontSize: t.fontSize,
+				isBold: t.isBold,
+				isItalic: t.isItalic,
+				textColor: t.textColor,
+				backgroundColor: t.backgroundColor,
+			}));
+
+			return { id: result.id, name: result.name, shapes, texts };
 		}),
 
 	// Create a new design

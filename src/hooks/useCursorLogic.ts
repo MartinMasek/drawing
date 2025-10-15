@@ -6,7 +6,7 @@ interface UseCursorLogicProps {
 	cursorType: number;
 	hoveredId: string | null;
 	isPanning: boolean;
-	allTexts: CanvasText[];
+	texts: ReadonlyArray<CanvasText>;
 }
 
 /**
@@ -17,7 +17,7 @@ export const useCursorLogic = ({
 	cursorType,
 	hoveredId,
 	isPanning,
-	allTexts,
+	texts,
 }: UseCursorLogicProps) => {
 	// Cursor type flags
 	const cursorFlags = useMemo(
@@ -49,7 +49,7 @@ export const useCursorLogic = ({
 			// Text cursor: show pointer only when hovering over existing text, text cursor otherwise
 			if (cursorFlags.isCursorText) {
 				const isHoveringOverText =
-					hoveredId && allTexts.some((t) => t.id === hoveredId);
+					hoveredId && texts.some((t) => t.id === hoveredId);
 				return isHoveringOverText ? "pointer" : "text";
 			}
 
@@ -65,7 +65,7 @@ export const useCursorLogic = ({
 
 			return "default";
 		},
-		[isPanning, cursorFlags, hoveredId, allTexts, isInteractiveCursor],
+		[isPanning, cursorFlags, hoveredId, texts, isInteractiveCursor],
 	);
 
 	return {

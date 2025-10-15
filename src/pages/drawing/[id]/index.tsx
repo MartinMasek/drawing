@@ -38,7 +38,7 @@ export default function Drawing() {
 							className="w-full overflow-hidden"
 							style={{ height: "calc(100vh - 56px)" }}
 						>
-							<DrawingCanvas shapes={design.shapes} />
+							<DrawingCanvas shapes={design.shapes} texts={design.texts} />
 						</div>
 					</ShapeProvider>
 				</main>
