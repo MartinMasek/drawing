@@ -9,18 +9,16 @@ import type {
 	CanvasText,
 	CanvasTextData,
 } from "~/types/drawing";
-import { useCanvasNavigation } from "../hooks/useCanvasNavigation";
 import { useCreateShape } from "../hooks/useCreateShape";
+import { useMouseInteractions } from "../hooks/useMouseInteractions";
+import { useText } from "../hooks/useText";
 import CursorPanel from "./CursorPanel";
 import DebugSidePanel from "./DebugSidePanel";
 import DrawingPreview from "./canvasShapes/DrawingPreview";
 import SidePanel from "./SidePanel";
 import { useDrawing } from "./header/context/DrawingContext";
 import { useShape } from "./header/context/ShapeContext";
-import { CursorTypes } from "./header/header/drawing-types";
 import CanvasTextInput from "./canvasTextInput/CanvasTextInput";
-import { useText } from "../hooks/useText";
-import { useCursorLogic } from "~/hooks/useCursorLogic";
 
 interface DrawingCanvasProps {
 	shapes?: ReadonlyArray<CanvasShape>;
@@ -32,6 +30,10 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 	const idParam = router.query.id;
 	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
 
+	const { selectedShape, setSelectedShape } = useShape();
+	const [hoveredId, setHoveredId] = useState<string | null>(null);
+	const [isDebugMode, setIsDebugMode] = useState(false);
+
 	const {
 		containerSize,
 		containerRef,
@@ -41,10 +43,8 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		cursorType,
 		isPanning,
 	} = useDrawing();
-	const { selectedShape, setSelectedShape } = useShape();
-	const [hoveredId, setHoveredId] = useState<string | null>(null);
-	const [isDebugMode, setIsDebugMode] = useState(false);
 
+	// Text handling
 	const {
 		editingText,
 		setEditingText,
@@ -57,23 +57,9 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		handleTextDragEnd,
 	} = useText(designId ?? "");
 
-	const { isInteractiveCursor, getCursor: getCursorFromHook } = useCursorLogic({
-		cursorType,
-		hoveredId,
-		isPanning,
-		texts,
-	});
-
 	// Shape mutations
 	const createShapeMutation = useCreateShape(designId);
 	// const updateShapeMutation = useUpdateShape(designId);
-
-	const {
-		handleWheel,
-		handleMouseDown: handleNavMouseDown,
-		handleMouseMove: handleNavMouseMove,
-		handleMouseUp: handleNavMouseUp,
-	} = useCanvasNavigation();
 
 	const handleShapeComplete = (shape: {
 		xPos: number;
@@ -95,7 +81,6 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		handleDrawStart,
 		handleDrawMove,
 		handleDrawEnd,
-		getCursor,
 		getPreviewBounds,
 		isDrawing,
 		previewShape,
@@ -109,11 +94,6 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		// handleShapeUpdateComplete,
 	);
 
-	// Log draftBounds whenever it changes
-	const previewBounds = getPreviewBounds();
-
-	const scale = zoom / 100;
-
 	const handleSelectShape = (shape: CanvasShape) => {
 		if (isInteractiveCursor) {
 			setSelectedShape(shape);
@@ -121,85 +101,49 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		}
 	};
 
-	// Combined mouse handlers
-	const handleMouseDown = (e: KonvaEventObject<MouseEvent>) => {
-		// Reset text editing if clicking on empty canvas
-		if (editingText !== null && e.target === e.target.getStage()) {
-			setEditingText(null);
-			setHoveredId(null); // Clear hover state to reset cursor
-			return;
-		}
+	// Mouse interactions
+	const {
+		handleMouseDown,
+		handleMouseMove,
+		handleMouseUp,
+		handleWheel,
+		getCombinedCursor,
+		isInteractiveCursor,
+	} = useMouseInteractions({
+		cursorType,
+		hoveredId,
+		setHoveredId,
+		texts,
+		isPanning,
+		isDrawing,
+		editingText,
+		setEditingText,
+		newTextPos,
+		setNewTextPos,
+		handleDrawStart,
+		handleDrawMove,
+		handleDrawEnd,
+		handleSelectShape,
+	});
 
-		// Handle text cursor logic first
-		if (cursorType === CursorTypes.Text) {
-			handleTextMouseDown(e);
-			return;
-		}
+	// Log draftBounds whenever it changes
+	const previewBounds = getPreviewBounds();
 
-		// Drawing takes priority unless panning
-		if (!isPanning && !e.evt.shiftKey && e.evt.button === 0 && !hoveredId) {
-			handleDrawStart(e);
-		}
-		// Navigation handling
-		handleNavMouseDown(e);
-	};
+	const scale = zoom / 100;
 
-	// Text-specific mouse interactions
-	const handleTextMouseDown = (e: KonvaEventObject<MouseEvent>) => {
-		// Only handle text cursor logic for left clicks
-		if (cursorType === CursorTypes.Text && e.evt.button === 0) {
-			// Only add new text if not hovering over existing text
-			// Allow adding text over shapes or empty space
-			const isHoveringOverText =
-				hoveredId && texts.some((t) => t.id === hoveredId);
-
-			if (!isHoveringOverText) {
-				const stage = e.target.getStage();
-				const pointerPosition = stage?.getPointerPosition();
-				if (pointerPosition && newTextPos === null) {
-					setNewTextPos(pointerPosition);
-				} else {
-					setNewTextPos(null);
-				}
-			} else {
-				// If hovering over text, let the text handle the click
-				handleNavMouseDown(e);
-			}
-		} else {
-			handleNavMouseDown(e);
-		}
-	};
-
-	// Combined cursor logic that integrates drawing and our cursor system
-	const getCombinedCursor = (e?: KonvaEventObject<MouseEvent>) => {
-		// Drawing takes priority
-		if (isDrawing) {
-			return 'url("/cursors/draw_small.svg") 16 16, crosshair';
-		}
-
-		// Use our cursor logic for non-drawing states
-		return getCursorFromHook();
-	};
-
-	const handleMouseMove = (e: KonvaEventObject<MouseEvent>) => {
-		// Handle drawing
-		handleDrawMove(e);
-		// Handle navigation
-		handleNavMouseMove(e);
-	};
-
-	const handleMouseUp = (e: KonvaEventObject<MouseEvent>) => {
-		handleDrawEnd();
-		handleNavMouseUp(e);
-	};
-
-	const handleEscapeWrapper = () => {
+	// Wrapper functions for text operations that clear hover state
+	const handleEscapeTextWrapper = () => {
 		handleEscape();
 		setHoveredId(null);
 	};
 
-	const handleSaveWrapper = (textData: CanvasTextData) => {
+	const handleSaveTextWrapper = (textData: CanvasTextData) => {
 		handleSave(textData);
+		setHoveredId(null);
+	};
+
+	const handleDeleteTextWrapper = () => {
+		handleDelete();
 		setHoveredId(null);
 	};
 
@@ -231,7 +175,6 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 				scaleX={scale}
 				scaleY={scale}
 				onWheel={handleWheel}
-				// onMouseDown={handleCanvasMouseDown}
 				onMouseDown={handleMouseDown}
 				onMouseMove={handleMouseMove}
 				onMouseUp={handleMouseUp}
@@ -309,9 +252,9 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 					key={editingText?.id || `${currentTextPos.x}-${currentTextPos.y}`}
 					position={currentTextPos}
 					initialText={editingText}
-					onSave={handleSaveWrapper}
-					onDelete={handleDelete}
-					onEscape={handleEscapeWrapper}
+					onSave={handleSaveTextWrapper}
+					onDelete={handleDeleteTextWrapper}
+					onEscape={handleEscapeTextWrapper}
 				/>
 			)}
 		</div>
