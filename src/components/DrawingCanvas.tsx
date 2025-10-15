@@ -1,7 +1,7 @@
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import { Layer, Line, Stage, Text } from "react-konva";
+import { Layer, Stage, Text } from "react-konva";
 import { useShapeDrawing } from "~/hooks/useShapeDrawing";
 import type {
 	CanvasShape,
@@ -15,19 +15,11 @@ import { useText } from "../hooks/useText";
 import CursorPanel from "./CursorPanel";
 import DebugSidePanel from "./DebugSidePanel";
 import DrawingPreview from "./canvasShapes/DrawingPreview";
-import ShapeEdgeMeasurements from "./canvasShapes/ShapeEdgeMeasurements";
+import Shape from "./canvasShapes/Shape";
 import SidePanel from "./SidePanel";
 import { useDrawing } from "./header/context/DrawingContext";
 import { useShape } from "./header/context/ShapeContext";
 import CanvasTextInput from "./canvasTextInput/CanvasTextInput";
-import {
-	SHAPE_DEFAULT_COLOR,
-	SHAPE_DEFAULT_FILL_COLOR,
-	SHAPE_HOVERED_COLOR,
-	SHAPE_HOVERED_FILL_COLOR,
-	SHAPE_SELECTED_COLOR,
-	SHAPE_SELECTED_FILL_COLOR,
-} from "~/utils/canvas-constants";
 
 interface DrawingCanvasProps {
 	shapes?: ReadonlyArray<CanvasShape>;
@@ -195,53 +187,28 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 			>
 				<Layer>
 					{shapes.map((shape) => {
-						const flattenedPoints: number[] = [];
-						const absolutePoints: Coordinate[] = [];
-						for (const p of shape.points) {
-							// Add shape origin to each point. Rotation is ignored for now.
-							const absX = p.xPos + shape.xPos;
-							const absY = p.yPos + shape.yPos;
-							flattenedPoints.push(absX, absY);
-							absolutePoints.push({ xPos: absX, yPos: absY });
-						}
-
 						const isSelected = shape.id === selectedShape?.id;
 						const isHovered = shape.id === hoveredId && isInteractiveCursor;
 
 						return (
-							<>
-								<Line
-									key={shape.id}
-									points={flattenedPoints}
-									stroke={
-										isSelected
-											? SHAPE_SELECTED_COLOR
-											: isHovered
-												? SHAPE_HOVERED_COLOR
-												: SHAPE_DEFAULT_COLOR
-									}
-									fill={
-										isSelected
-											? SHAPE_SELECTED_FILL_COLOR
-											: isHovered
-												? SHAPE_HOVERED_FILL_COLOR
-												: SHAPE_DEFAULT_FILL_COLOR
-									}
-									strokeWidth={2}
-									closed
-									listening={!isDrawing}
-									onClick={() => !isDrawing && handleSelectShape(shape)}
-									onMouseEnter={() => !isDrawing && setHoveredId(shape.id)}
-									onMouseLeave={() => setHoveredId(null)}
-								/>
-								{/* Edge measurements for each shape */}
-								<ShapeEdgeMeasurements
-									key={`measurements-${shape.id}`}
-									points={absolutePoints}
-								/>
-							</>
+							<Shape
+								key={shape.id}
+								shape={shape}
+								isSelected={isSelected}
+								isHovered={isHovered}
+								isDrawing={isDrawing}
+								onClick={() => handleSelectShape(shape)}
+								onMouseEnter={() => setHoveredId(shape.id)}
+								onMouseLeave={() => setHoveredId(null)}
+							/>
 						);
 					})}
+
+					<DrawingPreview
+						bounds={previewBounds}
+						directionChangingPoints={previewShape?.changedDirectionPoints}
+						isDebugMode={isDebugMode}
+					/>
 					{/* Render saved texts with optimistic updates */}
 					{texts.map((t) =>
 						editingText && editingText.id === t.id ? null : ( // hide the one being edited
@@ -261,12 +228,6 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 							/>
 						),
 					)}
-
-					<DrawingPreview
-						bounds={previewBounds}
-						directionChangingPoints={previewShape?.changedDirectionPoints}
-						isDebugMode={isDebugMode}
-					/>
 				</Layer>
 			</Stage>
 
