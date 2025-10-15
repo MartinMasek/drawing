@@ -1,33 +1,24 @@
 import { IconBug } from "@tabler/icons-react";
 import { XIcon } from "lucide-react";
 import { type FC, useState } from "react";
-import type { Point } from "~/types/drawing";
-import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
-import { Icon } from "./header/header/Icon";
+import type { CardinalDirection, Coordinate } from "~/types/drawing";
+import type { PreviewShape } from "~/hooks/useShapeDrawing";
 
-type DraftShape = {
-	startX: number;
-	startY: number;
-	currentX: number;
-	currentY: number;
-	changedDirectionPoints: Array<{ xPos: number; yPos: number }>;
-	direction: "horizontal" | "vertical";
-};
+import { Icon } from "./header/header/Icon";
+import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 
 interface DebugSidePanelProps {
-	draftBounds: Array<Point> | null;
-	draftShape: DraftShape | null;
+	previewBounds: Coordinate[] | null;
+	previewShape: PreviewShape | null;
 	canChangeDirectionNow: boolean;
-	actualyChangingDirectionNow: boolean;
-	lastDirection: "up" | "down" | "left" | "right" | null;
+	lastDirection: CardinalDirection | null;
 	onDebugModeChange: (enabled: boolean) => void;
 }
 
 const DebugSidePanel: FC<DebugSidePanelProps> = ({
-	draftBounds,
-	draftShape,
+	previewBounds,
+	previewShape,
 	canChangeDirectionNow,
-	actualyChangingDirectionNow,
 	lastDirection,
 	onDebugModeChange,
 }) => {
@@ -88,14 +79,14 @@ const DebugSidePanel: FC<DebugSidePanelProps> = ({
 						</div>
 					</div>
 
-					{draftShape && (
+					{previewShape && (
 						<div className="rounded-lg bg-gray-100 p-4">
 							<h3 className="mb-2 font-semibold text-lg">Draft Shape State</h3>
 							<div className="space-y-2">
 								<div className="flex items-center justify-between rounded bg-white px-3 py-2">
 									<span className="font-medium text-sm">Direction:</span>
 									<span className="font-mono text-sm">
-										{draftShape.direction}
+										{previewShape.direction}
 									</span>
 								</div>
 								<div className="flex items-center justify-between rounded bg-white px-3 py-2">
@@ -107,13 +98,13 @@ const DebugSidePanel: FC<DebugSidePanelProps> = ({
 								<div className="flex items-center justify-between rounded bg-white px-3 py-2">
 									<span className="font-medium text-sm">Current X:</span>
 									<span className="font-mono text-sm">
-										{draftShape.currentX.toFixed(2)}
+										{previewShape.currentX.toFixed(2)}
 									</span>
 								</div>
 								<div className="flex items-center justify-between rounded bg-white px-3 py-2">
 									<span className="font-medium text-sm">Current Y:</span>
 									<span className="font-mono text-sm">
-										{draftShape.currentY.toFixed(2)}
+										{previewShape.currentY.toFixed(2)}
 									</span>
 								</div>
 								<div className="flex items-center justify-between rounded bg-white px-3 py-2">
@@ -121,7 +112,7 @@ const DebugSidePanel: FC<DebugSidePanelProps> = ({
 										Direction Changes:
 									</span>
 									<span className="font-mono text-sm">
-										{draftShape.changedDirectionPoints.length}
+										{previewShape.changedDirectionPoints.length}
 									</span>
 								</div>
 								<div className="flex items-center justify-between rounded bg-white px-3 py-2">
@@ -134,43 +125,33 @@ const DebugSidePanel: FC<DebugSidePanelProps> = ({
 										{canChangeDirectionNow ? "✓ Yes" : "✗ No"}
 									</span>
 								</div>
-								<div className="flex items-center justify-between rounded bg-white px-3 py-2">
-									<span className="font-medium text-sm">
-										Actually Changing:
-									</span>
-									<span
-										className={`font-mono text-sm ${actualyChangingDirectionNow ? "text-green-600" : "text-red-600"}`}
-									>
-										{actualyChangingDirectionNow ? "✓ Yes" : "✗ No"}
-									</span>
-								</div>
 							</div>
 						</div>
 					)}
 
 					<div className="rounded-lg bg-gray-100 p-4">
-						<h3 className="mb-2 font-semibold text-lg">Draft Bounds</h3>
-						{draftBounds ? (
+						<h3 className="mb-2 font-semibold text-lg">Preview Bounds</h3>
+						{previewBounds ? (
 							<div className="space-y-2">
 								<p className="text-gray-600 text-sm">
-									Points count: {draftBounds.length}
+									Points count: {previewBounds.length}
 								</p>
 								<pre className="overflow-auto rounded bg-white p-3 text-xs">
-									{JSON.stringify(draftBounds, null, 2)}
+									{JSON.stringify(previewBounds, null, 2)}
 								</pre>
 							</div>
 						) : (
-							<p className="text-gray-600 text-sm">No draft shape</p>
+							<p className="text-gray-600 text-sm">No preview shape</p>
 						)}
 					</div>
 
-					{draftShape && draftShape.changedDirectionPoints.length > 0 && (
+					{previewShape && previewShape.changedDirectionPoints.length > 0 && (
 						<div className="rounded-lg bg-gray-100 p-4">
 							<h3 className="mb-2 font-semibold text-lg">
 								Direction Change Points
 							</h3>
 							<pre className="overflow-auto rounded bg-white p-3 text-xs">
-								{JSON.stringify(draftShape.changedDirectionPoints, null, 2)}
+								{JSON.stringify(previewShape.changedDirectionPoints, null, 2)}
 							</pre>
 						</div>
 					)}
