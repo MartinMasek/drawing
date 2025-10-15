@@ -13,156 +13,35 @@ import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import type { SidePanelDimensionsView } from "../SidePanelDimensions";
 import { useShape } from "~/components/header/context/ShapeContext";
 import { SelectStyled } from "~/components/SelectStyled";
-import type { CanvasShape, MaterialExtended } from "~/types/drawing";
+import type { MaterialExtended } from "~/types/drawing";
 import { Divider } from "~/components/header/header/Divider";
 import MaterialDetail from "../components/MaterialDetail";
-import { api } from "~/utils/api";
 import { useRouter } from "next/router";
+import { useSetMaterialToShape } from "~/hooks/mutations/useSetMaterialToShape";
+import { useSetMaterialToShapesWithoutMaterial } from "~/hooks/mutations/useSetMaterialToShapesWithoutMaterial";
+import { useSetMaterialToAllShapes } from "~/hooks/mutations/useSetMaterialToAllShapes";
+import { useRemoveMaterialFromShapes } from "~/hooks/mutations/useRemoveMaterialFromShapes";
 
 interface SidePanelEditMaterialProps {
 	setView: (value: SidePanelDimensionsView) => void;
 }
 
 const SidePanelEditMaterial: FC<SidePanelEditMaterialProps> = ({ setView }) => {
-	const utils = api.useUtils();
 	const router = useRouter();
 	const idParam = router.query.id;
 	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
 
-	const {
-		selectedMaterial,
-		getNumberOfShapesPerMaterial,
-		setSelectedShape,
-		selectedShape,
-		materials,
-		setMaterials,
-	} = useShape();
+	const { selectedMaterial, getNumberOfShapesPerMaterial, selectedShape } =
+		useShape();
 
 	const { mutate: setMaterialToShapesWithoutMaterial } =
-		api.design.setMaterialToShapesWithoutMaterial.useMutation({
-			onMutate: async ({ materialId, designId }) => {
-				await utils.design.getById.cancel({ id: designId });
+		useSetMaterialToShapesWithoutMaterial();
 
-				const previousData = utils.design.getById.getData({ id: designId });
+	const { mutate: setMaterialToAllShapes } = useSetMaterialToAllShapes();
 
-				utils.design.getById.setData({ id: designId }, (old) => {
-					if (!old) return old;
-					return {
-						...old,
-						shapes: old.shapes.map((shape) =>
-							shape.material === undefined
-								? {
-										...shape,
-										material: selectedMaterial ? selectedMaterial : undefined,
-									}
-								: shape,
-						),
-					};
-				});
-				setSelectedShape({
-					...selectedShape,
-					material: selectedMaterial,
-				} as CanvasShape);
-				return { previousData };
-			},
-		});
+	const { mutate: removeMaterialFromShapes } = useRemoveMaterialFromShapes();
 
-	const { mutate: setMaterialToAllShapes } =
-		api.design.setMaterialToAllShapes.useMutation({
-			onMutate: async ({ materialId, designId }) => {
-				await utils.design.getById.cancel({ id: designId });
-
-				const previousData = utils.design.getById.getData({ id: designId });
-
-				utils.design.getById.setData({ id: designId }, (old) => {
-					if (!old) return old;
-					return {
-						...old,
-						shapes: old.shapes.map((shape) => ({
-							...shape,
-							material: selectedMaterial ? selectedMaterial : undefined,
-						})),
-					};
-				});
-				setSelectedShape({
-					...selectedShape,
-					material: selectedMaterial,
-				} as CanvasShape);
-				return { previousData };
-			},
-		});
-
-	const { mutate: removeMaterialFromShapes } =
-		api.design.removeMaterialFromShapes.useMutation({
-			onMutate: async ({ materialId, designId }) => {
-				// Get all shapes that have the material
-				const shapesWithMaterial = materials.filter(
-					(material) => material.id === materialId,
-				);
-
-				await utils.design.getById.cancel({ id: designId });
-
-				const previousData = utils.design.getById.getData({ id: designId });
-
-				utils.design.getById.setData({ id: designId }, (old) => {
-					if (!old) return old;
-					return {
-						...old,
-						shapes: old.shapes.map((shape) =>
-							shapesWithMaterial.includes(shape.material as MaterialExtended)
-								? {
-										...shape,
-										material: undefined,
-									}
-								: shape,
-						),
-					};
-				});
-				setSelectedShape({
-					...selectedShape,
-					material: undefined,
-				} as CanvasShape);
-
-				// Remove the material from the materials array
-				setMaterials(
-					materials.filter((material) => material.id !== materialId),
-				);
-				setView("general");
-				return { previousData };
-			},
-		});
-
-	const { mutate: setMaterialToShape } =
-		api.design.setMaterialToShape.useMutation({
-			onMutate: async ({ id, materialId }) => {
-				await utils.design.getById.cancel({ id: designId ?? "" });
-
-				const previousData = utils.design.getById.getData({
-					id: designId ?? "",
-				});
-
-				utils.design.getById.setData({ id: designId ?? "" }, (old) => {
-					if (!old) return old;
-					return {
-						...old,
-						shapes: old.shapes.map((shape) =>
-							shape.id === id
-								? {
-										...shape,
-										material: undefined,
-									}
-								: shape,
-						),
-					};
-				});
-				setSelectedShape({
-					...selectedShape,
-					material: undefined,
-				} as CanvasShape);
-				setView("general");
-				return { previousData };
-			},
-		});
+	const { mutate: setMaterialToShape } = useSetMaterialToShape();
 
 	const handleSetMaterialToShapesWithoutMaterial = () => {
 		if (selectedMaterial?.id && designId) {
@@ -189,6 +68,7 @@ const SidePanelEditMaterial: FC<SidePanelEditMaterialProps> = ({ setView }) => {
 				designId: designId,
 			});
 		}
+		setView("general");
 	};
 
 	const handleRemoveMaterialFromSelectedShape = () => {
@@ -197,6 +77,7 @@ const SidePanelEditMaterial: FC<SidePanelEditMaterialProps> = ({ setView }) => {
 				id: selectedShape?.id,
 				materialId: null,
 			});
+			setView("general");
 		}
 	};
 

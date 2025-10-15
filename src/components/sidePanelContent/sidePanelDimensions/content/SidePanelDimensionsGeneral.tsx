@@ -1,8 +1,4 @@
-import {
-	IconAlertCircle,
-	IconAlertCircleFilled,
-	IconPlus,
-} from "@tabler/icons-react";
+import { IconAlertCircleFilled, IconPlus } from "@tabler/icons-react";
 import type { FC } from "react";
 import { useShape } from "~/components/header/context/ShapeContext";
 import Button from "~/components/header/header/Button";
@@ -11,9 +7,9 @@ import { Icon } from "~/components/header/header/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import MaterialTile from "../components/MaterialTile";
 import type { SidePanelDimensionsView } from "../SidePanelDimensions";
-import { api } from "~/utils/api";
 import { useRouter } from "next/router";
-import type { CanvasShape, MaterialExtended } from "~/types/drawing";
+import type { MaterialExtended } from "~/types/drawing";
+import { useSetMaterialToShape } from "~/hooks/mutations/useSetMaterialToShape";
 
 interface SidePanelDimensionsGeneralProps {
 	setView: (value: SidePanelDimensionsView) => void;
@@ -22,51 +18,14 @@ interface SidePanelDimensionsGeneralProps {
 const SidePanelDimensionsGeneral: FC<SidePanelDimensionsGeneralProps> = ({
 	setView,
 }) => {
-	const utils = api.useUtils();
-	const router = useRouter();
-	const idParam = router.query.id;
-	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
 	const {
 		selectedShape,
 		materials,
-		setSelectedShape,
 		getNumberOfShapesPerMaterial,
 		setSelectedMaterial,
 	} = useShape();
 
-	const { mutate: setMaterialToShape } =
-		api.design.setMaterialToShape.useMutation({
-			onMutate: async ({ id, materialId }) => {
-				const material = materials.find((m) => m.id === materialId);
-
-				await utils.design.getById.cancel({ id: designId ?? "" });
-
-				const previousShapes = utils.design.getById.getData({
-					id: designId ?? "",
-				});
-
-				utils.design.getById.setData({ id: designId ?? "" }, (old) => {
-					if (!old) return old;
-					return {
-						...old,
-						shapes: old.shapes.map((shape) =>
-							shape.id === id
-								? {
-										...shape,
-										material: material ? material : undefined,
-									}
-								: shape,
-						),
-					};
-				});
-
-				setSelectedShape({
-					...selectedShape,
-					material: material ?? undefined,
-				} as CanvasShape);
-				return { previousShapes };
-			},
-		});
+	const { mutate: setMaterialToShape } = useSetMaterialToShape();
 
 	const handleEditClick = (material: MaterialExtended | null) => {
 		setSelectedMaterial(material);

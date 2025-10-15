@@ -8,9 +8,8 @@ import type { SidePanelDimensionsView } from "../SidePanelDimensions";
 import { SelectStyled } from "~/components/SelectStyled";
 import { useShape } from "~/components/header/context/ShapeContext";
 import { api } from "~/utils/api";
-import { useRouter } from "next/router";
-import type { CanvasShape } from "~/types/drawing";
 import MaterialDetail from "../components/MaterialDetail";
+import { useSetMaterialToShape } from "~/hooks/mutations/useSetMaterialToShape";
 
 type OptionType = {
 	label: string;
@@ -26,50 +25,14 @@ interface SidePanelAddMaterialProps {
 }
 
 const SidePanelAddMaterial: FC<SidePanelAddMaterialProps> = ({ setView }) => {
-	const utils = api.useUtils();
-	const router = useRouter();
-	const idParam = router.query.id;
-	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
-	const { selectedShape, materials, setMaterials, setSelectedShape } =
-		useShape();
+	const { selectedShape, materials, setMaterials } = useShape();
 
 	// Material that is selected from the select
 	const [material, setMaterial] = useState<OptionType | null>(null);
 
 	const { data: materialOptions } = api.design.getMaterialOptions.useQuery();
 
-	const { mutate: setMaterialToShape } =
-		api.design.setMaterialToShape.useMutation({
-			onMutate: async ({ id, materialId }) => {
-				await utils.design.getById.cancel({ id: designId ?? "" });
-
-				const previousShapes = utils.design.getById.getData({
-					id: designId ?? "",
-				});
-
-				utils.design.getById.setData({ id: designId ?? "" }, (old) => {
-					if (!old) return old;
-					return {
-						...old,
-						shapes: old.shapes.map((shape) =>
-							shape.id === id
-								? {
-										...shape,
-										material: material
-											? mapToLocalMaterial(material)
-											: undefined,
-									}
-								: shape,
-						),
-					};
-				});
-				setSelectedShape({
-					...selectedShape,
-					material: material ? mapToLocalMaterial(material) : undefined,
-				} as CanvasShape);
-				return { previousShapes };
-			},
-		});
+	const { mutate: setMaterialToShape } = useSetMaterialToShape();
 
 	// Filter out the materials that are already used
 	const materialFilteredOption = materialOptions?.filter(
