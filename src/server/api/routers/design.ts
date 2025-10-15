@@ -34,6 +34,16 @@ export const designRouter = createTRPCRouter({
 							yPos: true,
 							rotation: true,
 							points: { select: { xPos: true, yPos: true } },
+							material: {
+								select: {
+									id: true,
+									name: true,
+									img: true,
+									SKU: true,
+									category: true,
+									subcategory: true,
+								},
+							},
 						},
 					},
 				},
@@ -47,6 +57,7 @@ export const designRouter = createTRPCRouter({
 				yPos: s.yPos,
 				rotation: s.rotation,
 				points: s.points,
+				material: s.material ?? undefined,
 			}));
 
 			return { id: result.id, name: result.name, shapes };
@@ -221,4 +232,59 @@ export const designRouter = createTRPCRouter({
 				},
 			});
 		}),
+	setMaterialToShape: publicProcedure
+		.input(z.object({ id: z.string(), materialId: z.string().nullable() }))
+		.mutation(async ({ ctx, input }) => {
+			return ctx.db.shape.update({
+				where: { id: input.id },
+				data: { materialId: input.materialId },
+			});
+		}),
+	setMaterialToShapesWithoutMaterial: publicProcedure
+		.input(
+			z.object({ materialId: z.string().nullable(), designId: z.string() }),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return ctx.db.shape.updateMany({
+				where: { materialId: null, designId: input.designId },
+				data: { materialId: input.materialId },
+			});
+		}),
+	setMaterialToAllShapes: publicProcedure
+		.input(
+			z.object({ materialId: z.string().nullable(), designId: z.string() }),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return ctx.db.shape.updateMany({
+				where: { designId: input.designId },
+				data: { materialId: input.materialId },
+			});
+		}),
+	removeMaterialFromShapes: publicProcedure
+		.input(z.object({ materialId: z.string(), designId: z.string() }))
+		.mutation(async ({ ctx, input }) => {
+			return ctx.db.shape.updateMany({
+				where: { materialId: input.materialId, designId: input.designId },
+				data: { materialId: null },
+			});
+		}),
+	getMaterialsByIds: publicProcedure
+		.input(z.object({ ids: z.array(z.string()) }))
+		.query(async ({ ctx, input }) => {
+			return ctx.db.material.findMany({
+				where: { id: { in: input.ids } },
+			});
+		}),
+	getMaterialOptions: publicProcedure.query(async ({ ctx }) => {
+		return ctx.db.material.findMany({
+			select: {
+				id: true,
+				name: true,
+				img: true,
+				SKU: true,
+				category: true,
+				subcategory: true,
+			},
+		});
+	}),
 });

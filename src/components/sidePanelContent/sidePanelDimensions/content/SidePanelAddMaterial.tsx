@@ -1,15 +1,120 @@
-import { IconArrowLeft, IconCopy, IconTrash } from "@tabler/icons-react";
+import { IconArrowLeft } from "@tabler/icons-react";
 
-import type { FC } from "react";
+import { useState, type FC } from "react";
 import Button from "~/components/header/header/Button";
 import { Icon } from "~/components/header/header/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
+import type { SidePanelDimensionsView } from "../SidePanelDimensions";
+import { SelectStyled } from "~/components/SelectStyled";
+import { useShape } from "~/components/header/context/ShapeContext";
+import { api } from "~/utils/api";
+import { useRouter } from "next/router";
+import type { CanvasShape } from "~/types/drawing";
+import MaterialDetail from "../components/MaterialDetail";
+
+type OptionType = {
+	label: string;
+	value: string;
+	img: string | null;
+	SKU: string;
+	category: string;
+	subcategory: string;
+};
 
 interface SidePanelAddMaterialProps {
-	setView: (value: "general" | "addMaterial") => void;
+	setView: (value: SidePanelDimensionsView) => void;
 }
 
 const SidePanelAddMaterial: FC<SidePanelAddMaterialProps> = ({ setView }) => {
+	const utils = api.useUtils();
+	const router = useRouter();
+	const idParam = router.query.id;
+	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
+	const { selectedShape, materials, setMaterials, setSelectedShape } =
+		useShape();
+
+	// Material that is selected from the select
+	const [material, setMaterial] = useState<OptionType | null>(null);
+
+	const { data: materialOptions } = api.design.getMaterialOptions.useQuery();
+
+	const { mutate: setMaterialToShape } =
+		api.design.setMaterialToShape.useMutation({
+			onMutate: async ({ id, materialId }) => {
+				await utils.design.getById.cancel({ id: designId ?? "" });
+
+				const previousShapes = utils.design.getById.getData({
+					id: designId ?? "",
+				});
+
+				utils.design.getById.setData({ id: designId ?? "" }, (old) => {
+					if (!old) return old;
+					return {
+						...old,
+						shapes: old.shapes.map((shape) =>
+							shape.id === id
+								? {
+										...shape,
+										material: material
+											? mapToLocalMaterial(material)
+											: undefined,
+									}
+								: shape,
+						),
+					};
+				});
+				setSelectedShape({
+					...selectedShape,
+					material: material ? mapToLocalMaterial(material) : undefined,
+				} as CanvasShape);
+				return { previousShapes };
+			},
+		});
+
+	// Filter out the materials that are already used
+	const materialFilteredOption = materialOptions?.filter(
+		(material) => !materials.some((m) => m.id === material.id),
+	);
+
+	const mappedMaterialOptions = materialFilteredOption?.map((material) => ({
+		label: material.name,
+		value: material.id,
+		img: material.img,
+		SKU: material.SKU,
+		category: material.category,
+		subcategory: material.subcategory,
+	}));
+
+	const mapToLocalMaterial = (material: OptionType) => ({
+		id: material.value,
+		name: material.label,
+		img: material.img,
+		SKU: material.SKU,
+		category: material.category,
+		subcategory: material.subcategory,
+	});
+
+	const handleSave = () => {
+		if (selectedShape?.id && material) {
+			setMaterialToShape({
+				id: selectedShape.id,
+				materialId: material?.value,
+			});
+		}
+
+		if (material) {
+			setMaterials([...materials, mapToLocalMaterial(material)]);
+		}
+		setView("general");
+	};
+
+	const handleSaveAndAddOther = () => {
+		if (material) {
+			setMaterials([...materials, mapToLocalMaterial(material)]);
+		}
+		setMaterial(null);
+	};
+
 	return (
 		<>
 			<SheetHeader>
@@ -25,39 +130,59 @@ const SidePanelAddMaterial: FC<SidePanelAddMaterialProps> = ({ setView }) => {
 							<IconArrowLeft />
 						</Icon>
 					</Button>
-					Materials Parameters
+					Add Material
 				</SheetTitle>
 			</SheetHeader>
 			<div className="flex flex-col gap-4 p-4">
-				<p className="text-gray-400 text-sm">Work in progress...</p>
+				<div className="flex flex-col gap-2">
+					<div className="flex items-center justify-between">
+						<p className="text-sm text-text-input-label">
+							Material <span className="text-icons-danger">*</span>
+						</p>
+						<p className="text-sm text-text-neutral-secondary">
+							{/* Insert checkbox */}
+							{/* Link to Quote Line */}
+						</p>
+					</div>
+					{/* Async select later */}
+					<SelectStyled<OptionType>
+						label="Material"
+						placeholder="Select a material"
+						inputSize="sm"
+						value={material}
+						rounded
+						options={mappedMaterialOptions}
+						onChange={(option) => setMaterial(option)}
+					/>
+				</div>
+				<MaterialDetail
+					material={material ? mapToLocalMaterial(material) : undefined}
+				/>
 			</div>
 			<SheetFooter>
 				<div className="flex w-full items-center gap-2">
 					<Button
-						variant="outlined"
-						iconLeft={
-							<Icon size="md">
-								<IconCopy />
-							</Icon>
-						}
-						color="neutral"
-						disabled
+						variant="contained"
+						color="primary"
 						className="flex-1 justify-center"
+						disabled={!material}
+						onClick={handleSave}
 					>
-						Duplicate
+						Save
 					</Button>
-					<Button
-						variant="outlined"
-						iconLeft={
-							<Icon size="md">
-								<IconTrash />
-							</Icon>
-						}
-						color="danger"
-						className="flex-1 justify-center"
-					>
-						Remove
-					</Button>
+					{/* Only show this button if no shape is selected
+						else the user will be able to override the current material over and over again */}
+					{!selectedShape && (
+						<Button
+							variant="outlined"
+							color="primary"
+							className="flex-1 justify-center"
+							disabled={!material}
+							onClick={handleSaveAndAddOther}
+						>
+							Save & Add Other
+						</Button>
+					)}
 				</div>
 			</SheetFooter>
 		</>

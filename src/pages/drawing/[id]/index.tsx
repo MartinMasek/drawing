@@ -27,7 +27,7 @@ export default function Drawing() {
 			) : (
 				<DrawingProvider>
 					<main className="flex min-h-screen flex-col overflow-hidden bg-white">
-						<ShapeProvider>
+						<ShapeProvider shapes={design?.shapes}>
 							<DrawingHeader title={design?.name} />
 							<div
 								className="w-full overflow-hidden"
