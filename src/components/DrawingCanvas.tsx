@@ -22,6 +22,7 @@ import SidePanel from "./SidePanel";
 import { useDrawing } from "./header/context/DrawingContext";
 import { useShape } from "./header/context/ShapeContext";
 import CanvasTextInput from "./canvasTextInput/CanvasTextInput";
+import type { KonvaEventObject } from "konva/lib/Node";
 
 interface DrawingCanvasProps {
 	shapes?: ReadonlyArray<CanvasShape>;

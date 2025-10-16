@@ -53,6 +53,23 @@ const Shape = ({
 		}
 	}, [shape.xPos, shape.yPos]);
 
+	// Calculate bounding box to find center point for rotation
+	let minX = Number.POSITIVE_INFINITY;
+	let minY = Number.POSITIVE_INFINITY;
+	let maxX = Number.NEGATIVE_INFINITY;
+	let maxY = Number.NEGATIVE_INFINITY;
+
+	for (const p of shape.points) {
+		minX = Math.min(minX, p.xPos);
+		minY = Math.min(minY, p.yPos);
+		maxX = Math.max(maxX, p.xPos);
+		maxY = Math.max(maxY, p.yPos);
+	}
+
+	// Center point of the bounding box (rotation offset)
+	const centerX = (minX + maxX) / 2;
+	const centerY = (minY + maxY) / 2;
+
 	// Convert shape points to flattened array for Line component
 	const flattenedPoints: number[] = [];
 	const absolutePoints: Coordinate[] = [];
@@ -67,13 +84,17 @@ const Shape = ({
 		flattenedPoints.push(p.xPos, p.yPos);
 		
 		// For measurements, calculate absolute position with rotation and drag offset
-		// Apply rotation transformation first
-		const rotatedX = p.xPos * cos - p.yPos * sin;
-		const rotatedY = p.xPos * sin + p.yPos * cos;
+		// Points need to be relative to center for rotation
+		const relX = p.xPos - centerX;
+		const relY = p.yPos - centerY;
+		
+		// Apply rotation transformation
+		const rotatedX = relX * cos - relY * sin;
+		const rotatedY = relX * sin + relY * cos;
 		
 		// Then translate to world coordinates with drag offset
-		const absX = rotatedX + shape.xPos + dragOffset.x;
-		const absY = rotatedY + shape.yPos + dragOffset.y;
+		const absX = rotatedX + centerX + shape.xPos + dragOffset.x;
+		const absY = rotatedY + centerY + shape.yPos + dragOffset.y;
 		
 		absolutePoints.push({
 			xPos: absX,
@@ -83,16 +104,17 @@ const Shape = ({
 
 	const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
 		const node = e.target;
-		// Calculate drag offset from original position
-		const offsetX = node.x() - shape.xPos;
-		const offsetY = node.y() - shape.yPos;
+		// Calculate drag offset from original position (center)
+		const offsetX = node.x() - (shape.xPos + centerX);
+		const offsetY = node.y() - (shape.yPos + centerY);
 		setDragOffset({ x: offsetX, y: offsetY });
 	};
 
 	const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
 		const node = e.target;
-		const newX = node.x();
-		const newY = node.y();
+		// Convert from center position back to shape position
+		const newX = node.x() - centerX;
+		const newY = node.y() - centerY;
 
 		// Call the update with new absolute position
 		// The optimistic update will trigger re-render with correct position
@@ -103,8 +125,10 @@ const Shape = ({
 		<>
 			<Line
 				key={shape.id}
-				x={shape.xPos}
-				y={shape.yPos}
+				x={shape.xPos + centerX}
+				y={shape.yPos + centerY}
+				offsetX={centerX}
+				offsetY={centerY}
 				rotation={shape.rotation}
 				points={flattenedPoints}
 				stroke={

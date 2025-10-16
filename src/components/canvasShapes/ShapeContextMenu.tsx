@@ -112,15 +112,9 @@ const ShapeContextMenu = ({
 							if (option) setSelectedAngle(option);
 						}}
 					>
-						<ToggleButton value={22.5}>
-							22.5°
-						</ToggleButton>
-						<ToggleButton value={90}>
-							90°
-						</ToggleButton>
-						<ToggleButton value={180}>
-							180°
-						</ToggleButton>
+						<ToggleButton value={22.5}>22.5°</ToggleButton>
+						<ToggleButton value={90}>90°</ToggleButton>
+						<ToggleButton value={180}>180°</ToggleButton>
 					</ButtonGroup>
 				</div>
 
@@ -167,7 +161,7 @@ const ShapeContextMenu = ({
 					</button>
 				</div>
 			</div>
-			<div className="w-full border-gray-200 border-t md:w-[2px] h-auto md:h-full md:border-t-0 md:border-l" />
+			<div className="h-auto w-full border-gray-200 border-t md:h-full md:w-[2px] md:border-t-0 md:border-l" />
 			<button
 				type="button"
 				onClick={handleDuplicate}
@@ -181,7 +175,7 @@ const ShapeContextMenu = ({
 				<IconCopy size={18} />
 				<span>Duplicate Shape</span>
 			</button>
-			<div className="w-full border-gray-200 border-t md:w-[2px] h-auto md:h-full md:border-t-0 md:border-l" />
+			<div className="h-auto w-full border-gray-200 border-t md:h-full md:w-[2px] md:border-t-0 md:border-l" />
 			<button
 				type="button"
 				onClick={handleDelete}
