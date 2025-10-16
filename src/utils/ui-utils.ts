@@ -51,3 +51,55 @@ export function getShapeArea(shape: CanvasShape): number {
 export function getTotalAreaOfShapes(shapes: CanvasShape[]): number {
 	return shapes.reduce((acc, shape) => acc + getShapeArea(shape), 0);
 }
+
+// Convert decimal inches to fractional format
+export const formatInches = (decimalInches: number): string => {
+	const wholeInches = Math.floor(decimalInches);
+	const fractionalPart = decimalInches - wholeInches;
+
+	// Common fractions (max 8 fractions)
+	const fractions = [
+		{ value: 0, text: "" },
+		{ value: 1 / 16, text: "1/16" },
+		{ value: 1 / 8, text: "1/8" },
+		{ value: 1 / 4, text: "1/4" },
+		{ value: 3 / 8, text: "3/8" },
+		{ value: 1 / 2, text: "1/2" },
+		{ value: 3 / 4, text: "3/4" },
+		{ value: 7 / 8, text: "7/8" },
+	];
+
+	// Find the closest fraction
+	let closestFraction = fractions[0];
+	let minDifference = Math.abs(fractionalPart - (closestFraction?.value ?? 0));
+
+	for (const fraction of fractions) {
+		const difference = Math.abs(fractionalPart - fraction.value);
+		if (difference < minDifference) {
+			minDifference = difference;
+			closestFraction = fraction;
+		}
+	}
+
+	// Ensure closestFraction is defined (it should always be since fractions array is not empty)
+	if (!closestFraction) {
+		return `${decimalInches.toFixed(2)}"`;
+	}
+
+	// If the closest fraction is close enough (within 1/32 tolerance), use it
+	if (minDifference < 1 / 32) {
+		if (wholeInches === 0 && closestFraction.text === "") {
+			return '0"';
+		}
+		if (wholeInches === 0) {
+			return `${closestFraction.text}"`;
+		}
+		if (closestFraction.text === "") {
+			return `${wholeInches}"`;
+		}
+		return `${wholeInches} ${closestFraction.text}"`;
+	}
+
+	// Fallback to decimal if no close fraction found
+	return `${decimalInches.toFixed(2)}"`;
+};
