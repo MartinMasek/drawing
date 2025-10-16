@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Layer, Stage, Text } from "react-konva";
 import { useShapeDrawing } from "~/hooks/useShapeDrawing";
 import type {
@@ -10,12 +10,14 @@ import type {
 } from "~/types/drawing";
 import { getShapeArea, getTotalAreaOfShapes } from "~/utils/ui-utils";
 import { useCreateShape } from "../hooks/mutations/useCreateShape";
+import { useUpdateShape } from "../hooks/mutations/useUpdateShape";
 import { useMouseInteractions } from "../hooks/useMouseInteractions";
 import { useText } from "../hooks/useText";
 import CursorPanel from "./CursorPanel";
 import DebugSidePanel from "./DebugSidePanel";
 import DrawingPreview from "./canvasShapes/DrawingPreview";
 import Shape from "./canvasShapes/Shape";
+import ShapeContextMenu from "./canvasShapes/ShapeContextMenu";
 import SidePanel from "./SidePanel";
 import { useDrawing } from "./header/context/DrawingContext";
 import { useShape } from "./header/context/ShapeContext";
@@ -34,6 +36,11 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 	const { selectedShape, setSelectedShape } = useShape();
 	const [hoveredId, setHoveredId] = useState<string | null>(null);
 	const [isDebugMode, setIsDebugMode] = useState(false);
+	const [contextMenu, setContextMenu] = useState<{
+		shapeId: string;
+		x: number;
+		y: number;
+	} | null>(null);
 
 	const {
 		containerSize,
@@ -73,7 +80,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 
 	// Shape mutations
 	const createShapeMutation = useCreateShape(designId);
-	// const updateShapeMutation = useUpdateShape(designId);
+	const updateShapeMutation = useUpdateShape(designId);
 
 	const handleShapeComplete = (shape: {
 		xPos: number;
@@ -114,6 +121,68 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 			setIsOpenSideDialog(true);
 		}
 	};
+
+	const handleShapeDragEnd = (
+		shape: CanvasShape,
+		newX: number,
+		newY: number,
+	) => {
+		if (!designId) return;
+
+		updateShapeMutation.mutate({
+			shapeId: shape.id,
+			xPos: newX,
+			yPos: newY,
+			points: [...shape.points],
+		});
+	};
+
+	const handleShapeContextMenu = (
+		shape: CanvasShape,
+		e: KonvaEventObject<PointerEvent>,
+	) => {
+		e.evt.preventDefault();
+
+		// Use client coordinates (screen position) for context menu
+		// This ensures the menu appears at the cursor regardless of zoom/pan
+		setContextMenu({
+			shapeId: shape.id,
+			x: e.evt.clientX,
+			y: e.evt.clientY,
+		});
+	};
+
+	const handleShapeDeleted = (shapeId: string) => {
+		// Clear selected shape if it's the one being deleted
+		setSelectedShape(null);
+		setIsOpenSideDialog(false);
+	};
+
+	const handleCloseContextMenu = () => {
+		setContextMenu(null);
+	};
+
+	// Close context menu on click outside or escape key
+	useEffect(() => {
+		if (!contextMenu) return;
+
+		const handleClickOutside = () => {
+			setContextMenu(null);
+		};
+		const handleEscapeKey = (e: KeyboardEvent) => {
+			if (e.key === "Escape") {
+				setContextMenu(null);
+			}
+		};
+
+		document.addEventListener("click", handleClickOutside);
+		document.addEventListener("keydown", handleEscapeKey);
+
+		return () => {
+			document.removeEventListener("click", handleClickOutside);
+			document.removeEventListener("keydown", handleEscapeKey);
+		};
+	}, [contextMenu]);
 
 	// Mouse interactions
 	const {
@@ -203,17 +272,21 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 					{shapes.map((shape) => {
 						const isSelected = shape.id === selectedShape?.id;
 						const isHovered = shape.id === hoveredId && isInteractiveCursor;
+						const hasContextMenuOpen = contextMenu?.shapeId === shape.id;
 
 						return (
 							<Shape
 								key={shape.id}
 								shape={shape}
-								isSelected={isSelected}
+								isSelected={isSelected || hasContextMenuOpen}
 								isHovered={isHovered}
 								isDrawing={isDrawing}
+								isDraggable={isInteractiveCursor}
 								onClick={() => handleSelectShape(shape)}
 								onMouseEnter={() => setHoveredId(shape.id)}
 								onMouseLeave={() => setHoveredId(null)}
+								onDragEnd={(newX, newY) => handleShapeDragEnd(shape, newX, newY)}
+								onContextMenu={(e) => handleShapeContextMenu(shape, e)}
 							/>
 						);
 					})}
@@ -257,6 +330,24 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 					onEscape={handleEscapeTextWrapper}
 				/>
 			)}
+
+			{/* Context menu for shapes */}
+			{contextMenu && designId && (() => {
+				const shape = shapes.find((s) => s.id === contextMenu.shapeId);
+				if (!shape) return null;
+				
+				return (
+					<ShapeContextMenu
+						x={contextMenu.x}
+						y={contextMenu.y}
+						shape={shape}
+						designId={designId}
+						selectedShapeId={selectedShape?.id ?? null}
+						onShapeDeleted={handleShapeDeleted}
+						onClose={handleCloseContextMenu}
+					/>
+				);
+			})()}
 		</div>
 	);
 };

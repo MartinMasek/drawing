@@ -176,6 +176,7 @@ export const designRouter = createTRPCRouter({
 				shapeId: z.string(),
 				xPos: z.number(),
 				yPos: z.number(),
+				rotation: z.number().optional(),
 				points: z.array(
 					z.object({
 						xPos: z.number(),
@@ -195,6 +196,7 @@ export const designRouter = createTRPCRouter({
 				data: {
 					xPos: input.xPos,
 					yPos: input.yPos,
+					...(input.rotation !== undefined && { rotation: input.rotation }),
 					points: {
 						create: input.points.map((p) => ({
 							xPos: p.xPos,
@@ -212,6 +214,15 @@ export const designRouter = createTRPCRouter({
 			});
 
 			return shape;
+		}),
+
+	// Delete shape
+	deleteShape: publicProcedure
+		.input(z.object({ shapeId: z.string() }))
+		.mutation(async ({ ctx, input }) => {
+			return ctx.db.shape.delete({
+				where: { id: input.shapeId },
+			});
 		}),
 
 	// Create text
