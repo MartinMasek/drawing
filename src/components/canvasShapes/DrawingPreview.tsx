@@ -1,5 +1,5 @@
 import { Circle, Line } from "react-konva";
-import type { Coordinate, Point } from "~/types/drawing";
+import type { Coordinate } from "~/types/drawing";
 import ShapeEdgeMeasurements from "./ShapeEdgeMeasurements";
 
 type DrawingPreviewProps = {

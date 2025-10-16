@@ -1,4 +1,3 @@
-import type { KonvaEventObject } from "konva/lib/Node";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { Layer, Stage, Text } from "react-konva";
@@ -9,6 +8,7 @@ import type {
 	CanvasText,
 	CanvasTextData,
 } from "~/types/drawing";
+import { getShapeArea, getTotalAreaOfShapes } from "~/utils/ui-utils";
 import { useCreateShape } from "../hooks/mutations/useCreateShape";
 import { useUpdateShape } from "../hooks/mutations/useUpdateShape";
 import { useMouseInteractions } from "../hooks/useMouseInteractions";
@@ -50,6 +50,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		setIsOpenSideDialog,
 		cursorType,
 		isPanning,
+		setTotalArea,
 	} = useDrawing();
 
 	// Text handling
@@ -64,6 +65,18 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		handleEscape,
 		handleTextDragEnd,
 	} = useText(designId ?? "");
+
+	// Calculate total area when shapes are loaded
+	useEffect(() => {
+		if (shapes && shapes.length > 0) {
+			const totalArea = getTotalAreaOfShapes(shapes as CanvasShape[]).toFixed(
+				2,
+			);
+			setTotalArea(Number(totalArea));
+		} else {
+			setTotalArea(0);
+		}
+	}, [shapes, setTotalArea]);
 
 	// Shape mutations
 	const createShapeMutation = useCreateShape(designId);
@@ -194,6 +207,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		handleDrawMove,
 		handleDrawEnd,
 		handleSelectShape,
+		selectedShape,
 	});
 
 	// Log draftBounds whenever it changes
@@ -282,6 +296,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 						directionChangingPoints={previewShape?.changedDirectionPoints}
 						isDebugMode={isDebugMode}
 					/>
+
 					{/* Render saved texts with optimistic updates */}
 					{texts.map((t) =>
 						editingText && editingText.id === t.id ? null : ( // hide the one being edited

@@ -20,6 +20,7 @@ interface UseMouseInteractionsProps {
 	handleDrawMove: (e: KonvaEventObject<MouseEvent>) => void;
 	handleDrawEnd: () => void;
 	handleSelectShape: (shape: CanvasShape) => void;
+	selectedShape: CanvasShape | null;
 }
 
 /**
@@ -41,6 +42,7 @@ export const useMouseInteractions = ({
 	handleDrawMove,
 	handleDrawEnd,
 	handleSelectShape,
+	selectedShape,
 }: UseMouseInteractionsProps) => {
 	// Cursor logic
 	const { isInteractiveCursor, getCursor: getCursorFromHook } = useCursorLogic({
@@ -125,7 +127,13 @@ export const useMouseInteractions = ({
 			}
 
 			// Drawing takes priority unless panning
-			if (!isPanning && !e.evt.shiftKey && e.evt.button === 0 && !hoveredId) {
+			if (
+				!isPanning &&
+				!e.evt.shiftKey &&
+				e.evt.button === 0 &&
+				!hoveredId &&
+				!selectedShape
+			) {
 				handleDrawStart(e);
 			}
 			// Navigation handling
@@ -141,6 +149,7 @@ export const useMouseInteractions = ({
 			hoveredId,
 			handleDrawStart,
 			handleNavMouseDown,
+			selectedShape,
 		],
 	);
 

@@ -31,6 +31,8 @@ export interface ReactSelectStyledProps<
 	/** When true, shows the required asterisk on the label without enabling native HTML validation */
 	requiredAsterisk?: boolean;
 	isClearable?: boolean;
+	/** When true, uses rounded-md instead of rounded-none */
+	rounded?: boolean;
 }
 
 /**
@@ -62,6 +64,7 @@ function ReactSelectStyledInner<
 		tooltipContent,
 		error,
 		inputSize = "md",
+		rounded = false,
 		filterOption,
 		classNames: customClassNames,
 		...reactSelectProps
@@ -99,7 +102,8 @@ function ReactSelectStyledInner<
 	const defaultClassNames = {
 		control: (state: ControlProps<Option, IsMulti, Group>) =>
 			clsx(
-				"!cursor-pointer !rounded-none !bg-background-input-default border shadow-none focus:border focus:border-border-input-active focus:outline-none",
+				"!cursor-pointer !bg-background-input-default border shadow-none focus:border focus:border-border-input-active focus:outline-none",
+				rounded ? "!rounded-md" : "!rounded-none",
 				state.isFocused
 					? "!shadow-general-focus dark:!shadow-general-focus-dark !border-border-input-focus"
 					: "!border-border-input-default",
