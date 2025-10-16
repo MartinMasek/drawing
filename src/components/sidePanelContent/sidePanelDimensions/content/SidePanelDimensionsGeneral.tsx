@@ -9,6 +9,7 @@ import MaterialTile from "../components/MaterialTile";
 import type { SidePanelDimensionsView } from "../SidePanelDimensions";
 import type { MaterialExtended } from "~/types/drawing";
 import { useSetMaterialToShape } from "~/hooks/mutations/useSetMaterialToShape";
+import { getTotalAreaOfShapes } from "~/utils/ui-utils";
 
 interface SidePanelDimensionsGeneralProps {
 	setView: (value: SidePanelDimensionsView) => void;
@@ -22,6 +23,7 @@ const SidePanelDimensionsGeneral: FC<SidePanelDimensionsGeneralProps> = ({
 		materials,
 		getNumberOfShapesPerMaterial,
 		setSelectedMaterial,
+		getAllShapesWithMaterial,
 	} = useShape();
 
 	const { mutate: setMaterialToShape } = useSetMaterialToShape({
@@ -52,7 +54,7 @@ const SidePanelDimensionsGeneral: FC<SidePanelDimensionsGeneralProps> = ({
 					<MaterialTile
 						key={material.id}
 						name={material.name}
-						description={`Applied: 0 SF (${getNumberOfShapesPerMaterial(material.id)} shape${getNumberOfShapesPerMaterial(material.id) === 1 ? "" : "s"})`}
+						description={`Applied: ${getTotalAreaOfShapes(getAllShapesWithMaterial(material.id)).toFixed(2)} SF (${getNumberOfShapesPerMaterial(material.id)} shape${getNumberOfShapesPerMaterial(material.id) === 1 ? "" : "s"})`}
 						img={material.img}
 						isSelected={selectedShape?.material?.id === material.id}
 						onSelect={() => {
@@ -72,7 +74,9 @@ const SidePanelDimensionsGeneral: FC<SidePanelDimensionsGeneralProps> = ({
 					name="None"
 					description={
 						<span className="flex items-center gap-1">
-							Applied: 0 SF ({numberOfShapesWithoutMaterial} shape
+							Applied:{" "}
+							{getTotalAreaOfShapes(getAllShapesWithMaterial()).toFixed(2)} SF (
+							{numberOfShapesWithoutMaterial} shape
 							{numberOfShapesWithoutMaterial === 1 ? "" : "s"})
 							{numberOfShapesWithoutMaterial > 0 && (
 								<Icon size="sm" color="warning">

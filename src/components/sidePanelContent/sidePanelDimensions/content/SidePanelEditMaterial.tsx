@@ -23,8 +23,12 @@ const SidePanelEditMaterial: FC<SidePanelEditMaterialProps> = ({ setView }) => {
 	const idParam = router.query.id;
 	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
 
-	const { selectedMaterial, getNumberOfShapesPerMaterial, selectedShape } =
-		useShape();
+	const {
+		selectedMaterial,
+		getNumberOfShapesPerMaterial,
+		selectedShape,
+		getAllShapesWithMaterial,
+	} = useShape();
 
 	const { mutate: setMaterialToShapesWithoutMaterial } =
 		useSetMaterialToShapesWithoutMaterial();
@@ -102,6 +106,7 @@ const SidePanelEditMaterial: FC<SidePanelEditMaterialProps> = ({ setView }) => {
 			{selectedMaterial === null ? (
 				<EditNoneMaterial
 					numberOfShapesWithoutMaterial={numberOfShapesWithoutMaterial}
+					getAllShapesWithMaterial={getAllShapesWithMaterial}
 				/>
 			) : (
 				<EditMaterial
@@ -116,6 +121,7 @@ const SidePanelEditMaterial: FC<SidePanelEditMaterialProps> = ({ setView }) => {
 						handleSetMaterialToShapesWithoutMaterial
 					}
 					selectedShape={selectedShape}
+					getAllShapesWithMaterial={getAllShapesWithMaterial}
 				/>
 			)}
 			<SheetFooter>

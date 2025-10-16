@@ -7,6 +7,7 @@ import PackagesBreakdown from "./PackagesBreakdown";
 import Button from "~/components/header/header/Button";
 import { Icon } from "~/components/header/header/Icon";
 import { IconX } from "@tabler/icons-react";
+import { getTotalAreaOfShapes } from "~/utils/ui-utils";
 
 interface EditMaterialProps {
 	selectedMaterial: MaterialExtended | null;
@@ -16,6 +17,7 @@ interface EditMaterialProps {
 	handleSetMaterialToAllShapes: () => void;
 	handleSetMaterialToShapesWithoutMaterial: () => void;
 	selectedShape: CanvasShape | null;
+	getAllShapesWithMaterial: (materialId?: string) => CanvasShape[];
 }
 
 const EditMaterial: FC<EditMaterialProps> = ({
@@ -26,6 +28,7 @@ const EditMaterial: FC<EditMaterialProps> = ({
 	handleSetMaterialToAllShapes,
 	handleSetMaterialToShapesWithoutMaterial,
 	selectedShape,
+	getAllShapesWithMaterial,
 }) => {
 	return (
 		<div className="flex flex-col gap-4 p-4">
@@ -39,7 +42,12 @@ const EditMaterial: FC<EditMaterialProps> = ({
 			/>
 			<Divider className="border-[0.5px]" />
 			<div className="flex flex-col gap-2">
-				<PackagesBreakdown numberOfShapes={numberOfShapesWithMaterial} />
+				<PackagesBreakdown
+					numberOfShapes={numberOfShapesWithMaterial}
+					totalArea={getTotalAreaOfShapes(
+						getAllShapesWithMaterial(selectedMaterial?.id),
+					)}
+				/>
 				{selectedShape?.material?.id === selectedMaterial?.id && (
 					<Button
 						iconLeft={

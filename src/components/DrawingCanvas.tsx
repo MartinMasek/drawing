@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layer, Stage, Text } from "react-konva";
 import { useShapeDrawing } from "~/hooks/useShapeDrawing";
 import type {
@@ -8,6 +8,7 @@ import type {
 	CanvasText,
 	CanvasTextData,
 } from "~/types/drawing";
+import { getShapeArea, getTotalAreaOfShapes } from "~/utils/ui-utils";
 import { useCreateShape } from "../hooks/mutations/useCreateShape";
 import { useMouseInteractions } from "../hooks/useMouseInteractions";
 import { useText } from "../hooks/useText";
@@ -42,6 +43,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		setIsOpenSideDialog,
 		cursorType,
 		isPanning,
+		setTotalArea,
 	} = useDrawing();
 
 	// Text handling
@@ -56,6 +58,18 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		handleEscape,
 		handleTextDragEnd,
 	} = useText(designId ?? "");
+
+	// Calculate total area when shapes are loaded
+	useEffect(() => {
+		if (shapes && shapes.length > 0) {
+			const totalArea = getTotalAreaOfShapes(shapes as CanvasShape[]).toFixed(
+				2,
+			);
+			setTotalArea(Number(totalArea));
+		} else {
+			setTotalArea(0);
+		}
+	}, [shapes, setTotalArea]);
 
 	// Shape mutations
 	const createShapeMutation = useCreateShape(designId);
