@@ -6,7 +6,7 @@ type ShapeContextType = {
 	setSelectedShape: (shape: CanvasShape | null) => void;
 	materials: MaterialExtended[];
 	setMaterials: (materials: MaterialExtended[]) => void;
-	getNumberOfShapesPerMaterial: (materialId?: string) => number | undefined;
+	getNumberOfShapesPerMaterial: (materialId?: string) => number;
 	selectedMaterial: MaterialExtended | null;
 	setSelectedMaterial: (material: MaterialExtended | null) => void;
 };
@@ -45,12 +45,16 @@ export const ShapeProvider = ({
 		}
 	}, []);
 
-	const getNumberOfShapesPerMaterial = (materialId?: string) => {
+	const getNumberOfShapesPerMaterial = (materialId?: string): number => {
 		// If no materialId is provided, return the number of shapes without a material
 		if (!materialId) {
-			return shapes?.filter((shape) => shape.material === undefined).length;
+			return (
+				shapes?.filter((shape) => shape.material === undefined).length ?? 0
+			);
 		}
-		return shapes?.filter((shape) => shape.material?.id === materialId).length;
+		return (
+			shapes?.filter((shape) => shape.material?.id === materialId).length ?? 0
+		);
 	};
 
 	const value = {

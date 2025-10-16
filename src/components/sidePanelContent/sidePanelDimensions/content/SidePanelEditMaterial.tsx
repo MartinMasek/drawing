@@ -12,8 +12,6 @@ import { Icon } from "~/components/header/header/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import type { SidePanelDimensionsView } from "../SidePanelDimensions";
 import { useShape } from "~/components/header/context/ShapeContext";
-import { SelectStyled } from "~/components/SelectStyled";
-import type { MaterialExtended } from "~/types/drawing";
 import { Divider } from "~/components/header/header/Divider";
 import MaterialDetail from "../components/MaterialDetail";
 import { useRouter } from "next/router";
@@ -21,6 +19,8 @@ import { useSetMaterialToShape } from "~/hooks/mutations/useSetMaterialToShape";
 import { useSetMaterialToShapesWithoutMaterial } from "~/hooks/mutations/useSetMaterialToShapesWithoutMaterial";
 import { useSetMaterialToAllShapes } from "~/hooks/mutations/useSetMaterialToAllShapes";
 import { useRemoveMaterialFromShapes } from "~/hooks/mutations/useRemoveMaterialFromShapes";
+import MaterialSelect from "../components/MaterialSelect";
+import PackagesBreakdown from "../components/PackagesBreakdown";
 
 interface SidePanelEditMaterialProps {
 	setView: (value: SidePanelDimensionsView) => void;
@@ -81,6 +81,12 @@ const SidePanelEditMaterial: FC<SidePanelEditMaterialProps> = ({ setView }) => {
 		}
 	};
 
+	const numberOfShapesWithMaterial = getNumberOfShapesPerMaterial(
+		selectedMaterial?.id,
+	);
+
+	const numberOfShapesWithoutMaterial = getNumberOfShapesPerMaterial();
+
 	return (
 		<>
 			<SheetHeader>
@@ -105,25 +111,12 @@ const SidePanelEditMaterial: FC<SidePanelEditMaterialProps> = ({ setView }) => {
 						Material: <span className="text-text-colors-secondary">None</span>
 					</p>
 					<Divider className="border-[0.5px]" />
-					<div className="flex flex-col">
-						<span className="flex items-center justify-between">
-							<p className="text-sm text-text-neutral-terciary">Applied:</p>
-							<p className="text-sm text-text-neutral-primary">0 SF total</p>
-						</span>
-						<span className="flex items-center justify-between">
-							<p className="text-text-button-secondary-disabledOnWhiteBg text-xs">
-								Packages Breakdown:
-							</p>
-							<p className="text-text-neutral-terciary text-xs">
-								{getNumberOfShapesPerMaterial()} shape
-								{getNumberOfShapesPerMaterial() === 1 ? "" : "s"}
-							</p>
-						</span>
-					</div>
+
+					<PackagesBreakdown numberOfShapes={numberOfShapesWithoutMaterial} />
 					<Divider className="border-[0.5px]" />
 
 					{/* Replace with Banner in stonify */}
-					{!!getNumberOfShapesPerMaterial() && (
+					{numberOfShapesWithoutMaterial > 0 && (
 						<div className="flex gap-2 rounded-md bg-background-banners-warning-subtle p-3">
 							<Icon size="md" color="warning">
 								<IconAlertCircleFilled />
@@ -145,47 +138,15 @@ const SidePanelEditMaterial: FC<SidePanelEditMaterialProps> = ({ setView }) => {
 				</div>
 			) : (
 				<div className="flex flex-col gap-4 p-4">
-					<div className="flex flex-col gap-2">
-						<div className="flex items-center justify-between">
-							<p className="text-sm text-text-input-label">
-								Material <span className="text-icons-danger">*</span>
-							</p>
-							<p className="text-sm text-text-neutral-secondary">
-								{/* Insert checkbox */}
-								{/* Link to Quote Line */}
-							</p>
-						</div>
-						{/* Async select later */}
-						<SelectStyled<MaterialExtended>
-							label="Material"
-							placeholder="Select a material"
-							inputSize="sm"
-							value={selectedMaterial}
-							rounded
-							options={[]}
-							onChange={() => {}}
-						/>
-					</div>
+					<MaterialSelect
+						value={selectedMaterial}
+						onChange={() => {}}
+						disabled={true}
+					/>
 					<MaterialDetail material={selectedMaterial} />
 					<Divider className="border-[0.5px]" />
 					<div className="flex flex-col gap-2">
-						<div className="flex flex-col">
-							<span className="flex items-center justify-between">
-								<p className="text-sm text-text-neutral-terciary">Applied:</p>
-								<p className="text-sm text-text-neutral-primary">0 SF total</p>
-							</span>
-							<span className="flex items-center justify-between">
-								<p className="text-text-button-secondary-disabledOnWhiteBg text-xs">
-									Packages Breakdown:
-								</p>
-								<p className="text-text-neutral-terciary text-xs">
-									{getNumberOfShapesPerMaterial(selectedMaterial?.id)} shape
-									{getNumberOfShapesPerMaterial(selectedMaterial?.id) === 1
-										? ""
-										: "s"}
-								</p>
-							</span>
-						</div>
+						<PackagesBreakdown numberOfShapes={numberOfShapesWithMaterial} />
 						{selectedShape?.material?.id === selectedMaterial?.id && (
 							<Button
 								iconLeft={
@@ -220,10 +181,10 @@ const SidePanelEditMaterial: FC<SidePanelEditMaterialProps> = ({ setView }) => {
 								variant="outlined"
 								color="neutral"
 								className="flex-1 justify-center"
-								disabled={getNumberOfShapesPerMaterial() === 0}
+								disabled={numberOfShapesWithoutMaterial === 0}
 								onClick={handleSetMaterialToShapesWithoutMaterial}
 							>
-								Unassigned ({getNumberOfShapesPerMaterial()})
+								Unassigned ({numberOfShapesWithoutMaterial})
 							</Button>
 						</div>
 					</div>

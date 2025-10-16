@@ -5,20 +5,11 @@ import Button from "~/components/header/header/Button";
 import { Icon } from "~/components/header/header/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import type { SidePanelDimensionsView } from "../SidePanelDimensions";
-import { SelectStyled } from "~/components/SelectStyled";
 import { useShape } from "~/components/header/context/ShapeContext";
-import { api } from "~/utils/api";
 import MaterialDetail from "../components/MaterialDetail";
 import { useSetMaterialToShape } from "~/hooks/mutations/useSetMaterialToShape";
-
-type OptionType = {
-	label: string;
-	value: string;
-	img: string | null;
-	SKU: string;
-	category: string;
-	subcategory: string;
-};
+import type { MaterialExtended } from "~/types/drawing";
+import MaterialSelect from "../components/MaterialSelect";
 
 interface SidePanelAddMaterialProps {
 	setView: (value: SidePanelDimensionsView) => void;
@@ -28,52 +19,27 @@ const SidePanelAddMaterial: FC<SidePanelAddMaterialProps> = ({ setView }) => {
 	const { selectedShape, materials, setMaterials } = useShape();
 
 	// Material that is selected from the select
-	const [material, setMaterial] = useState<OptionType | null>(null);
-
-	const { data: materialOptions } = api.design.getMaterialOptions.useQuery();
+	const [material, setMaterial] = useState<MaterialExtended | null>(null);
 
 	const { mutate: setMaterialToShape } = useSetMaterialToShape();
-
-	// Filter out the materials that are already used
-	const materialFilteredOption = materialOptions?.filter(
-		(material) => !materials.some((m) => m.id === material.id),
-	);
-
-	const mappedMaterialOptions = materialFilteredOption?.map((material) => ({
-		label: material.name,
-		value: material.id,
-		img: material.img,
-		SKU: material.SKU,
-		category: material.category,
-		subcategory: material.subcategory,
-	}));
-
-	const mapToLocalMaterial = (material: OptionType) => ({
-		id: material.value,
-		name: material.label,
-		img: material.img,
-		SKU: material.SKU,
-		category: material.category,
-		subcategory: material.subcategory,
-	});
 
 	const handleSave = () => {
 		if (selectedShape?.id && material) {
 			setMaterialToShape({
 				id: selectedShape.id,
-				materialId: material?.value,
+				materialId: material?.id,
 			});
 		}
 
 		if (material) {
-			setMaterials([...materials, mapToLocalMaterial(material)]);
+			setMaterials([...materials, material]);
 		}
 		setView("general");
 	};
 
 	const handleSaveAndAddOther = () => {
 		if (material) {
-			setMaterials([...materials, mapToLocalMaterial(material)]);
+			setMaterials([...materials, material]);
 		}
 		setMaterial(null);
 	};
@@ -97,30 +63,8 @@ const SidePanelAddMaterial: FC<SidePanelAddMaterialProps> = ({ setView }) => {
 				</SheetTitle>
 			</SheetHeader>
 			<div className="flex flex-col gap-4 p-4">
-				<div className="flex flex-col gap-2">
-					<div className="flex items-center justify-between">
-						<p className="text-sm text-text-input-label">
-							Material <span className="text-icons-danger">*</span>
-						</p>
-						<p className="text-sm text-text-neutral-secondary">
-							{/* Insert checkbox */}
-							{/* Link to Quote Line */}
-						</p>
-					</div>
-					{/* Async select later */}
-					<SelectStyled<OptionType>
-						label="Material"
-						placeholder="Select a material"
-						inputSize="sm"
-						value={material}
-						rounded
-						options={mappedMaterialOptions}
-						onChange={(option) => setMaterial(option)}
-					/>
-				</div>
-				<MaterialDetail
-					material={material ? mapToLocalMaterial(material) : undefined}
-				/>
+				<MaterialSelect value={material} onChange={setMaterial} />
+				<MaterialDetail material={material ? material : undefined} />
 			</div>
 			<SheetFooter>
 				<div className="flex w-full items-center gap-2">

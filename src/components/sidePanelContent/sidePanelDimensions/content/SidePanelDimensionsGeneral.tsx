@@ -7,7 +7,6 @@ import { Icon } from "~/components/header/header/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import MaterialTile from "../components/MaterialTile";
 import type { SidePanelDimensionsView } from "../SidePanelDimensions";
-import { useRouter } from "next/router";
 import type { MaterialExtended } from "~/types/drawing";
 import { useSetMaterialToShape } from "~/hooks/mutations/useSetMaterialToShape";
 
@@ -31,6 +30,8 @@ const SidePanelDimensionsGeneral: FC<SidePanelDimensionsGeneralProps> = ({
 		setSelectedMaterial(material);
 		setView("editMaterial");
 	};
+
+	const numberOfShapesWithoutMaterial = getNumberOfShapesPerMaterial();
 
 	return (
 		<>
@@ -69,9 +70,9 @@ const SidePanelDimensionsGeneral: FC<SidePanelDimensionsGeneralProps> = ({
 					name="None"
 					description={
 						<span className="flex items-center gap-1">
-							Applied: 0 SF ({getNumberOfShapesPerMaterial()} shape
-							{getNumberOfShapesPerMaterial() === 1 ? "" : "s"})
-							{!!getNumberOfShapesPerMaterial() && (
+							Applied: 0 SF ({numberOfShapesWithoutMaterial} shape
+							{numberOfShapesWithoutMaterial === 1 ? "" : "s"})
+							{numberOfShapesWithoutMaterial > 0 && (
 								<Icon size="sm" color="warning">
 									<IconAlertCircleFilled />
 								</Icon>
