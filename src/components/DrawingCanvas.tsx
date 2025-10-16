@@ -1,4 +1,3 @@
-import type { KonvaEventObject } from "konva/lib/Node";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { Layer, Stage, Text } from "react-konva";
@@ -210,6 +209,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 						directionChangingPoints={previewShape?.changedDirectionPoints}
 						isDebugMode={isDebugMode}
 					/>
+
 					{/* Render saved texts with optimistic updates */}
 					{texts.map((t) =>
 						editingText && editingText.id === t.id ? null : ( // hide the one being edited
