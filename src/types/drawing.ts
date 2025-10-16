@@ -156,7 +156,7 @@ export type CanvasShape = {
 	yPos: number;
 	rotation: number;
 	points: ReadonlyArray<Coordinate>;
-	materialId?: string;
+	material?: MaterialExtended;
 };
 
 export type CanvasText = {
@@ -180,4 +180,13 @@ export type CanvasTextData = {
 	backgroundColor: string;
 	xPos: number;
 	yPos: number;
+};
+
+export type MaterialExtended = {
+	id: string;
+	name: string;
+	img: string | null;
+	SKU: string;
+	category: string;
+	subcategory: string;
 };

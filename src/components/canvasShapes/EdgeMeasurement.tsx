@@ -6,6 +6,7 @@ import {
 	MEASUREMENT_TEXT_BACKGROUND_COLOR,
 	MEASUREMENT_TEXT_COLOR,
 } from "~/utils/canvas-constants";
+import { formatInches } from "~/utils/ui-utils";
 
 interface EdgeMeasurementProps {
 	startPoint: Coordinate;
@@ -70,7 +71,8 @@ const EdgeMeasurement = ({
 
 	// Convert pixels to inches (DPI standard)
 	const inches = length / DPI;
-	const lengthText = `${Math.round(inches)}"`;
+
+	const lengthText = formatInches(inches);
 
 	return (
 		<Group listening={false}>

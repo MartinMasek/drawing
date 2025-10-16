@@ -101,6 +101,9 @@ model Shape {
     // We have to remember where we started and ended drawing the shape because from there we can start reshaping the shape
     startEdgeId String?
     endEdgeId   String?
+
+    materialId String?
+    material   Material? @relation(fields: [materialId], references: [id])
 }
 
 model Point {
@@ -241,6 +244,11 @@ model Service {
 model Material {
     id                String             @id @default(cuid())
     name              String
+    img               String?
+    SKU               String
+    category          String
+    subcategory       String
+    shapes            Shape[]
     backsplashConfigs BacksplashConfig[]
     waterfallConfigs  WaterfallConfig[]
 }

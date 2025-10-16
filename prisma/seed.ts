@@ -12,10 +12,30 @@ async function main() {
 		},
 	});
 
-	const material = await prisma.material.create({
-		data: {
-			name: "Granite - Black Galaxy",
-		},
+	const material = await prisma.material.createManyAndReturn({
+		data: [
+			{
+				name: "Granite - Black Galaxy",
+				SKU: "1234567890",
+				category: "Granite",
+				subcategory: "Black Galaxy",
+				img: "/materials/material_1.png",
+			},
+			{
+				name: "Marble - Carrara White",
+				SKU: "2345678901",
+				category: "Marble",
+				subcategory: "Carrara White",
+				img: "/materials/material_2.png",
+			},
+			{
+				name: "Quartz - Calacatta Gold",
+				SKU: "3456789012",
+				category: "Quartz",
+				subcategory: "Calacatta Gold",
+				img: "/materials/material_3.png",
+			},
+		],
 	});
 
 	const product = await prisma.product.create({
@@ -312,15 +332,16 @@ async function main() {
 			point2Id: ip3.id,
 		},
 	});
-
-	await prisma.waterfallConfig.create({
-		data: {
-			serviceId: service.id,
-			materialId: material.id,
-			height: 36,
-			edgeId: waterfallEdge.id,
-		},
-	});
+	if (material[0]) {
+		await prisma.waterfallConfig.create({
+			data: {
+				serviceId: service.id,
+				materialId: material[0].id,
+				height: 36,
+				edgeId: waterfallEdge.id,
+			},
+		});
+	}
 
 	console.log("Created waterfall design:", waterfallQuote.name);
 
@@ -349,14 +370,16 @@ async function main() {
 	const supportEdge = await prisma.edge.create({
 		data: { shapeId: shape3b.id, point1Id: s3b_p2.id, point2Id: s3b_p3.id },
 	});
-	await prisma.waterfallConfig.create({
-		data: {
-			serviceId: service.id,
-			materialId: material.id,
-			height: 12,
-			edgeId: supportEdge.id,
-		},
-	});
+	if (material[0]) {
+		await prisma.waterfallConfig.create({
+			data: {
+				serviceId: service.id,
+				materialId: material[0].id,
+				height: 12,
+				edgeId: supportEdge.id,
+			},
+		});
+	}
 	console.log("Seed completed successfully!");
 }
 

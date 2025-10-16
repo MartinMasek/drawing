@@ -17,7 +17,8 @@ export const SHAPE_DRAWING_DEFAULT_HEIGHT = 100; // Default height for the shape
 export const MEASUREMENT_LINE_STROKE = "#D1D5DB";
 export const MEASUREMENT_TEXT_BACKGROUND_COLOR = "#FFFFFF";
 export const MEASUREMENT_TEXT_COLOR = "#6B7280";
-export const DPI = 96;
+
+export const DPI = 4;
 
 // Shape colors
 export const SHAPE_SELECTED_COLOR = "#2563EB";
