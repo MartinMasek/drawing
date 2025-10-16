@@ -1,10 +1,4 @@
-import {
-	IconAlertCircleFilled,
-	IconArrowLeft,
-	IconCopy,
-	IconTrash,
-	IconX,
-} from "@tabler/icons-react";
+import { IconArrowLeft, IconCopy, IconTrash } from "@tabler/icons-react";
 
 import type { FC } from "react";
 import Button from "~/components/header/header/Button";
@@ -12,15 +6,13 @@ import { Icon } from "~/components/header/header/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import type { SidePanelDimensionsView } from "../SidePanelDimensions";
 import { useShape } from "~/components/header/context/ShapeContext";
-import { Divider } from "~/components/header/header/Divider";
-import MaterialDetail from "../components/MaterialDetail";
 import { useRouter } from "next/router";
 import { useSetMaterialToShape } from "~/hooks/mutations/useSetMaterialToShape";
 import { useSetMaterialToShapesWithoutMaterial } from "~/hooks/mutations/useSetMaterialToShapesWithoutMaterial";
 import { useSetMaterialToAllShapes } from "~/hooks/mutations/useSetMaterialToAllShapes";
 import { useRemoveMaterialFromShapes } from "~/hooks/mutations/useRemoveMaterialFromShapes";
-import MaterialSelect from "../components/MaterialSelect";
-import PackagesBreakdown from "../components/PackagesBreakdown";
+import EditNoneMaterial from "../components/EditNoneMaterial";
+import EditMaterial from "../components/EditMaterial";
 
 interface SidePanelEditMaterialProps {
 	setView: (value: SidePanelDimensionsView) => void;
@@ -41,7 +33,9 @@ const SidePanelEditMaterial: FC<SidePanelEditMaterialProps> = ({ setView }) => {
 
 	const { mutate: removeMaterialFromShapes } = useRemoveMaterialFromShapes();
 
-	const { mutate: setMaterialToShape } = useSetMaterialToShape();
+	const { mutate: setMaterialToShape } = useSetMaterialToShape({
+		material: selectedMaterial,
+	});
 
 	const handleSetMaterialToShapesWithoutMaterial = () => {
 		if (selectedMaterial?.id && designId) {
@@ -106,89 +100,23 @@ const SidePanelEditMaterial: FC<SidePanelEditMaterialProps> = ({ setView }) => {
 				</SheetTitle>
 			</SheetHeader>
 			{selectedMaterial === null ? (
-				<div className="flex flex-col gap-4 p-4">
-					<p>
-						Material: <span className="text-text-colors-secondary">None</span>
-					</p>
-					<Divider className="border-[0.5px]" />
-
-					<PackagesBreakdown numberOfShapes={numberOfShapesWithoutMaterial} />
-					<Divider className="border-[0.5px]" />
-
-					{/* Replace with Banner in stonify */}
-					{numberOfShapesWithoutMaterial > 0 && (
-						<div className="flex gap-2 rounded-md bg-background-banners-warning-subtle p-3">
-							<Icon size="md" color="warning">
-								<IconAlertCircleFilled />
-							</Icon>
-							<div className="flex flex-col gap-1">
-								<p className="font-bold text-sm text-text-neutral-primary">
-									Unassigned Materials Detected
-								</p>
-								<p className="text-sm">
-									Some shapes are still using this material option. To proceed
-									with quote generation, please ensure{" "}
-									<span className="font-bold">
-										all shapes have an assigned material
-									</span>
-								</p>
-							</div>
-						</div>
-					)}
-				</div>
+				<EditNoneMaterial
+					numberOfShapesWithoutMaterial={numberOfShapesWithoutMaterial}
+				/>
 			) : (
-				<div className="flex flex-col gap-4 p-4">
-					<MaterialSelect
-						value={selectedMaterial}
-						onChange={() => {}}
-						disabled={true}
-					/>
-					<MaterialDetail material={selectedMaterial} />
-					<Divider className="border-[0.5px]" />
-					<div className="flex flex-col gap-2">
-						<PackagesBreakdown numberOfShapes={numberOfShapesWithMaterial} />
-						{selectedShape?.material?.id === selectedMaterial?.id && (
-							<Button
-								iconLeft={
-									<Icon size="md">
-										<IconX />
-									</Icon>
-								}
-								variant="outlined"
-								color="danger"
-								className="flex-1 justify-center"
-								onClick={handleRemoveMaterialFromSelectedShape}
-							>
-								Unassign Selected Shape
-							</Button>
-						)}
-					</div>
-					<Divider className="border-[0.5px]" />
-					<div className="flex flex-col gap-2">
-						<p className="text-sm text-text-neutral-terciary">
-							Quick Apply To Shapes:
-						</p>
-						<div className="flex gap-2">
-							<Button
-								variant="outlined"
-								color="neutral"
-								className="flex-1 justify-center"
-								onClick={handleSetMaterialToAllShapes}
-							>
-								All (#)
-							</Button>
-							<Button
-								variant="outlined"
-								color="neutral"
-								className="flex-1 justify-center"
-								disabled={numberOfShapesWithoutMaterial === 0}
-								onClick={handleSetMaterialToShapesWithoutMaterial}
-							>
-								Unassigned ({numberOfShapesWithoutMaterial})
-							</Button>
-						</div>
-					</div>
-				</div>
+				<EditMaterial
+					selectedMaterial={selectedMaterial}
+					numberOfShapesWithMaterial={numberOfShapesWithMaterial}
+					numberOfShapesWithoutMaterial={numberOfShapesWithoutMaterial}
+					handleRemoveMaterialFromSelectedShape={
+						handleRemoveMaterialFromSelectedShape
+					}
+					handleSetMaterialToAllShapes={handleSetMaterialToAllShapes}
+					handleSetMaterialToShapesWithoutMaterial={
+						handleSetMaterialToShapesWithoutMaterial
+					}
+					selectedShape={selectedShape}
+				/>
 			)}
 			<SheetFooter>
 				{selectedMaterial === null ? (

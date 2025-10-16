@@ -21,7 +21,7 @@ const SidePanelAddMaterial: FC<SidePanelAddMaterialProps> = ({ setView }) => {
 	// Material that is selected from the select
 	const [material, setMaterial] = useState<MaterialExtended | null>(null);
 
-	const { mutate: setMaterialToShape } = useSetMaterialToShape();
+	const { mutate: setMaterialToShape } = useSetMaterialToShape({ material });
 
 	const handleSave = () => {
 		if (selectedShape?.id && material) {
@@ -34,6 +34,7 @@ const SidePanelAddMaterial: FC<SidePanelAddMaterialProps> = ({ setView }) => {
 		if (material) {
 			setMaterials([...materials, material]);
 		}
+
 		setView("general");
 	};
 

@@ -1,5 +1,5 @@
 import { api } from "~/utils/api";
-import type { CanvasShape } from "~/types/drawing";
+import type { CanvasShape, MaterialExtended } from "~/types/drawing";
 import { useRouter } from "next/router";
 import { useShape } from "~/components/header/context/ShapeContext";
 
@@ -7,7 +7,13 @@ import { useShape } from "~/components/header/context/ShapeContext";
  * Hook for setting material to shapes with optimistic updates.
  * Updates cache immediately for smooth interactions.
  */
-export function useSetMaterialToShape() {
+interface UseSetMaterialToShapeProps {
+	material: MaterialExtended | null;
+}
+
+export function useSetMaterialToShape({
+	material,
+}: UseSetMaterialToShapeProps) {
 	const router = useRouter();
 	const idParam = router.query.id;
 	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
@@ -18,10 +24,15 @@ export function useSetMaterialToShape() {
 	const mutation = api.design.setMaterialToShape.useMutation({
 		onMutate: async ({ id, materialId }) => {
 			if (!designId) return { previousData: undefined };
-			let material = null;
 
-			if (materialId) {
-				material = materials.find((m) => m.id === materialId);
+			let materialToSet = material;
+
+			if (materialToSet === null) {
+				materialToSet = materials.find((m) => m.id === materialId) ?? null;
+			}
+
+			if (materialId === null) {
+				materialToSet = null;
 			}
 
 			// Cancel outgoing refetches
@@ -40,7 +51,7 @@ export function useSetMaterialToShape() {
 							shape.id === id
 								? {
 										...shape,
-										material: material ? material : undefined,
+										material: materialToSet ? materialToSet : undefined,
 									}
 								: shape,
 						),
@@ -52,7 +63,7 @@ export function useSetMaterialToShape() {
 			if (selectedShape && selectedShape.id === id) {
 				setSelectedShape({
 					...selectedShape,
-					material: material ?? undefined,
+					material: materialToSet ?? undefined,
 				} as CanvasShape);
 			}
 

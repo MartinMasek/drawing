@@ -24,7 +24,9 @@ const SidePanelDimensionsGeneral: FC<SidePanelDimensionsGeneralProps> = ({
 		setSelectedMaterial,
 	} = useShape();
 
-	const { mutate: setMaterialToShape } = useSetMaterialToShape();
+	const { mutate: setMaterialToShape } = useSetMaterialToShape({
+		material: null,
+	});
 
 	const handleEditClick = (material: MaterialExtended | null) => {
 		setSelectedMaterial(material);

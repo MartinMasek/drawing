@@ -125,6 +125,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		handleDrawMove,
 		handleDrawEnd,
 		handleSelectShape,
+		selectedShape,
 	});
 
 	// Log draftBounds whenever it changes
