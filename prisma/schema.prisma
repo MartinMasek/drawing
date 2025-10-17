@@ -14,18 +14,6 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
-
-    @@index([name])
-}
-
 // Necessary for Next auth
 model Account {
     id                       String  @id @default(cuid())
@@ -62,7 +50,6 @@ model User {
     image         String?
     accounts      Account[]
     sessions      Session[]
-    posts         Post[]
 }
 
 model VerificationToken {
@@ -99,8 +86,14 @@ model Shape {
     cutouts Cutout[]
 
     // We have to remember where we started and ended drawing the shape because from there we can start reshaping the shape
-    startEdgeId String?
-    endEdgeId   String?
+    startPoint1Id String?
+    startPoint2Id String?
+    endPoint1Id   String?
+    endPoint2Id   String?
+    startPoint1   Point?  @relation("ShapeStartPoint1", fields: [startPoint1Id], references: [id])
+    startPoint2   Point?  @relation("ShapeStartPoint2", fields: [startPoint2Id], references: [id])
+    endPoint1     Point?  @relation("ShapeEndPoint1", fields: [endPoint1Id], references: [id])
+    endPoint2     Point?  @relation("ShapeEndPoint2", fields: [endPoint2Id], references: [id])
 
     materialId String?
     material   Material? @relation(fields: [materialId], references: [id])
@@ -112,12 +105,20 @@ model Point {
     yPos    Float
     shapeId String?
     shape   Shape?  @relation(fields: [shapeId], references: [id], onDelete: Cascade)
-    corner  Corner?
-}
 
-// #########################################################
-// IMPORTANT: Everything bellow this will be changed to match correct data model. We dont need it for now, Right now we only need to store points somewhere for demo
-// #########################################################
+    // When we define some modification on corner we store it here
+    corner Corner?
+
+    // Relations for edges that use this point
+    edgesAsPoint1 Edge[] @relation("EdgePoint1")
+    edgesAsPoint2 Edge[] @relation("EdgePoint2")
+
+    // Relations for shapes start and end points that use this point
+    shapeStart1 Shape[] @relation("ShapeStartPoint1")
+    shapeStart2 Shape[] @relation("ShapeStartPoint2")
+    shapeEnd1   Shape[] @relation("ShapeEndPoint1")
+    shapeEnd2   Shape[] @relation("ShapeEndPoint2")
+}
 
 model Text {
     id              String  @id @default(cuid())
@@ -134,46 +135,87 @@ model Text {
 }
 
 model Edge {
-    id               String            @id @default(cuid())
-    shapeId          String
-    shape            Shape             @relation(fields: [shapeId], references: [id], onDelete: Cascade)
-    point1Id         String
-    point2Id         String
-    linkedService    String?
-    edgeShapes       EdgeShape[]
+    id      String @id @default(cuid())
+    shapeId String
+    shape   Shape  @relation(fields: [shapeId], references: [id], onDelete: Cascade)
+
+    // Edge is defined by two points for that we use point1Id and point2Id
+    point1Id String
+    point1   Point  @relation("EdgePoint1", fields: [point1Id], references: [id], onDelete: Cascade)
+    point2Id String
+    point2   Point  @relation("EdgePoint2", fields: [point2Id], references: [id], onDelete: Cascade)
+
+    edgeModifications EdgeModification[]
+
+    // TODO those configurations are not yet finished
     backsplashConfig BacksplashConfig?
     waterfallConfig  WaterfallConfig?
+    linkedServiceId  String?
 }
 
-model EdgeShape {
-    id             String @id @default(cuid())
-    depth          Float
-    width          Float
-    type           String // "Right" | "Center" | "Left"
-    edges          String // JSON array of "BumpIn" | "BumpOut"
-    distance       Float
-    sideAngleLeft  Float
-    sideAngleRight Float
-    edgeId         String
-    edge           Edge   @relation(fields: [edgeId], references: [id], onDelete: Cascade)
+// Edge modifications are used to define the shape of the edge. (Bumps, curves, etc.). We need it as separate model because we can have up to 2 modifications on the single edge.
+model EdgeModification {
+    id       String               @id @default(cuid())
+    edgeType EdgeModificationType @default(None)
+
+    position EdgeShapePosition? @default(Center) // Optional because full curve type does not have position
+    distance Float? // When position is Left or Right, we need to define distance from the corner
+
+    // Used for bump ins and outs
+    // ----------------------------
+    depth          Float?
+    width          Float?
+    sideAngleLeft  Float? // Defines angle of the bump in the left side of the edge. This is not used when we have curve bumps
+    sideAngleRight Float? // Defines angle of the bump in the right side of the edge. This is not used when we have curve bumps
+    // ----------------------------
+
+    fullRadiusDepth Float? // Used when full curve type is used to define depth of the curve
+
+    edgeId String
+    edge   Edge   @relation(fields: [edgeId], references: [id], onDelete: Cascade)
+}
+
+enum EdgeShapePosition {
+    Right
+    Center
+    Left
+}
+
+enum EdgeModificationType {
+    BumpIn
+    BumpOut
+    BumpInCurve
+    BumpOutCurve
+    FullCurve
+    None
 }
 
 model Corner {
-    id                 String  @id @default(cuid())
-    pointId            String  @unique
-    point              Point   @relation(fields: [pointId], references: [id], onDelete: Cascade)
-    cornerModification String
-    type               String // "Clip" | "BumpOut" | "None"
-    clip               Float?
-    radius             Float
-    bumpInLength       Float?
-    bumpOutLength      Float?
-    bumpOutDepth       Float?
-    linkedService      String?
-    shapeId            String
-    shape              Shape   @relation(fields: [shapeId], references: [id], onDelete: Cascade)
+    id                 String     @id @default(cuid())
+    type               CornerType @default(None)
+    clip               Float? // Used when type is Clip to define length of the clip
+    radius             Float? // Used when type is Radius to define radius of the corner
+    modificationLength Float? // Used when type is BumpOut or Notch to define length of that modification
+    modificationDepth  Float? // Used when type is BumpOut or Notch to define depth of that modification
+
+    pointId String @unique
+    point   Point  @relation(fields: [pointId], references: [id], onDelete: Cascade)
+    shapeId String
+    shape   Shape  @relation(fields: [shapeId], references: [id], onDelete: Cascade)
+
+    // TODO: Define service relation
+    linkedServiceId String?
 }
 
+enum CornerType {
+    Clip
+    Radius
+    BumpOut
+    Notch
+    None
+}
+
+// TODO FINISH THIS when we start working on cutouts
 model Cutout {
     id         String          @id @default(cuid())
     posX       Float
@@ -211,28 +253,6 @@ model CutoutConfig {
     template    CutoutTemplate?
 }
 
-model BacksplashConfig {
-    id         String   @id @default(cuid())
-    serviceId  String
-    service    Service  @relation(fields: [serviceId], references: [id])
-    materialId String
-    material   Material @relation(fields: [materialId], references: [id])
-    height     Float
-    edgeId     String   @unique
-    edge       Edge     @relation(fields: [edgeId], references: [id], onDelete: Cascade)
-}
-
-model WaterfallConfig {
-    id         String   @id @default(cuid())
-    serviceId  String
-    service    Service  @relation(fields: [serviceId], references: [id])
-    materialId String
-    material   Material @relation(fields: [materialId], references: [id])
-    height     Float
-    edgeId     String   @unique
-    edge       Edge     @relation(fields: [edgeId], references: [id], onDelete: Cascade)
-}
-
 model Service {
     id                String             @id @default(cuid())
     name              String
@@ -257,4 +277,26 @@ model Product {
     id            String         @id @default(cuid())
     name          String
     cutoutConfigs CutoutConfig[]
+}
+
+model BacksplashConfig {
+    id         String   @id @default(cuid())
+    serviceId  String
+    service    Service  @relation(fields: [serviceId], references: [id])
+    materialId String
+    material   Material @relation(fields: [materialId], references: [id])
+    height     Float
+    edgeId     String   @unique
+    edge       Edge     @relation(fields: [edgeId], references: [id], onDelete: Cascade)
+}
+
+model WaterfallConfig {
+    id         String   @id @default(cuid())
+    serviceId  String
+    service    Service  @relation(fields: [serviceId], references: [id])
+    materialId String
+    material   Material @relation(fields: [materialId], references: [id])
+    height     Float
+    edgeId     String   @unique
+    edge       Edge     @relation(fields: [edgeId], references: [id], onDelete: Cascade)
 }
