@@ -84,13 +84,13 @@ async function main() {
 		},
 	});
 
-	await prisma.edgeShape.create({
+	await prisma.edgeModification.create({
 		data: {
 			edgeId: edge1.id,
+			edgeType: "BumpOut",
+			position: "Center",
 			depth: 1.5,
 			width: 3,
-			type: "Center",
-			edges: JSON.stringify([]),
 			distance: 96,
 			sideAngleLeft: 90,
 			sideAngleRight: 90,
@@ -102,9 +102,7 @@ async function main() {
 		data: {
 			shapeId: shape1.id,
 			pointId: point1.id,
-			cornerModification: "none",
 			type: "None",
-			radius: 0,
 		},
 	});
 
@@ -172,13 +170,13 @@ async function main() {
 	const s1b_edgeTop = await prisma.edge.create({
 		data: { shapeId: shape1b.id, point1Id: s1b_p1.id, point2Id: s1b_p2.id },
 	});
-	await prisma.edgeShape.create({
+	await prisma.edgeModification.create({
 		data: {
 			edgeId: s1b_edgeTop.id,
+			edgeType: "BumpOut",
+			position: "Center",
 			depth: 1,
 			width: 2,
-			type: "Center",
-			edges: JSON.stringify(["BumpOut"]),
 			distance: 80,
 			sideAngleLeft: 90,
 			sideAngleRight: 90,
@@ -247,8 +245,7 @@ async function main() {
 		data: {
 			shapeId: shape2.id,
 			pointId: lp4.id,
-			cornerModification: "radius",
-			type: "None",
+			type: "Radius",
 			radius: 0.5,
 		},
 	});
@@ -281,13 +278,13 @@ async function main() {
 	const s2b_edge = await prisma.edge.create({
 		data: { shapeId: shape2b.id, point1Id: s2b_p1.id, point2Id: s2b_p2.id },
 	});
-	await prisma.edgeShape.create({
+	await prisma.edgeModification.create({
 		data: {
 			edgeId: s2b_edge.id,
+			edgeType: "BumpOut",
+			position: "Center",
 			depth: 0.5,
 			width: 1,
-			type: "Center",
-			edges: JSON.stringify([]),
 			distance: 72,
 			sideAngleLeft: 90,
 			sideAngleRight: 90,
