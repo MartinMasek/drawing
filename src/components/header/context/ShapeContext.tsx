@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState } from "react";
 import type { CanvasShape, MaterialExtended } from "~/types/drawing";
 
 type ShapeContextType = {
@@ -25,26 +25,19 @@ export const ShapeProvider = ({
 		useState<MaterialExtended | null>(null);
 
 	// All material ids that are applied to the shapes
-	const [materials, setMaterials] = useState<MaterialExtended[]>([]);
-
-	// Extract unique materials from shapes on initial render
-	// biome-ignore lint/correctness/useExhaustiveDependencies: <Only run on initial render>
-	useEffect(() => {
-		if (shapes) {
-			const uniqueMaterials = shapes
-				.filter(
-					(shape): shape is CanvasShape & { material: MaterialExtended } =>
-						shape.material !== undefined,
-				)
-				.map((shape) => shape.material)
-				.filter(
-					(material, index, array) =>
-						array.findIndex((m) => m.id === material.id) === index,
-				);
-
-			setMaterials(uniqueMaterials);
-		}
-	}, []);
+	const [materials, setMaterials] = useState<MaterialExtended[]>(() => {
+		if (!shapes) return [];
+		return shapes
+			.filter(
+				(shape): shape is CanvasShape & { material: MaterialExtended } =>
+					shape.material !== undefined,
+			)
+			.map((shape) => shape.material)
+			.filter(
+				(material, index, array) =>
+					array.findIndex((m) => m.id === material.id) === index,
+			);
+	});
 
 	const getNumberOfShapesPerMaterial = (materialId?: string): number => {
 		// If no materialId is provided, return the number of shapes without a material

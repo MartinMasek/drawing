@@ -7,10 +7,10 @@ import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import type { SidePanelDimensionsView } from "../SidePanelDimensions";
 import { useShape } from "~/components/header/context/ShapeContext";
 import { useRouter } from "next/router";
-import { useSetMaterialToShape } from "~/hooks/mutations/useSetMaterialToShape";
-import { useSetMaterialToShapesWithoutMaterial } from "~/hooks/mutations/useSetMaterialToShapesWithoutMaterial";
-import { useSetMaterialToAllShapes } from "~/hooks/mutations/useSetMaterialToAllShapes";
-import { useRemoveMaterialFromShapes } from "~/hooks/mutations/useRemoveMaterialFromShapes";
+import { useSetMaterialToShape } from "~/hooks/mutations/materials/useSetMaterialToShape";
+import { useSetMaterialToShapesWithoutMaterial } from "~/hooks/mutations/materials/useSetMaterialToShapesWithoutMaterial";
+import { useSetMaterialToAllShapes } from "~/hooks/mutations/materials/useSetMaterialToAllShapes";
+import { useRemoveMaterialFromShapes } from "~/hooks/mutations/materials/useRemoveMaterialFromShapes";
 import EditNoneMaterial from "../components/EditNoneMaterial";
 import EditMaterial from "../components/EditMaterial";
 

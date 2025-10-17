@@ -7,7 +7,7 @@ import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import type { SidePanelDimensionsView } from "../SidePanelDimensions";
 import { useShape } from "~/components/header/context/ShapeContext";
 import MaterialDetail from "../components/MaterialDetail";
-import { useSetMaterialToShape } from "~/hooks/mutations/useSetMaterialToShape";
+import { useSetMaterialToShape } from "~/hooks/mutations/materials/useSetMaterialToShape";
 import type { MaterialExtended } from "~/types/drawing";
 import MaterialSelect from "../components/MaterialSelect";
 

@@ -1,10 +1,10 @@
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useState, useCallback } from "react";
 import type { CanvasTextData, CanvasText } from "~/types/drawing";
-import { useCreateText } from "./mutations/useCreateText";
-import { useUpdateText } from "./mutations/useUpdateText";
-import { useDeleteText } from "./mutations/useDeleteText";
-import { useChangeTextPosition } from "./mutations/useChangeTextPosition";
+import { useCreateText } from "./mutations/texts/useCreateText";
+import { useUpdateText } from "./mutations/texts/useUpdateText";
+import { useDeleteText } from "./mutations/texts/useDeleteText";
+import { useChangeTextPosition } from "./mutations/texts/useChangeTextPosition";
 
 export const useText = (designId: string) => {
 	const createText = useCreateText(designId);
