@@ -52,6 +52,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		cursorType,
 		isPanning,
 		setTotalArea,
+		activeTab,
 	} = useDrawing();
 
 	// Text handling
@@ -288,6 +289,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 								onMouseLeave={() => setHoveredId(null)}
 								onDragEnd={(newX, newY) => handleShapeDragEnd(shape, newX, newY)}
 								onContextMenu={(e) => handleShapeContextMenu(shape, e)}
+								activeTab={activeTab}
 							/>
 						);
 					})}
