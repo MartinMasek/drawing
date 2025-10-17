@@ -288,7 +288,9 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 								onClick={() => handleSelectShape(shape)}
 								onMouseEnter={() => setHoveredId(shape.id)}
 								onMouseLeave={() => setHoveredId(null)}
-								onDragEnd={(newX, newY) => handleShapeDragEnd(shape, newX, newY)}
+								onDragEnd={(newX, newY) =>
+									handleShapeDragEnd(shape, newX, newY)
+								}
 								onContextMenu={(e) => handleShapeContextMenu(shape, e)}
 								activeTab={activeTab}
 							/>
@@ -336,22 +338,24 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 			)}
 
 			{/* Context menu for shapes */}
-			{contextMenu && designId && (() => {
-				const shape = shapes.find((s) => s.id === contextMenu.shapeId);
-				if (!shape) return null;
-				
-				return (
-					<ShapeContextMenu
-						x={contextMenu.x}
-						y={contextMenu.y}
-						shape={shape}
-						designId={designId}
-						selectedShapeId={selectedShape?.id ?? null}
-						onShapeDeleted={handleShapeDeleted}
-						onClose={handleCloseContextMenu}
-					/>
-				);
-			})()}
+			{contextMenu &&
+				designId &&
+				(() => {
+					const shape = shapes.find((s) => s.id === contextMenu.shapeId);
+					if (!shape) return null;
+
+					return (
+						<ShapeContextMenu
+							x={contextMenu.x}
+							y={contextMenu.y}
+							shape={shape}
+							designId={designId}
+							selectedShapeId={selectedShape?.id ?? null}
+							onShapeDeleted={handleShapeDeleted}
+							onClose={handleCloseContextMenu}
+						/>
+					);
+				})()}
 		</div>
 	);
 };
