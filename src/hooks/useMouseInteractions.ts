@@ -1,6 +1,6 @@
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useCallback, useMemo } from "react";
-import { CursorTypes } from "../components/header/header/drawing-types";
+import { CursorTypes, DrawingTab } from "../components/header/header/drawing-types";
 import type { CanvasText, CanvasShape, CanvasTextData } from "~/types/drawing";
 import { useCanvasNavigation } from "./useCanvasNavigation";
 import { useCursorLogic } from "./useCursorLogic";
@@ -21,6 +21,7 @@ interface UseMouseInteractionsProps {
 	handleDrawEnd: () => void;
 	handleSelectShape: (shape: CanvasShape) => void;
 	selectedShape: CanvasShape | null;
+	drawingTab: number;
 }
 
 /**
@@ -43,6 +44,7 @@ export const useMouseInteractions = ({
 	handleDrawEnd,
 	handleSelectShape,
 	selectedShape,
+	drawingTab,
 }: UseMouseInteractionsProps) => {
 	// Cursor logic
 	const { isInteractiveCursor, getCursor: getCursorFromHook } = useCursorLogic({
@@ -132,7 +134,8 @@ export const useMouseInteractions = ({
 				!e.evt.shiftKey &&
 				e.evt.button === 0 &&
 				!hoveredId &&
-				!selectedShape
+				!selectedShape &&
+				drawingTab === DrawingTab.Dimensions
 			) {
 				handleDrawStart(e);
 			}
@@ -150,6 +153,7 @@ export const useMouseInteractions = ({
 			handleDrawStart,
 			handleNavMouseDown,
 			selectedShape,
+			drawingTab,
 		],
 	);
 

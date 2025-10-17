@@ -210,6 +210,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		handleDrawEnd,
 		handleSelectShape,
 		selectedShape,
+		drawingTab: activeTab,
 	});
 
 	// Log draftBounds whenever it changes
