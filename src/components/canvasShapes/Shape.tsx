@@ -27,7 +27,7 @@ interface ShapeProps {
 	isHovered: boolean;
 	isDrawing: boolean;
 	isDraggable: boolean;
-	onClick: () => void;
+	onClick: (e: KonvaEventObject<MouseEvent>) => void;
 	onMouseEnter: () => void;
 	onMouseLeave: () => void;
 	onDragEnd: (newX: number, newY: number) => void;
@@ -85,7 +85,7 @@ const transformPoints = (
 	shapeY: number,
 	centerX: number,
 	centerY: number,
-	dragOffset: { x: number; y: number }
+	dragOffset: { x: number; y: number },
 ): TransformedPoints => {
 	const flattenedPoints: number[] = [];
 	const absolutePoints: Coordinate[] = [];
@@ -128,19 +128,20 @@ const calculateDistance = (p1: Coordinate, p2: Coordinate): number => {
 /**
  * Create clipping function for a polygon shape
  */
-const createShapeClipFunc = (points: readonly Coordinate[]) => (ctx: Context) => {
-	ctx.beginPath();
-	for (let i = 0; i < points.length; i++) {
-		const p = points[i];
-		if (!p) continue;
-		if (i === 0) {
-			ctx.moveTo(p.xPos, p.yPos);
-		} else {
-			ctx.lineTo(p.xPos, p.yPos);
+const createShapeClipFunc =
+	(points: readonly Coordinate[]) => (ctx: Context) => {
+		ctx.beginPath();
+		for (let i = 0; i < points.length; i++) {
+			const p = points[i];
+			if (!p) continue;
+			if (i === 0) {
+				ctx.moveTo(p.xPos, p.yPos);
+			} else {
+				ctx.lineTo(p.xPos, p.yPos);
+			}
 		}
-	}
-	ctx.closePath();
-};
+		ctx.closePath();
+	};
 
 /**
  * Get stroke color based on shape state
@@ -175,7 +176,9 @@ const Shape = ({
 }: ShapeProps) => {
 	const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 	const [hoveredEdgeIndex, setHoveredEdgeIndex] = useState<number | null>(null);
-	const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
+	const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(
+		null,
+	);
 	const prevShapePos = useRef({ x: shape.xPos, y: shape.yPos });
 
 	// Reset drag offset when shape position changes (after optimistic update)
@@ -192,7 +195,7 @@ const Shape = ({
 
 	const boundingBox = useMemo(
 		() => calculateBoundingBox(shape.points),
-		[shape.points]
+		[shape.points],
 	);
 
 	const { centerX, centerY } = boundingBox;
@@ -206,15 +209,25 @@ const Shape = ({
 				shape.yPos,
 				centerX,
 				centerY,
-				dragOffset
+				dragOffset,
 			),
-		[shape.points, shape.rotation, shape.xPos, shape.yPos, centerX, centerY, dragOffset]
+		[
+			shape.points,
+			shape.rotation,
+			shape.xPos,
+			shape.yPos,
+			centerX,
+			centerY,
+			dragOffset,
+		],
 	);
 
-	const { flattened: flattenedPoints, absolute: absolutePoints } = transformedPoints;
+	const { flattened: flattenedPoints, absolute: absolutePoints } =
+		transformedPoints;
 
 	// Determine rendering mode based on active tab
-	const isEdgesMode = activeTab === DrawingTab.Edges || activeTab === DrawingTab.Shape;
+	const isEdgesMode =
+		activeTab === DrawingTab.Edges || activeTab === DrawingTab.Shape;
 	const isShapeMode = activeTab === DrawingTab.Shape;
 
 	const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
@@ -231,7 +244,10 @@ const Shape = ({
 		onDragEnd(newX, newY);
 	};
 
-	const handleEdgeClick = (edgeIndex: number, e: KonvaEventObject<MouseEvent>) => {
+	const handleEdgeClick = (
+		edgeIndex: number,
+		e: KonvaEventObject<MouseEvent>,
+	) => {
 		if (isDrawing || e.evt.button !== 0) return;
 
 		const startPoint = absolutePoints[edgeIndex];
@@ -255,17 +271,21 @@ const Shape = ({
 			length: length.toFixed(2),
 		});
 
-		onClick();
+		onClick(e);
 	};
 
-	const handlePointClick = (pointIndex: number, e: KonvaEventObject<MouseEvent>) => {
+	const handlePointClick = (
+		pointIndex: number,
+		e: KonvaEventObject<MouseEvent>,
+	) => {
 		e.cancelBubble = true;
 		if (isDrawing || e.evt.button !== 0) return;
 
 		const point = absolutePoints[pointIndex];
 		if (!point) return;
 
-		const prevIndex = (pointIndex - 1 + absolutePoints.length) % absolutePoints.length;
+		const prevIndex =
+			(pointIndex - 1 + absolutePoints.length) % absolutePoints.length;
 		const nextIndex = (pointIndex + 1) % absolutePoints.length;
 		const prevPoint = absolutePoints[prevIndex];
 		const nextPoint = absolutePoints[nextIndex];
@@ -273,10 +293,14 @@ const Shape = ({
 		const adjacentEdges: { edge1Length?: string; edge2Length?: string } = {};
 
 		if (prevPoint) {
-			adjacentEdges.edge1Length = calculateDistance(prevPoint, point).toFixed(2);
+			adjacentEdges.edge1Length = calculateDistance(prevPoint, point).toFixed(
+				2,
+			);
 		}
 		if (nextPoint) {
-			adjacentEdges.edge2Length = calculateDistance(point, nextPoint).toFixed(2);
+			adjacentEdges.edge2Length = calculateDistance(point, nextPoint).toFixed(
+				2,
+			);
 		}
 
 		console.log("Point Info:", {
@@ -289,7 +313,7 @@ const Shape = ({
 			adjacentEdgeLengths: adjacentEdges,
 		});
 
-		onClick();
+		onClick(e);
 	};
 
 	const handleEdgeMouseEnter = (index: number) => {
@@ -317,79 +341,87 @@ const Shape = ({
 	// Render mode: Edges and Shape tabs (individual edge/point interaction)
 	if (isEdgesMode) {
 		return (
-			<Group
-				x={shape.xPos + centerX}
-				y={shape.yPos + centerY}
-				offsetX={centerX}
-				offsetY={centerY}
-				rotation={shape.rotation}
-				draggable={isDraggable && !isDrawing}
-				listening={!isDrawing}
-				onDragMove={handleDragMove}
-				onDragEnd={handleDragEnd}
-				onContextMenu={onContextMenu}
-				clipFunc={createShapeClipFunc(shape.points)}
-			>
-				{/* Background fill */}
-				<Line
-					points={flattenedPoints}
-					fill={getFillColor(isSelected, isHovered)}
-					closed
-					listening={false}
-				/>
+			<>
+				<Group
+					x={shape.xPos + centerX}
+					y={shape.yPos + centerY}
+					offsetX={centerX}
+					offsetY={centerY}
+					rotation={shape.rotation}
+					draggable={isDraggable && !isDrawing}
+					listening={!isDrawing}
+					onDragMove={handleDragMove}
+					onDragEnd={handleDragEnd}
+					onContextMenu={onContextMenu}
+					clipFunc={createShapeClipFunc(shape.points)}
+				>
+					{/* Draggable background fill - handles drag interactions */}
+					<Line
+						points={flattenedPoints}
+						fill={getFillColor(isSelected, isHovered)}
+						closed
+						listening={!isDrawing}
+						draggable={false}
+						onClick={onClick}
+						onMouseEnter={onMouseEnter}
+						onMouseLeave={onMouseLeave}
+					/>
 
-				{/* Individual edges */}
-				{shape.points.map((point, index) => {
-					const nextIndex = (index + 1) % shape.points.length;
-					const nextPoint = shape.points[nextIndex];
-					if (!nextPoint) return null;
+					{/* Individual edges */}
+					{shape.points.map((point, index) => {
+						const nextIndex = (index + 1) % shape.points.length;
+						const nextPoint = shape.points[nextIndex];
+						if (!nextPoint) return null;
 
-					const isEdgeHovered = hoveredEdgeIndex === index;
-
-					return (
-						<Line
-							key={`${shape.id}-edge-${index}`}
-							points={[point.xPos, point.yPos, nextPoint.xPos, nextPoint.yPos]}
-							stroke={
-								isEdgeHovered
-									? SHAPE_HOVERED_COLOR
-									: getStrokeColor(isSelected, false)
-							}
-							strokeWidth={isEdgeHovered ? EDGE_STROKE_WIDTH_HOVERED : EDGE_STROKE_WIDTH}
-							hitStrokeWidth={EDGE_HIT_STROKE_WIDTH}
-							listening={!isDrawing}
-							onClick={(e) => handleEdgeClick(index, e)}
-							onMouseEnter={() => handleEdgeMouseEnter(index)}
-							onMouseLeave={handleEdgeMouseLeave}
-						/>
-					);
-				})}
-
-				{/* Edge measurements */}
-				<ShapeEdgeMeasurements points={absolutePoints} />
-
-				{/* Individual points (Shape mode only) */}
-				{isShapeMode &&
-					shape.points.map((point, index) => {
-						const isPointHovered = hoveredPointIndex === index;
+						const isEdgeHovered = hoveredEdgeIndex === index;
 
 						return (
-							<Circle
-								key={`${shape.id}-point-${index}`}
-								x={point.xPos}
-								y={point.yPos}
-								radius={POINT_HOVER_RADIUS}
-								fill={isPointHovered ? "red" : "transparent"}
-								opacity={isPointHovered ? POINT_HOVER_OPACITY : 1}
-								stroke="transparent"
+							<Line
+								key={`${shape.id}-edge-${index}`}
+								points={[point.xPos, point.yPos, nextPoint.xPos, nextPoint.yPos]}
+								stroke={
+									isEdgeHovered
+										? SHAPE_HOVERED_COLOR
+										: getStrokeColor(isSelected, false)
+								}
+								strokeWidth={
+									isEdgeHovered ? EDGE_STROKE_WIDTH_HOVERED : EDGE_STROKE_WIDTH
+								}
+								hitStrokeWidth={EDGE_HIT_STROKE_WIDTH}
 								listening={!isDrawing}
-								onClick={(e) => handlePointClick(index, e)}
-								onMouseEnter={() => handlePointMouseEnter(index)}
-								onMouseLeave={handlePointMouseLeave}
+								onClick={(e) => handleEdgeClick(index, e)}
+								onMouseEnter={() => handleEdgeMouseEnter(index)}
+								onMouseLeave={handleEdgeMouseLeave}
 							/>
 						);
 					})}
-			</Group>
+
+					{/* Individual points (Shape mode only) */}
+					{isShapeMode &&
+						shape.points.map((point, index) => {
+							const isPointHovered = hoveredPointIndex === index;
+
+							return (
+								<Circle
+									key={`${shape.id}-point-${index}`}
+									x={point.xPos}
+									y={point.yPos}
+									radius={POINT_HOVER_RADIUS}
+									fill={isPointHovered ? "red" : "transparent"}
+									opacity={isPointHovered ? POINT_HOVER_OPACITY : 1}
+									stroke="transparent"
+									listening={!isDrawing}
+									onClick={(e) => handlePointClick(index, e)}
+									onMouseEnter={() => handlePointMouseEnter(index)}
+									onMouseLeave={handlePointMouseLeave}
+								/>
+							);
+						})}
+				</Group>
+
+				{/* Edge measurements - outside of clipped group */}
+				<ShapeEdgeMeasurements points={absolutePoints} />
+			</>
 		);
 	}
 
@@ -411,7 +443,7 @@ const Shape = ({
 				draggable={isDraggable && !isDrawing}
 				onClick={(e) => {
 					if (!isDrawing && e.evt.button === 0) {
-						onClick();
+						onClick(e);
 					}
 				}}
 				onMouseEnter={() => !isDrawing && onMouseEnter()}

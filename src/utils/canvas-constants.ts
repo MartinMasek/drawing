@@ -10,7 +10,8 @@ export const CANVAS_PAN_BUTTON_MIDDLE = 1; // Middle mouse button
 export const CANVAS_PAN_BUTTON_LEFT = 0; // Left mouse button
 
 // Shape drawing
-export const SHAPE_DRAWING_MIN_DISTANCE = 300; // Minimum distance before we can change direction
+export const SHAPE_DRAWING_MIN_START_DISTANCE = 30; // Minimum distance before drawing preview appears
+export const SHAPE_DRAWING_MIN_DISTANCE = 200; // Minimum distance before we can change direction
 export const SHAPE_DRAWING_DEFAULT_HEIGHT = 100; // Default height for the shape
 
 // Edge measurements
