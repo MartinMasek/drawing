@@ -9,7 +9,7 @@ import { Icon } from "~/components/header/header/Icon";
 import { IconX } from "@tabler/icons-react";
 import { getTotalAreaOfShapes } from "~/utils/ui-utils";
 
-interface EditMaterialProps {
+interface EditSelectedMaterialProps {
 	selectedMaterial: MaterialExtended | null;
 	numberOfShapesWithMaterial: number;
 	numberOfShapesWithoutMaterial: number;
@@ -20,7 +20,7 @@ interface EditMaterialProps {
 	getAllShapesWithMaterial: (materialId?: string) => CanvasShape[];
 }
 
-const EditMaterial: FC<EditMaterialProps> = ({
+const EditSelectedMaterial: FC<EditSelectedMaterialProps> = ({
 	selectedMaterial,
 	numberOfShapesWithMaterial,
 	numberOfShapesWithoutMaterial,
@@ -93,4 +93,4 @@ const EditMaterial: FC<EditMaterialProps> = ({
 	);
 };
 
-export default EditMaterial;
+export default EditSelectedMaterial;

@@ -4,7 +4,7 @@ import type { FC } from "react";
 import Button from "~/components/header/header/Button";
 import { Icon } from "~/components/header/header/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
-import type { SidePanelDimensionsView } from "../SidePanelDimensions";
+import type { MaterialSidePanelView } from "../MaterialSidePanel";
 import { useShape } from "~/components/header/context/ShapeContext";
 import { useRouter } from "next/router";
 import { useSetMaterialToShape } from "~/hooks/mutations/materials/useSetMaterialToShape";
@@ -12,13 +12,13 @@ import { useSetMaterialToShapesWithoutMaterial } from "~/hooks/mutations/materia
 import { useSetMaterialToAllShapes } from "~/hooks/mutations/materials/useSetMaterialToAllShapes";
 import { useRemoveMaterialFromShapes } from "~/hooks/mutations/materials/useRemoveMaterialFromShapes";
 import EditNoneMaterial from "../components/EditNoneMaterial";
-import EditMaterial from "../components/EditMaterial";
+import EditSelectedMaterial from "../components/EditSelectedMaterial";
 
-interface SidePanelEditMaterialProps {
-	setView: (value: SidePanelDimensionsView) => void;
+interface EditMaterialProps {
+	setView: (value: MaterialSidePanelView) => void;
 }
 
-const SidePanelEditMaterial: FC<SidePanelEditMaterialProps> = ({ setView }) => {
+const EditMaterial: FC<EditMaterialProps> = ({ setView }) => {
 	const router = useRouter();
 	const idParam = router.query.id;
 	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
@@ -109,7 +109,7 @@ const SidePanelEditMaterial: FC<SidePanelEditMaterialProps> = ({ setView }) => {
 					getAllShapesWithMaterial={getAllShapesWithMaterial}
 				/>
 			) : (
-				<EditMaterial
+				<EditSelectedMaterial
 					selectedMaterial={selectedMaterial}
 					numberOfShapesWithMaterial={numberOfShapesWithMaterial}
 					numberOfShapesWithoutMaterial={numberOfShapesWithoutMaterial}
@@ -174,4 +174,4 @@ const SidePanelEditMaterial: FC<SidePanelEditMaterialProps> = ({ setView }) => {
 	);
 };
 
-export default SidePanelEditMaterial;
+export default EditMaterial;

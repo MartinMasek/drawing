@@ -4,18 +4,18 @@ import { useState, type FC } from "react";
 import Button from "~/components/header/header/Button";
 import { Icon } from "~/components/header/header/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
-import type { SidePanelDimensionsView } from "../SidePanelDimensions";
+import type { MaterialSidePanelView } from "../MaterialSidePanel";
 import { useShape } from "~/components/header/context/ShapeContext";
 import MaterialDetail from "../components/MaterialDetail";
 import { useSetMaterialToShape } from "~/hooks/mutations/materials/useSetMaterialToShape";
 import type { MaterialExtended } from "~/types/drawing";
 import MaterialSelect from "../components/MaterialSelect";
 
-interface SidePanelAddMaterialProps {
-	setView: (value: SidePanelDimensionsView) => void;
+interface AddMaterialProps {
+	setView: (value: MaterialSidePanelView) => void;
 }
 
-const SidePanelAddMaterial: FC<SidePanelAddMaterialProps> = ({ setView }) => {
+const AddMaterial: FC<AddMaterialProps> = ({ setView }) => {
 	const { selectedShape, materials, setMaterials } = useShape();
 
 	// Material that is selected from the select
@@ -97,4 +97,4 @@ const SidePanelAddMaterial: FC<SidePanelAddMaterialProps> = ({ setView }) => {
 	);
 };
 
-export default SidePanelAddMaterial;
+export default AddMaterial;

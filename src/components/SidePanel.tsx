@@ -6,7 +6,7 @@ import { CursorTypes } from "./header/header/drawing-types";
 import SidePanelCorners from "./sidePanelContent/sidePanelCorners/SidePanelCorners";
 import SidePanelCurvesAndBumps from "./sidePanelContent/sidePanelCurvesAndBumps/SidePanelCurvesAndBumps";
 import SidePanelCutouts from "./sidePanelContent/SidePanelCutouts";
-import SidePanelDimensions from "./sidePanelContent/sidePanelDimensions/SidePanelDimensions";
+import SidePanelDimensions from "./sidePanelContent/materialSidePanel/MaterialSidePanel";
 import SidePanelEdges from "./sidePanelContent/SidePanelEdges";
 
 const SidePanel: FC = () => {
