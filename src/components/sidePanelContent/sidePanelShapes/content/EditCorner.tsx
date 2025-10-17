@@ -3,12 +3,14 @@ import type { FC } from "react";
 import Button from "~/components/header/header/Button";
 import { Icon } from "~/components/header/header/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
+import type { ShapeSidePanelView } from "../ShapeSidePanel";
+import LengthInput from "../components/LengthInput";
 
-interface SidePanelCornersEditProps {
-	setView: (value: "general" | "editCorners") => void;
+interface EditCornerProps {
+	setView: (value: ShapeSidePanelView) => void;
 }
 
-const SidePanelCornersEdit: FC<SidePanelCornersEditProps> = ({ setView }) => {
+const EditCorner: FC<EditCornerProps> = ({ setView }) => {
 	return (
 		<>
 			<SheetHeader>
@@ -18,7 +20,7 @@ const SidePanelCornersEdit: FC<SidePanelCornersEditProps> = ({ setView }) => {
 						iconOnly
 						size="sm"
 						variant="text"
-						onClick={() => setView("general")}
+						onClick={() => setView("generalCorners")}
 					>
 						<Icon size="md">
 							<IconArrowLeft />
@@ -28,7 +30,13 @@ const SidePanelCornersEdit: FC<SidePanelCornersEditProps> = ({ setView }) => {
 				</SheetTitle>
 			</SheetHeader>
 			<div className="flex flex-col gap-4 p-4">
-				<p className="text-gray-400 text-sm">Work in progress...</p>
+				<p>
+					Corner Type: <span className="text-text-colors-secondary">XXXX</span>
+				</p>
+				<div className="flex h-[170px] rounded-md border border-border-neutral">
+					img
+				</div>
+				<LengthInput />
 			</div>
 			<SheetFooter>
 				<div className="flex w-full items-center gap-2">
@@ -63,4 +71,4 @@ const SidePanelCornersEdit: FC<SidePanelCornersEditProps> = ({ setView }) => {
 	);
 };
 
-export default SidePanelCornersEdit;
+export default EditCorner;

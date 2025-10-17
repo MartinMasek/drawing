@@ -22,7 +22,7 @@ import { DrawingTabList } from "./drawing-types";
 
 const DrawingTabs: FC = () => {
 	const { activeTab, setActiveTab } = useDrawing();
-	const { setSelectedShape } = useShape();
+	const { setSelectedShape, setSelectedEdge, setSelectedPoint } = useShape();
 
 	const tabIcons = {
 		1: IconSquareRoundedNumber1,
@@ -45,6 +45,8 @@ const DrawingTabs: FC = () => {
 	const handleTabClick = (id: number) => {
 		setActiveTab(id);
 		setSelectedShape(null);
+		setSelectedEdge(null);
+		setSelectedPoint(null);
 	};
 
 	return (
@@ -66,7 +68,7 @@ const DrawingTabs: FC = () => {
 						onClick={() => handleTabClick(id)}
 					>
 						<div className="flex flex-col items-center justify-center">
-							<Icon size="md" color={activeTab === id ? 'brand' : 'subtle'}>
+							<Icon size="md" color={activeTab === id ? "brand" : "subtle"}>
 								<IconComponent />
 							</Icon>
 							<p className="text-sm">{label}</p>

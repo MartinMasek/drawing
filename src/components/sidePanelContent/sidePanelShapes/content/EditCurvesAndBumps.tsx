@@ -1,22 +1,19 @@
-import {
-	IconArrowLeft,
-	IconCopy,
-	IconPlus,
-	IconTrash,
-} from "@tabler/icons-react";
+import { IconArrowLeft, IconCopy, IconTrash } from "@tabler/icons-react";
 import type { FC } from "react";
 import Button from "~/components/header/header/Button";
-import { Divider } from "~/components/header/header/Divider";
 import { Icon } from "~/components/header/header/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
+import type { ShapeSidePanelView } from "../ShapeSidePanel";
+import CurvesSizeInput from "../components/CurvesSizeInput";
+import CurvesAnglesInput from "../components/CurvesAnglesInput";
+import PositioningInput from "../components/PositioningInput";
+import DistanceInput from "../components/DistanceInput";
 
-interface SidePanelCurvesAndBumpsEditProps {
-	setView: (value: "general" | "editCurves") => void;
+interface EditCurvesAndBumpsProps {
+	setView: (value: ShapeSidePanelView) => void;
 }
 
-const SidePanelCurvesAndBumpsEdit: FC<SidePanelCurvesAndBumpsEditProps> = ({
-	setView,
-}) => {
+const EditCurvesAndBumps: FC<EditCurvesAndBumpsProps> = ({ setView }) => {
 	return (
 		<>
 			<SheetHeader>
@@ -26,7 +23,7 @@ const SidePanelCurvesAndBumpsEdit: FC<SidePanelCurvesAndBumpsEditProps> = ({
 						iconOnly
 						size="sm"
 						variant="text"
-						onClick={() => setView("general")}
+						onClick={() => setView("generalCurves")}
 					>
 						<Icon size="md">
 							<IconArrowLeft />
@@ -36,7 +33,16 @@ const SidePanelCurvesAndBumpsEdit: FC<SidePanelCurvesAndBumpsEditProps> = ({
 				</SheetTitle>
 			</SheetHeader>
 			<div className="flex flex-col gap-4 p-4">
-				<p className="text-gray-400 text-sm">Work in progress...</p>
+				<p>
+					Bump Type: <span className="text-text-colors-secondary">XXXX</span>
+				</p>
+				<div className="flex h-[170px] rounded-md border border-border-neutral">
+					img
+				</div>
+				<CurvesSizeInput />
+				<CurvesAnglesInput />
+				<PositioningInput />
+				<DistanceInput />
 			</div>
 			<SheetFooter>
 				<div className="flex w-full items-center gap-2">
@@ -71,4 +77,4 @@ const SidePanelCurvesAndBumpsEdit: FC<SidePanelCurvesAndBumpsEditProps> = ({
 	);
 };
 
-export default SidePanelCurvesAndBumpsEdit;
+export default EditCurvesAndBumps;

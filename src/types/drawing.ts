@@ -190,3 +190,13 @@ export type MaterialExtended = {
 	category: string;
 	subcategory: string;
 };
+
+export type SelectedPoint = {
+	shapeId: string;
+	pointIndex: number;
+};
+
+export type SelectedEdge = {
+	shapeId: string;
+	edgeIndex: number;
+};

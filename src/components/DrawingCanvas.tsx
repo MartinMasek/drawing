@@ -8,7 +8,7 @@ import type {
 	CanvasText,
 	CanvasTextData,
 } from "~/types/drawing";
-import { getShapeArea, getTotalAreaOfShapes } from "~/utils/ui-utils";
+import { getTotalAreaOfShapes } from "~/utils/ui-utils";
 import { useCreateShape } from "../hooks/mutations/useCreateShape";
 import { useUpdateShape } from "../hooks/mutations/useUpdateShape";
 import { useMouseInteractions } from "../hooks/useMouseInteractions";
@@ -34,7 +34,8 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 	const idParam = router.query.id;
 	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
 
-	const { selectedShape, setSelectedShape } = useShape();
+	const { selectedShape, setSelectedShape, setSelectedEdge, setSelectedPoint } =
+		useShape();
 	const [hoveredId, setHoveredId] = useState<string | null>(null);
 	const [isDebugMode, setIsDebugMode] = useState(false);
 	const [contextMenu, setContextMenu] = useState<{
@@ -157,6 +158,8 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 	const handleShapeDeleted = (shapeId: string) => {
 		// Clear selected shape if it's the one being deleted
 		setSelectedShape(null);
+		setSelectedEdge(null);
+		setSelectedPoint(null);
 		setIsOpenSideDialog(false);
 	};
 
