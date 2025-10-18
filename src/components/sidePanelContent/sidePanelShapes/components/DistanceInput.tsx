@@ -1,7 +1,12 @@
 import { Input } from "@headlessui/react";
 import type { FC } from "react";
 
-const DistanceInput: FC = () => {
+interface DistanceInputProps {
+	onChange: (value: number) => void;
+	distance: number;
+}
+
+const DistanceInput: FC<DistanceInputProps> = ({ onChange, distance }) => {
 	return (
 		<div className="flex flex-col gap-2">
 			<p className="text-sm text-text-input-label">Distance</p>

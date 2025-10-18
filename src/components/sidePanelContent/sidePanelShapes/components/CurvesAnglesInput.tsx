@@ -1,7 +1,17 @@
 import { Input } from "@headlessui/react";
 import type { FC } from "react";
 
-const CurvesAnglesInput: FC = () => {
+interface CurvesAnglesInputProps {
+	onChange: (value: { left: number; right: number }) => void;
+	left: number;
+	right: number;
+}
+
+const CurvesAnglesInput: FC<CurvesAnglesInputProps> = ({
+	onChange,
+	left,
+	right,
+}) => {
 	return (
 		<div className="flex flex-col gap-2">
 			<p className="text-sm text-text-input-label">Angles (Left-Right)</p>

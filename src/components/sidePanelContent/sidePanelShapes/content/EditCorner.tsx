@@ -36,7 +36,7 @@ const EditCorner: FC<EditCornerProps> = ({ setView }) => {
 				<div className="flex h-[170px] rounded-md border border-border-neutral">
 					img
 				</div>
-				<LengthInput />
+				<LengthInput onChange={() => {}} length={0} />
 			</div>
 			<SheetFooter>
 				<div className="flex w-full items-center gap-2">

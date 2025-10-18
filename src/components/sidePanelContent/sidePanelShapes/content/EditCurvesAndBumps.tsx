@@ -8,12 +8,31 @@ import CurvesSizeInput from "../components/CurvesSizeInput";
 import CurvesAnglesInput from "../components/CurvesAnglesInput";
 import PositioningInput from "../components/PositioningInput";
 import DistanceInput from "../components/DistanceInput";
+import { useShape } from "~/components/header/context/ShapeContext";
 
 interface EditCurvesAndBumpsProps {
 	setView: (value: ShapeSidePanelView) => void;
 }
 
 const EditCurvesAndBumps: FC<EditCurvesAndBumpsProps> = ({ setView }) => {
+	const { selectedEdge } = useShape();
+
+	const handleSizeChange = (value: { depth: number; width: number }) => {
+		// Mutation + optimistic update
+	};
+
+	const handleAnglesChange = (value: { left: number; right: number }) => {
+		// Mutation + optimistic update
+	};
+
+	const handlePositionChange = (value: string) => {
+		// Mutation + optimistic update
+	};
+
+	const handleDistanceChange = (value: number) => {
+		// Mutation + optimistic update
+	};
+
 	return (
 		<>
 			<SheetHeader>
@@ -34,15 +53,32 @@ const EditCurvesAndBumps: FC<EditCurvesAndBumpsProps> = ({ setView }) => {
 			</SheetHeader>
 			<div className="flex flex-col gap-4 p-4">
 				<p>
-					Bump Type: <span className="text-text-colors-secondary">XXXX</span>
+					Bump Type:{" "}
+					<span className="text-text-colors-secondary">
+						{selectedEdge?.edgeModification.type}
+					</span>
 				</p>
 				<div className="flex h-[170px] rounded-md border border-border-neutral">
 					img
 				</div>
-				<CurvesSizeInput />
-				<CurvesAnglesInput />
-				<PositioningInput />
-				<DistanceInput />
+				<CurvesSizeInput
+					onChange={handleSizeChange}
+					depth={selectedEdge?.edgeModification.depth ?? 0}
+					width={selectedEdge?.edgeModification.width ?? 0}
+				/>
+				<CurvesAnglesInput
+					onChange={handleAnglesChange}
+					left={selectedEdge?.edgeModification.sideAngleLeft ?? 0}
+					right={selectedEdge?.edgeModification.sideAngleRight ?? 0}
+				/>
+				<PositioningInput
+					onChange={handlePositionChange}
+					position={selectedEdge?.edgeModification.position ?? "Center"}
+				/>
+				<DistanceInput
+					onChange={handleDistanceChange}
+					distance={selectedEdge?.edgeModification.distance ?? 0}
+				/>
 			</div>
 			<SheetFooter>
 				<div className="flex w-full items-center gap-2">

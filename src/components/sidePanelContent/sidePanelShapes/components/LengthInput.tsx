@@ -1,7 +1,12 @@
 import { Input } from "@headlessui/react";
 import type { FC } from "react";
 
-const LengthInput: FC = () => {
+interface LengthInputProps {
+	onChange: (value: number) => void;
+	length: number;
+}
+
+const LengthInput: FC<LengthInputProps> = ({ onChange, length }) => {
 	return (
 		<div className="flex flex-col gap-2">
 			<p className="text-sm text-text-input-label">Length</p>

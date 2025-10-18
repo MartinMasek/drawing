@@ -1,7 +1,17 @@
 import { Input } from "@headlessui/react";
 import type { FC } from "react";
 
-const CurvesSizeInput: FC = () => {
+interface CurvesSizeInputProps {
+	onChange: (value: { depth: number; width: number }) => void;
+	depth: number;
+	width: number;
+}
+
+const CurvesSizeInput: FC<CurvesSizeInputProps> = ({
+	onChange,
+	depth,
+	width,
+}) => {
 	return (
 		<div className="flex flex-col gap-2">
 			<p className="text-sm text-text-input-label">Size (DxW)</p>

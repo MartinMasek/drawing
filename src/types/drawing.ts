@@ -2,6 +2,8 @@
 // IMPORTANT: Drawing types are for now just prepared for demo version. It will be changed to match correct data model.
 // #########################################################
 
+import type { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
+
 export interface Design {
 	id: string;
 	name: string;
@@ -199,4 +201,16 @@ export type SelectedPoint = {
 export type SelectedEdge = {
 	shapeId: string;
 	edgeIndex: number;
+	edgeModification: EdgeModification;
+};
+
+export type EdgeModification = {
+	type: EdgeModificationType;
+	position: EdgeShapePosition;
+	distance: number;
+	depth: number;
+	width: number;
+	sideAngleLeft: number;
+	sideAngleRight: number;
+	fullRadiusDepth: number;
 };

@@ -18,6 +18,7 @@ import {
 } from "~/components/header/header/drawing-types";
 import { useDrawing } from "../header/context/DrawingContext";
 import { useShape } from "../header/context/ShapeContext";
+import { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
 
 // Constants for interactive elements
 const EDGE_STROKE_WIDTH = 2;
@@ -279,7 +280,21 @@ const Shape = ({
 			length: length.toFixed(2),
 		});
 
-		setSelectedEdge({ shapeId: shape.id, edgeIndex });
+		// Get this from SHAPE, edit endpoint
+		setSelectedEdge({
+			shapeId: shape.id,
+			edgeIndex,
+			edgeModification: {
+				type: EdgeModificationType.None,
+				position: EdgeShapePosition.Center,
+				distance: 0,
+				depth: 0,
+				width: 0,
+				sideAngleLeft: 0,
+				sideAngleRight: 0,
+				fullRadiusDepth: 0,
+			},
+		});
 		setCursorType(CursorTypes.Curves);
 		setSelectedPoint(null);
 		onClick();
@@ -418,7 +433,9 @@ const Shape = ({
 				{isShapeMode &&
 					shape.points.map((point, index) => {
 						const isPointHovered = hoveredPointIndex === index;
-						const isPointSelected = selectedPoint?.pointIndex === index;
+						const isPointSelected =
+							selectedPoint?.pointIndex === index &&
+							selectedPoint?.shapeId === shape.id;
 						return (
 							<Circle
 								key={`${shape.id}-point-${index}`}

@@ -13,6 +13,11 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 > = ({ setView }) => {
 	const { selectedEdge } = useShape();
 
+	const handleSelectModification = () => {
+		// Mutation + optimistic update
+		// setView("editCurves")
+		// That should be enough, since we pull the type from the selected edge, we dont need to pass it to the EditCurvesAndBumps component
+	};
 	return (
 		<>
 			<SheetHeader>
