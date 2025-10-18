@@ -33,7 +33,7 @@ interface ShapeProps {
 	isHovered: boolean;
 	isDrawing: boolean;
 	isDraggable: boolean;
-	onClick: () => void;
+	onClick: (e: KonvaEventObject<MouseEvent>) => void;
 	onMouseEnter: () => void;
 	onMouseLeave: () => void;
 	onDragEnd: (newX: number, newY: number) => void;
@@ -297,7 +297,7 @@ const Shape = ({
 		});
 		setCursorType(CursorTypes.Curves);
 		setSelectedPoint(null);
-		onClick();
+		onClick(e);
 	};
 
 	const handlePointClick = (
@@ -342,7 +342,7 @@ const Shape = ({
 		setSelectedPoint({ shapeId: shape.id, pointIndex });
 		setCursorType(CursorTypes.Corners);
 		setSelectedEdge(null);
-		onClick();
+		onClick(e);
 	};
 
 	const handleEdgeMouseEnter = (index: number) => {
@@ -371,88 +371,101 @@ const Shape = ({
 	// Render mode: Edges and Shape tabs (individual edge/point interaction)
 	if (isEdgesMode) {
 		return (
-			<Group
-				x={shape.xPos + centerX}
-				y={shape.yPos + centerY}
-				offsetX={centerX}
-				offsetY={centerY}
-				rotation={shape.rotation}
-				draggable={isDraggable && !isDrawing}
-				listening={!isDrawing}
-				onDragMove={handleDragMove}
-				onDragEnd={handleDragEnd}
-				onContextMenu={onContextMenu}
-				clipFunc={createShapeClipFunc(shape.points)}
-			>
-				{/* Background fill */}
-				<Line
-					points={flattenedPoints}
-					fill={getFillColor(isSelected, isHovered)}
-					closed
-					listening={false}
-				/>
+			<>
+				<Group
+					x={shape.xPos + centerX}
+					y={shape.yPos + centerY}
+					offsetX={centerX}
+					offsetY={centerY}
+					rotation={shape.rotation}
+					draggable={isDraggable && !isDrawing}
+					listening={!isDrawing}
+					onDragMove={handleDragMove}
+					onDragEnd={handleDragEnd}
+					onContextMenu={onContextMenu}
+					clipFunc={createShapeClipFunc(shape.points)}
+				>
+					{/* Draggable background fill - handles drag interactions */}
+					<Line
+						points={flattenedPoints}
+						fill={getFillColor(isSelected, isHovered)}
+						closed
+						listening={!isDrawing}
+						draggable={false}
+						onClick={onClick}
+						onMouseEnter={onMouseEnter}
+						onMouseLeave={onMouseLeave}
+					/>
 
-				{/* Individual edges */}
-				{shape.points.map((point, index) => {
-					const nextIndex = (index + 1) % shape.points.length;
-					const nextPoint = shape.points[nextIndex];
-					if (!nextPoint) return null;
+					{/* Individual edges */}
+					{shape.points.map((point, index) => {
+						const nextIndex = (index + 1) % shape.points.length;
+						const nextPoint = shape.points[nextIndex];
+						if (!nextPoint) return null;
 
-					const isEdgeHovered = hoveredEdgeIndex === index;
-					const isEdgeSelected = selectedEdge?.edgeIndex === index;
+						const isEdgeHovered = hoveredEdgeIndex === index;
+						const isEdgeSelected = selectedEdge?.edgeIndex === index;
 
-					return (
-						<Line
-							key={`${shape.id}-edge-${index}`}
-							points={[point.xPos, point.yPos, nextPoint.xPos, nextPoint.yPos]}
-							stroke={
-								isEdgeHovered
-									? SHAPE_HOVERED_COLOR
-									: getStrokeColor(isSelected, false)
-							}
-							strokeWidth={
-								isEdgeSelected
-									? EDGE_STROKE_WIDTH_SELECTED
-									: isEdgeHovered
-										? EDGE_STROKE_WIDTH_HOVERED
-										: EDGE_STROKE_WIDTH
-							}
-							hitStrokeWidth={EDGE_HIT_STROKE_WIDTH}
-							listening={!isDrawing}
-							onClick={(e) => handleEdgeClick(index, e)}
-							onMouseEnter={() => handleEdgeMouseEnter(index)}
-							onMouseLeave={handleEdgeMouseLeave}
-						/>
-					);
-				})}
-
-				{/* Edge measurements */}
-				<ShapeEdgeMeasurements points={absolutePoints} />
-
-				{/* Individual points (Shape mode only) */}
-				{isShapeMode &&
-					shape.points.map((point, index) => {
-						const isPointHovered = hoveredPointIndex === index;
-						const isPointSelected =
-							selectedPoint?.pointIndex === index &&
-							selectedPoint?.shapeId === shape.id;
 						return (
-							<Circle
-								key={`${shape.id}-point-${index}`}
-								x={point.xPos}
-								y={point.yPos}
-								radius={POINT_HOVER_RADIUS}
-								fill={isPointHovered || isPointSelected ? "red" : "transparent"}
-								opacity={isPointHovered ? POINT_HOVER_OPACITY : 1}
-								stroke="transparent"
+							<Line
+								key={`${shape.id}-edge-${index}`}
+								points={[
+									point.xPos,
+									point.yPos,
+									nextPoint.xPos,
+									nextPoint.yPos,
+								]}
+								stroke={
+									isEdgeHovered
+										? SHAPE_HOVERED_COLOR
+										: getStrokeColor(isSelected, false)
+								}
+								strokeWidth={
+									isEdgeSelected
+										? EDGE_STROKE_WIDTH_SELECTED
+										: isEdgeHovered
+											? EDGE_STROKE_WIDTH_HOVERED
+											: EDGE_STROKE_WIDTH
+								}
+								hitStrokeWidth={EDGE_HIT_STROKE_WIDTH}
 								listening={!isDrawing}
-								onClick={(e) => handlePointClick(index, e)}
-								onMouseEnter={() => handlePointMouseEnter(index)}
-								onMouseLeave={handlePointMouseLeave}
+								onClick={(e) => handleEdgeClick(index, e)}
+								onMouseEnter={() => handleEdgeMouseEnter(index)}
+								onMouseLeave={handleEdgeMouseLeave}
 							/>
 						);
 					})}
-			</Group>
+
+					{/* Individual points (Shape mode only) */}
+					{isShapeMode &&
+						shape.points.map((point, index) => {
+							const isPointHovered = hoveredPointIndex === index;
+							const isPointSelected =
+								selectedPoint?.pointIndex === index &&
+								selectedPoint?.shapeId === shape.id;
+							return (
+								<Circle
+									key={`${shape.id}-point-${index}`}
+									x={point.xPos}
+									y={point.yPos}
+									radius={POINT_HOVER_RADIUS}
+									fill={
+										isPointHovered || isPointSelected ? "red" : "transparent"
+									}
+									opacity={isPointHovered ? POINT_HOVER_OPACITY : 1}
+									stroke="transparent"
+									listening={!isDrawing}
+									onClick={(e) => handlePointClick(index, e)}
+									onMouseEnter={() => handlePointMouseEnter(index)}
+									onMouseLeave={handlePointMouseLeave}
+								/>
+							);
+						})}
+				</Group>
+
+				{/* Edge measurements - outside of clipped group */}
+				<ShapeEdgeMeasurements points={absolutePoints} />
+			</>
 		);
 	}
 
@@ -474,7 +487,7 @@ const Shape = ({
 				draggable={isDraggable && !isDrawing}
 				onClick={(e) => {
 					if (!isDrawing && e.evt.button === 0) {
-						onClick();
+						onClick(e);
 					}
 				}}
 				onMouseEnter={() => !isDrawing && onMouseEnter()}

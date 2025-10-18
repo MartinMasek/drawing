@@ -98,7 +98,12 @@ const ShapeContextMenu = ({
 			}}
 			className="flex h-auto flex-col items-center gap-1 rounded-[10px] border bg-white p-1 font-semibold text-sm shadow-lg md:h-[44px] md:flex-row"
 			onClick={(e) => e.stopPropagation()}
-			onKeyDown={(e) => e.stopPropagation()}
+			onKeyDown={(e) => {
+				if (e.key === "Escape") {
+					onClose();
+				}
+				e.stopPropagation();
+			}}
 		>
 			<div className="flex w-full flex-col items-center gap-1 md:flex-row">
 				{/* Mobile/Tablet: ButtonGroup on top */}

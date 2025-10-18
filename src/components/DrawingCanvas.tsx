@@ -118,10 +118,17 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		// handleShapeUpdateComplete,
 	);
 
-	const handleSelectShape = (shape: CanvasShape) => {
+	const handleSelectShape = (shape: CanvasShape, e: KonvaEventObject<MouseEvent>) => {
 		if (isInteractiveCursor) {
 			setSelectedShape(shape);
 			setIsOpenSideDialog(true);
+			
+			// Open context menu on left click as well
+			setContextMenu({
+				shapeId: shape.id,
+				x: e.evt.clientX,
+				y: e.evt.clientY,
+			});
 		}
 	};
 
@@ -167,28 +174,6 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		setContextMenu(null);
 	};
 
-	// Close context menu on click outside or escape key
-	useEffect(() => {
-		if (!contextMenu) return;
-
-		const handleClickOutside = () => {
-			setContextMenu(null);
-		};
-		const handleEscapeKey = (e: KeyboardEvent) => {
-			if (e.key === "Escape") {
-				setContextMenu(null);
-			}
-		};
-
-		document.addEventListener("click", handleClickOutside);
-		document.addEventListener("keydown", handleEscapeKey);
-
-		return () => {
-			document.removeEventListener("click", handleClickOutside);
-			document.removeEventListener("keydown", handleEscapeKey);
-		};
-	}, [contextMenu]);
-
 	// Mouse interactions
 	const {
 		handleMouseDown,
@@ -214,6 +199,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		handleSelectShape,
 		selectedShape,
 		drawingTab: activeTab,
+		closeContextMenu: handleCloseContextMenu,
 	});
 
 	// Log draftBounds whenever it changes
@@ -288,7 +274,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 								isHovered={isHovered}
 								isDrawing={isDrawing}
 								isDraggable={isInteractiveCursor}
-								onClick={() => handleSelectShape(shape)}
+								onClick={(e) => handleSelectShape(shape, e)}
 								onMouseEnter={() => setHoveredId(shape.id)}
 								onMouseLeave={() => setHoveredId(null)}
 								onDragEnd={(newX, newY) =>

@@ -19,9 +19,10 @@ interface UseMouseInteractionsProps {
 	handleDrawStart: (e: KonvaEventObject<MouseEvent>) => void;
 	handleDrawMove: (e: KonvaEventObject<MouseEvent>) => void;
 	handleDrawEnd: () => void;
-	handleSelectShape: (shape: CanvasShape) => void;
+	handleSelectShape: (shape: CanvasShape, e: KonvaEventObject<MouseEvent>) => void;
 	selectedShape: CanvasShape | null;
 	drawingTab: number;
+	closeContextMenu: () => void;
 }
 
 /**
@@ -45,6 +46,7 @@ export const useMouseInteractions = ({
 	handleSelectShape,
 	selectedShape,
 	drawingTab,
+	closeContextMenu,
 }: UseMouseInteractionsProps) => {
 	// Cursor logic
 	const { isInteractiveCursor, getCursor: getCursorFromHook } = useCursorLogic({
@@ -115,6 +117,11 @@ export const useMouseInteractions = ({
 	// Unified mouse down handler
 	const handleMouseDown = useCallback(
 		(e: KonvaEventObject<MouseEvent>) => {
+			// Close context menu if clicking on empty canvas (stage)
+			if (e.target === e.target.getStage()) {
+				closeContextMenu();
+			}
+
 			// Reset text editing if clicking on empty canvas
 			if (editingText !== null && e.target === e.target.getStage()) {
 				setEditingText(null);
@@ -143,6 +150,7 @@ export const useMouseInteractions = ({
 			handleNavMouseDown(e);
 		},
 		[
+			closeContextMenu,
 			editingText,
 			setEditingText,
 			setHoveredId,

@@ -8,6 +8,7 @@ import {
 import {
 	SHAPE_DRAWING_DEFAULT_HEIGHT,
 	SHAPE_DRAWING_MIN_DISTANCE,
+	SHAPE_DRAWING_MIN_START_DISTANCE,
 } from "~/utils/canvas-constants";
 
 export type PreviewShape = {
@@ -50,6 +51,43 @@ const getLastDirectionPoint = (shape: PreviewShape): Coordinate => {
 		xPos: shape.startX,
 		yPos: shape.startY,
 	};
+};
+
+/**
+ * Get the first direction change point, or the current position if no changes yet
+ */
+const getFirstTargetPoint = (shape: PreviewShape): Coordinate => {
+	const firstPoint = shape.changedDirectionPoints[0];
+	
+	if (firstPoint) {
+		return firstPoint;
+	}
+	
+	return {
+		xPos: shape.currentX,
+		yPos: shape.currentY,
+	};
+};
+
+/**
+ * Derive the initial axis from the shape's current state
+ * If no direction changes yet, use current direction
+ * Otherwise, work backwards: each direction change toggles the axis
+ */
+const getInitialAxis = (shape: PreviewShape): DrawingAxis => {
+	const changeCount = shape.changedDirectionPoints.length;
+	
+	// If no changes, initial axis is current direction
+	if (changeCount === 0) {
+		return shape.direction;
+	}
+	
+	// Each direction change toggles between horizontal and vertical
+	// So if odd number of changes, initial is opposite of current
+	// If even number of changes, initial is same as current
+	return changeCount % 2 === 0
+		? shape.direction
+		: getPerpendicularAxis(shape.direction);
 };
 
 /**
@@ -101,6 +139,34 @@ const shouldRevertDirectionChange = (
 		: Math.abs(lastPoint.yPos - currentPoint.y);
 	
 	return distance < HALF_HEIGHT;
+};
+
+/**
+ * Check if user is close enough to start to allow switching the initial axis
+ * Only applicable when no direction changes have been made yet
+ */
+const shouldSwitchInitialAxis = (
+	shape: PreviewShape,
+	currentPoint: CanvasPoint,
+): boolean => {
+	// Only allow switching before any direction changes
+	if (shape.changedDirectionPoints.length > 0) return false;
+
+	// Check if user has moved more on the perpendicular axis than the current axis
+	const deltaX = Math.abs(currentPoint.x - shape.startX);
+	const deltaY = Math.abs(currentPoint.y - shape.startY);
+
+	// If drawing horizontal but moved more vertically, switch to vertical
+	if (shape.direction === DrawingAxis.Horizontal && deltaY > deltaX) {
+		return deltaY > SHAPE_DRAWING_MIN_START_DISTANCE;
+	}
+
+	// If drawing vertical but moved more horizontally, switch to horizontal
+	if (shape.direction === DrawingAxis.Vertical && deltaX > deltaY) {
+		return deltaX > SHAPE_DRAWING_MIN_START_DISTANCE;
+	}
+
+	return false;
 };
 
 /**
@@ -173,6 +239,47 @@ const calculateOffsetPoint = (
 };
 
 /**
+ * Calculate the start cap points for the leading edge of the shape
+ * Forms the perpendicular termination at the starting position
+ * Cap winding order depends on initial direction to prevent edge crossing
+ */
+const getStartCapPoints = (
+	startX: number,
+	startY: number,
+	initialDirection: CardinalDirection | null,
+): Coordinate[] => {
+	if (initialDirection === CardinalDirection.Left) {
+		// Horizontal left - reversed vertical cap
+		return [
+			{ xPos: startX, yPos: startY + HALF_HEIGHT },
+			{ xPos: startX, yPos: startY - HALF_HEIGHT },
+		];
+	}
+	
+	if (initialDirection === CardinalDirection.Right) {
+		// Horizontal right - normal vertical cap
+		return [
+			{ xPos: startX, yPos: startY - HALF_HEIGHT },
+			{ xPos: startX, yPos: startY + HALF_HEIGHT },
+		];
+	}
+	
+	if (initialDirection === CardinalDirection.Up) {
+		// Vertical up - reversed horizontal cap
+		return [
+			{ xPos: startX - HALF_HEIGHT, yPos: startY },
+			{ xPos: startX + HALF_HEIGHT, yPos: startY },
+		];
+	}
+	
+	// Vertical down - normal horizontal cap
+	return [
+		{ xPos: startX + HALF_HEIGHT, yPos: startY },
+		{ xPos: startX - HALF_HEIGHT, yPos: startY },
+	];
+};
+
+/**
  * Calculate the end cap points for the trailing edge of the shape
  * Forms the perpendicular termination at the current drawing position
  */
@@ -222,6 +329,7 @@ export function useShapeDrawing(
 	const [previewShape, setPreviewShape] = useState<PreviewShape | null>(null);
 	const [isDrawing, setIsDrawing] = useState(false);
 	const [canChangeDirectionNow, setCanChangeDirectionNow] = useState(false);
+	const [pendingStartPoint, setPendingStartPoint] = useState<CanvasPoint | null>(null);
 
 	/** Convert screen coordinates to canvas coordinates accounting for zoom and pan */
 	const screenToCanvas = (screenX: number, screenY: number): CanvasPoint => {
@@ -244,16 +352,9 @@ export function useShapeDrawing(
 
 		const canvasPoint = screenToCanvas(pointer.x, pointer.y);
 
-		// Start drawing new rectangle
-		setIsDrawing(true);
-		setPreviewShape({
-			startX: canvasPoint.x,
-			startY: canvasPoint.y,
-			currentX: canvasPoint.x,
-			currentY: canvasPoint.y,
-			changedDirectionPoints: [],
-			direction: DrawingAxis.Horizontal,
-		});
+		// Record the initial click position but don't start drawing yet
+		// Drawing will begin once user drags beyond minimum distance
+		setPendingStartPoint(canvasPoint);
 	};
 
 	/**
@@ -346,9 +447,29 @@ export function useShapeDrawing(
 		};
 	};
 
-	const handleDrawMove = (e: KonvaEventObject<MouseEvent>) => {
-		if (!previewShape) return;
+	/**
+	 * Switch the initial drawing axis before any direction changes are made
+	 * Allows user to change their mind about the initial direction
+	 */
+	const switchInitialAxis = (
+		shape: PreviewShape,
+		canvasPoint: CanvasPoint,
+	): PreviewShape => {
+		const newDirection = getPerpendicularAxis(shape.direction);
 		
+		return {
+			...shape,
+			direction: newDirection,
+			currentX: newDirection === DrawingAxis.Horizontal 
+				? canvasPoint.x 
+				: shape.startX,
+			currentY: newDirection === DrawingAxis.Vertical 
+				? canvasPoint.y 
+				: shape.startY,
+		};
+	};
+
+	const handleDrawMove = (e: KonvaEventObject<MouseEvent>) => {
 		const stage = e.target.getStage();
 		if (!stage) return;
 
@@ -356,6 +477,56 @@ export function useShapeDrawing(
 		if (!pointer) return;
 
 		const canvasPoint = screenToCanvas(pointer.x, pointer.y);
+
+		// If we have a pending start point but haven't started drawing yet
+		if (pendingStartPoint && !previewShape) {
+			const distance = Math.sqrt(
+				(canvasPoint.x - pendingStartPoint.x) ** 2 +
+				(canvasPoint.y - pendingStartPoint.y) ** 2
+			);
+
+			// Start drawing once minimum distance threshold is exceeded
+			if (distance >= SHAPE_DRAWING_MIN_START_DISTANCE) {
+				// Determine initial axis based on which direction has more movement
+				const deltaX = Math.abs(canvasPoint.x - pendingStartPoint.x);
+				const deltaY = Math.abs(canvasPoint.y - pendingStartPoint.y);
+				const initialAxis = deltaY > deltaX 
+					? DrawingAxis.Vertical 
+					: DrawingAxis.Horizontal;
+
+				// Lock position on the perpendicular axis
+				const currentX = initialAxis === DrawingAxis.Horizontal 
+					? canvasPoint.x 
+					: pendingStartPoint.x;
+				const currentY = initialAxis === DrawingAxis.Vertical 
+					? canvasPoint.y 
+					: pendingStartPoint.y;
+
+				setIsDrawing(true);
+				setPreviewShape({
+					startX: pendingStartPoint.x,
+					startY: pendingStartPoint.y,
+					currentX,
+					currentY,
+					changedDirectionPoints: [],
+					direction: initialAxis,
+				});
+				setPendingStartPoint(null);
+			}
+			return;
+		}
+
+		// Continue with existing drawing logic if already drawing
+		if (!previewShape) return;
+		
+		// Check if user wants to switch the initial axis before making any direction changes
+		const shouldSwitchAxis = shouldSwitchInitialAxis(previewShape, canvasPoint);
+		
+		if (shouldSwitchAxis) {
+			setPreviewShape(switchInitialAxis(previewShape, canvasPoint));
+			return;
+		}
+
 		const lastPoint = getLastDirectionPoint(previewShape);
 
 		// Check if minimum distance traveled to allow direction change
@@ -388,6 +559,12 @@ export function useShapeDrawing(
 	};
 
 	const handleDrawEnd = () => {
+		// Clear pending start point if user released before reaching minimum distance
+		if (pendingStartPoint) {
+			setPendingStartPoint(null);
+			return;
+		}
+
 		if (!previewShape) {
 			setIsDrawing(false);
 			setCanChangeDirectionNow(false);
@@ -457,6 +634,11 @@ export function useShapeDrawing(
 		const lastDirection = getLastDirection();
 
 		// Calculate offset points along outer and inner edges at each direction change
+		// Segment index offset: if we started vertically, add 1 to all indices
+		// This is because getPointDirection expects even indices for horizontal, odd for vertical
+		const initialAxis = getInitialAxis(previewShape);
+		const segmentIndexOffset = initialAxis === DrawingAxis.Vertical ? 1 : 0;
+		
 		const { outerPoints, innerPoints } = previewShape.changedDirectionPoints.reduce(
 			(acc, point, index) => {
 				// Next point is either the next direction change or current cursor position
@@ -471,8 +653,10 @@ export function useShapeDrawing(
 					yPos: previewShape.startY,
 				};
 
-				const outer = calculateOffsetPoint(point, nextPoint, prevPoint, index, true);
-				const inner = calculateOffsetPoint(point, nextPoint, prevPoint, index, false);
+				// Adjust segment index if we started vertically
+				const segmentIndex = index + segmentIndexOffset;
+				const outer = calculateOffsetPoint(point, nextPoint, prevPoint, segmentIndex, true);
+				const inner = calculateOffsetPoint(point, nextPoint, prevPoint, segmentIndex, false);
 
 				acc.outerPoints.push(outer);
 				acc.innerPoints.push(inner);
@@ -490,11 +674,29 @@ export function useShapeDrawing(
 			lastDirection,
 		);
 
+		// Determine initial direction and calculate start cap points
+		const startPoint: Coordinate = {
+			xPos: previewShape.startX,
+			yPos: previewShape.startY,
+		};
+		const firstTargetPoint = getFirstTargetPoint(previewShape);
+		
+		// Get initial direction using the correct segment index
+		// Index 0 = horizontal segment, index 1 = vertical segment
+		const initialSegmentIndex = initialAxis === DrawingAxis.Vertical ? 1 : 0;
+		const initialDirection = getPointDirection(startPoint, firstTargetPoint, initialSegmentIndex);
+
+		// Build start cap with proper winding based on initial direction
+		const startCapPoints = getStartCapPoints(
+			previewShape.startX,
+			previewShape.startY,
+			initialDirection,
+		);
+
 		// Build closed polygon: start cap → outer edge → end cap → inner edge (reversed)
 		// Inner points are reversed to maintain counter-clockwise winding for proper rendering
 		const coordinates: Coordinate[] = [
-			{ xPos: previewShape.startX, yPos: previewShape.startY - HALF_HEIGHT },
-			{ xPos: previewShape.startX, yPos: previewShape.startY + HALF_HEIGHT },
+			...startCapPoints,
 			...outerPoints,
 			...endCapPoints,
 			...innerPoints.reverse(),
