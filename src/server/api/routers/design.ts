@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { textCreateSchema, textUpdateSchema } from "~/server/types/text-types";
 import type { CanvasShape, CanvasText } from "~/types/drawing";
+import { getShapeEdgePointIndices } from "~/utils/shape-utils";
 
 export const designRouter = createTRPCRouter({
 	// Get all designs
@@ -62,16 +63,18 @@ export const designRouter = createTRPCRouter({
 				},
 			});
 
-			if (!result) return null;
+		if (!result) return null;
 
-			const shapes: CanvasShape[] = result.shapes.map((s) => ({
-				id: s.id,
-				xPos: s.xPos,
-				yPos: s.yPos,
-				rotation: s.rotation,
-				points: s.points,
-				material: s.material ?? undefined,
-			}));
+		const shapes: CanvasShape[] = result.shapes.map((s) => ({
+			id: s.id,
+			xPos: s.xPos,
+			yPos: s.yPos,
+			rotation: s.rotation,
+			points: s.points,
+			material: s.material ?? undefined,
+			// Pre-calculate edge indices for frontend visualization
+			edgeIndices: getShapeEdgePointIndices(s.points),
+		}));
 
 			const texts: CanvasText[] = result.texts.map((t) => ({
 				id: t.id,
@@ -144,29 +147,33 @@ export const designRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			const shape = await ctx.db.shape.create({
-				data: {
-					designId: input.designId,
-					xPos: input.xPos,
-					yPos: input.yPos,
-					rotation: input.rotation,
-					points: {
-						create: input.points.map((p) => ({
-							xPos: p.xPos,
-							yPos: p.yPos,
-						})),
-					},
+		const shape = await ctx.db.shape.create({
+			data: {
+				designId: input.designId,
+				xPos: input.xPos,
+				yPos: input.yPos,
+				rotation: input.rotation,
+				points: {
+					create: input.points.map((p) => ({
+						xPos: p.xPos,
+						yPos: p.yPos,
+					})),
 				},
-				select: {
-					id: true,
-					xPos: true,
-					yPos: true,
-					rotation: true,
-					points: { select: { xPos: true, yPos: true } },
-				},
-			});
+			},
+			select: {
+				id: true,
+				xPos: true,
+				yPos: true,
+				rotation: true,
+				points: { select: { xPos: true, yPos: true } },
+			},
+		});
 
-			return shape;
+		// Calculate edge indices for the created shape
+		return {
+			...shape,
+			edgeIndices: getShapeEdgePointIndices(shape.points),
+		};
 		}),
 
 	// Update shape position and points

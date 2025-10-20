@@ -152,11 +152,35 @@ export interface Product {
 // This will probably be removed when we need every field for the canvas at some point
 export type CanvasShape = {
 	id: string;
+	/**
+	 * Stable client-side ID used as React component key.
+	 * 
+	 * Why we need this:
+	 * When a shape is created, it gets a temporary ID (temp-xxx) for optimistic updates.
+	 * Once the server responds, we replace the temp ID with the real database ID.
+	 * 
+	 * Problem: Changing the ID mid-drag causes React to unmount/remount the component
+	 * (because the key changes), which breaks Konva's internal drag state.
+	 * 
+	 * Solution: clientId stays constant throughout the shape's lifetime, preventing
+	 * component remounting during temp->real ID transitions, thus preserving drag state.
+	 */
+	clientId?: string;
 	xPos: number;
 	yPos: number;
 	rotation: number;
 	points: ReadonlyArray<Coordinate>;
 	material?: MaterialExtended;
+	/**
+	 * Pre-calculated edge point indices for start and end edges.
+	 * These are calculated on the backend for efficient frontend visualization.
+	 */
+	edgeIndices?: {
+		startPoint1: number;
+		startPoint2: number;
+		endPoint1: number;
+		endPoint2: number;
+	} | null;
 };
 
 export type CanvasText = {

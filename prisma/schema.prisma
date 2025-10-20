@@ -86,6 +86,7 @@ model Shape {
     cutouts Cutout[]
 
     // We have to remember where we started and ended drawing the shape because from there we can start reshaping the shape
+    // TODO REmove this now we calculate them using getShapeEdgePointIndices function
     startPoint1Id String?
     startPoint2Id String?
     endPoint1Id   String?

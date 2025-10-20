@@ -1,20 +1,17 @@
 import { api } from "~/utils/api";
-import { isTempShapeId, registerPendingUpdate } from "./useCreateShape";
 
 /**
  * Hook for updating shapes (position and points) with optimistic updates.
  * Updates cache immediately for smooth interactions.
- * Handles temp IDs by registering pending updates instead of calling server.
+ * NOTE: Do not call this for shapes with temp IDs - handle those at the call site
+ * using registerPendingUpdate() and manual cache updates.
  */
 export function useUpdateShape(designId: string | undefined) {
 	const utils = api.useUtils();
 
 	const mutation = api.design.updateShape.useMutation({
 		onMutate: async (updatedShape) => {
-			if (!designId) return { previousData: undefined, isTempId: false };
-
-			// Check if this is a temp ID (shape being created)
-			const isTempId = isTempShapeId(updatedShape.shapeId);
+			if (!designId) return { previousData: undefined };
 
 			// Cancel outgoing refetches
 			await utils.design.getById.cancel({ id: designId });
@@ -43,23 +40,13 @@ export function useUpdateShape(designId: string | undefined) {
 						),
 					},
 				);
-
-				// If this is a temp ID, register pending update instead of calling server
-				if (isTempId) {
-					registerPendingUpdate(updatedShape.shapeId, {
-						xPos: updatedShape.xPos,
-						yPos: updatedShape.yPos,
-						rotation: updatedShape.rotation,
-					});
-				}
 			}
 
-			return { previousData, isTempId };
+			return { previousData };
 		},
 		onError: (err, updatedShape, context) => {
-			// Only revert on error if this wasn't a temp ID
-			// (temp ID errors are expected since server doesn't know about them yet)
-			if (context?.previousData && designId && !context.isTempId) {
+			// Revert on error
+			if (context?.previousData && designId) {
 				utils.design.getById.setData({ id: designId }, context.previousData);
 			}
 		},

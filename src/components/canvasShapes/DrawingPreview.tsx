@@ -6,6 +6,7 @@ type DrawingPreviewProps = {
 	bounds: Coordinate[] | null;
 	directionChangingPoints?: Coordinate[];
 	isDebugMode: boolean;
+	scale: number;
 };
 
 /**
@@ -16,6 +17,7 @@ const DrawingPreview = ({
 	bounds,
 	directionChangingPoints,
 	isDebugMode,
+	scale,
 }: DrawingPreviewProps) => {
 	if (!bounds) return null;
 
@@ -60,7 +62,7 @@ const DrawingPreview = ({
 				))}
 
 			{/* Edge measurements for the preview shape */}
-			<ShapeEdgeMeasurements points={bounds} />
+			<ShapeEdgeMeasurements points={bounds} scale={scale} />
 		</>
 	);
 };

@@ -587,6 +587,8 @@ export function useShapeDrawing(
 					yPos: p.yPos - minY,
 				}));
 
+				// Start and end point indices will be calculated on the backend
+				// using getShapeEdgePointIndices utility function
 				onComplete({
 					xPos: minX,
 					yPos: minY,
