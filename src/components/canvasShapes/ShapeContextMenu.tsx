@@ -6,12 +6,13 @@ import {
 } from "@tabler/icons-react";
 import { useState } from "react";
 import type { CanvasShape } from "~/types/drawing";
-import { useCreateShape } from "../../hooks/mutations/useCreateShape";
+import { useCreateShape, isTempShapeId, registerPendingUpdate } from "../../hooks/mutations/useCreateShape";
 import { useDeleteShape } from "../../hooks/mutations/useDeleteShape";
 import { useUpdateShape } from "../../hooks/mutations/useUpdateShape";
 import { SelectStyled } from "../SelectStyled";
 import ButtonGroup from "../ui/ButtonGroup";
 import ToggleButton from "../ui/ToggleButton";
+import { api } from "~/utils/api";
 
 interface RotationOption {
 	label: string;
@@ -48,6 +49,7 @@ const ShapeContextMenu = ({
 	const [selectedAngle, setSelectedAngle] =
 		useState<RotationOption>(DEFAULT_ROTATION);
 
+	const utils = api.useUtils();
 	const createShapeMutation = useCreateShape(designId);
 	const updateShapeMutation = useUpdateShape(designId);
 	const deleteShapeMutation = useDeleteShape(designId);
@@ -55,6 +57,30 @@ const ShapeContextMenu = ({
 	const handleRotate = (degrees: number) => {
 		// Calculate new rotation (normalize to 0-360 range)
 		const newRotation = (shape.rotation + degrees + 360) % 360;
+
+		// If shape has temp ID, register pending update and update cache
+		if (isTempShapeId(shape.id)) {
+			registerPendingUpdate(shape.id, {
+				xPos: shape.xPos,
+				yPos: shape.yPos,
+				rotation: newRotation,
+			});
+
+			// Update cache optimistically
+			const currentData = utils.design.getById.getData({ id: designId });
+			if (currentData) {
+				utils.design.getById.setData(
+					{ id: designId },
+					{
+						...currentData,
+						shapes: currentData.shapes.map((s) =>
+							s.id === shape.id ? { ...s, rotation: newRotation } : s,
+						),
+					},
+				);
+			}
+			return;
+		}
 
 		updateShapeMutation.mutate({
 			shapeId: shape.id,
@@ -78,6 +104,27 @@ const ShapeContextMenu = ({
 	};
 
 	const handleDelete = () => {
+		// If shape has temp ID, just remove from cache (no server call needed)
+		if (isTempShapeId(shape.id)) {
+			const currentData = utils.design.getById.getData({ id: designId });
+			if (currentData) {
+				utils.design.getById.setData(
+					{ id: designId },
+					{
+						...currentData,
+						shapes: currentData.shapes.filter((s) => s.id !== shape.id),
+					},
+				);
+			}
+
+			// Notify parent if this was the selected shape
+			if (selectedShapeId === shape.id) {
+				onShapeDeleted(shape.id);
+			}
+			onClose();
+			return;
+		}
+
 		deleteShapeMutation.mutate({ shapeId: shape.id });
 
 		// Notify parent if this was the selected shape
