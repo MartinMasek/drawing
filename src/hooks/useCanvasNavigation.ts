@@ -5,6 +5,7 @@ import {
 	CANVAS_MIN_ZOOM,
 	CANVAS_PAN_BUTTON_LEFT,
 	CANVAS_PAN_BUTTON_MIDDLE,
+	CANVAS_PAN_BUTTON_RIGHT,
 	ZOOM_STEP,
 } from "../utils/canvas-constants";
 import { useDrawing } from "../components/header/context/DrawingContext";
@@ -12,7 +13,7 @@ import { useDrawing } from "../components/header/context/DrawingContext";
 /**
  * Provides event handlers for canvas navigation (pan and zoom).
  * - Mouse wheel: zoom towards cursor
- * - Middle click or Shift+left click: pan by dragging
+ * - Middle click, Shift+left click, or right click on empty space: pan by dragging
  * State is managed in DrawingContext.
  */
 export function useCanvasNavigation() {
@@ -69,13 +70,16 @@ export function useCanvasNavigation() {
 		});
 	};
 
-	/** Start panning on middle click or Shift+left click */
+	/** Start panning on middle click, Shift+left click, or right click on empty space */
 	const handleMouseDown = (e: KonvaEventObject<MouseEvent>) => {
 		const isMiddleClick = e.evt.button === CANVAS_PAN_BUTTON_MIDDLE;
 		const isShiftLeftClick =
 			e.evt.button === CANVAS_PAN_BUTTON_LEFT && e.evt.shiftKey;
+		const isRightClickOnEmptySpace =
+			e.evt.button === CANVAS_PAN_BUTTON_RIGHT &&
+			e.target === e.target.getStage();
 
-		if (isMiddleClick || isShiftLeftClick) {
+		if (isMiddleClick || isShiftLeftClick || isRightClickOnEmptySpace) {
 			e.evt.preventDefault();
 			setIsPanning(true);
 			setPanStart({

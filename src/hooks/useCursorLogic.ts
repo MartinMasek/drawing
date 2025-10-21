@@ -6,6 +6,7 @@ interface UseCursorLogicProps {
 	cursorType: number;
 	hoveredId: string | null;
 	isPanning: boolean;
+	isDragging: boolean;
 	texts: ReadonlyArray<CanvasText>;
 }
 
@@ -17,6 +18,7 @@ export const useCursorLogic = ({
 	cursorType,
 	hoveredId,
 	isPanning,
+	isDragging,
 	texts,
 }: UseCursorLogicProps) => {
 	// Cursor type flags
@@ -37,6 +39,10 @@ export const useCursorLogic = ({
 
 	// Get the appropriate cursor based on current state
 	const getCursor = () => {
+		// Dragging a shape - highest priority
+		if (isDragging) return "move";
+
+		// Panning the canvas
 		if (isPanning) return "grabbing";
 
 		// Text cursor: show pointer only when hovering over existing text, text cursor otherwise

@@ -330,6 +330,7 @@ export function useShapeDrawing(
 	const [isDrawing, setIsDrawing] = useState(false);
 	const [canChangeDirectionNow, setCanChangeDirectionNow] = useState(false);
 	const [pendingStartPoint, setPendingStartPoint] = useState<CanvasPoint | null>(null);
+	const [rawCursorPosition, setRawCursorPosition] = useState<CanvasPoint | null>(null);
 
 	/** Convert screen coordinates to canvas coordinates accounting for zoom and pan */
 	const screenToCanvas = (screenX: number, screenY: number): CanvasPoint => {
@@ -477,6 +478,9 @@ export function useShapeDrawing(
 		if (!pointer) return;
 
 		const canvasPoint = screenToCanvas(pointer.x, pointer.y);
+		
+		// Track raw cursor position for visual feedback
+		setRawCursorPosition(canvasPoint);
 
 		// If we have a pending start point but haven't started drawing yet
 		if (pendingStartPoint && !previewShape) {
@@ -562,12 +566,14 @@ export function useShapeDrawing(
 		// Clear pending start point if user released before reaching minimum distance
 		if (pendingStartPoint) {
 			setPendingStartPoint(null);
+			setRawCursorPosition(null);
 			return;
 		}
 
 		if (!previewShape) {
 			setIsDrawing(false);
 			setCanChangeDirectionNow(false);
+			setRawCursorPosition(null);
 			return;
 		}
 
@@ -597,16 +603,14 @@ export function useShapeDrawing(
 			}
 		}
 
-		// Reset drawing state
-		setPreviewShape(null);
-		setIsDrawing(false);
-		setCanChangeDirectionNow(false);
-	};
-
-
-	/** Get the appropriate cursor style based on drawing state */
-	const getCursor = (): string => {
-		return isDrawing ? "crosshair" : "default";
+		// Reset drawing state after a brief delay to allow optimistic update to complete
+		// This prevents visual gap between preview disappearing and real shape appearing
+		requestAnimationFrame(() => {
+			setPreviewShape(null);
+			setIsDrawing(false);
+			setCanChangeDirectionNow(false);
+			setRawCursorPosition(null);
+		});
 	};
 
 	/** Determine the cardinal direction of the current drawing segment */
@@ -717,9 +721,9 @@ export function useShapeDrawing(
 		isDrawing,
 		previewShape,
 		canChangeDirectionNow,
+		rawCursorPosition,
 		
 		// Derived values
-		getCursor,
 		getPreviewBounds,
 		lastDirection: getLastDirection(),
 	};
