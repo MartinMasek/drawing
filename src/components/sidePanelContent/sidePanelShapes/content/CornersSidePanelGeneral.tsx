@@ -31,6 +31,7 @@ const CornersSidePanelGeneral: FC<CornersSidePanelGeneralProps> = ({
 					</p>
 					<div className="grid grid-cols-2 gap-4 p-4">
 						<ShapeCard
+							id='Radius'
 							name={"Radius"}
 							icon={
 								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
@@ -54,6 +55,7 @@ const CornersSidePanelGeneral: FC<CornersSidePanelGeneralProps> = ({
 						/>
 
 						<ShapeCard
+							id='Clip'
 							name={"Clip"}
 							icon={
 								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
@@ -77,6 +79,7 @@ const CornersSidePanelGeneral: FC<CornersSidePanelGeneralProps> = ({
 						/>
 
 						<ShapeCard
+							id='BumpOut'
 							name={"Bump-Out"}
 							icon={
 								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
@@ -100,6 +103,7 @@ const CornersSidePanelGeneral: FC<CornersSidePanelGeneralProps> = ({
 						/>
 
 						<ShapeCard
+							id='Notch'
 							name={"Notch"}
 							icon={
 								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
@@ -123,6 +127,7 @@ const CornersSidePanelGeneral: FC<CornersSidePanelGeneralProps> = ({
 						/>
 
 						<ShapeCard
+							id='None'
 							name={"None"}
 							icon={
 								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>

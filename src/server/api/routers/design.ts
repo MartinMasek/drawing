@@ -1,3 +1,4 @@
+import { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
 import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
@@ -33,7 +34,7 @@ export const designRouter = createTRPCRouter({
 							xPos: true,
 							yPos: true,
 							rotation: true,
-							points: { select: { xPos: true, yPos: true } },
+							points: { select: { id: true, xPos: true, yPos: true } },
 							material: {
 								select: {
 									id: true,
@@ -42,6 +43,26 @@ export const designRouter = createTRPCRouter({
 									SKU: true,
 									category: true,
 									subcategory: true,
+								},
+							},
+							edges: {
+								select: {
+									id: true,
+									point1Id: true,
+									point2Id: true,
+									edgeModifications: {
+										select: {
+											id: true,
+											edgeType: true,
+											position: true,
+											distance: true,
+											depth: true,
+											width: true,
+											sideAngleLeft: true,
+											sideAngleRight: true,
+											fullRadiusDepth: true,
+										},
+									},
 								},
 							},
 						},
@@ -71,6 +92,22 @@ export const designRouter = createTRPCRouter({
 				rotation: s.rotation,
 				points: s.points,
 				material: s.material ?? undefined,
+				edges: s.edges.map((e) => ({
+					id: e.id,
+					point1Id: e.point1Id,
+					point2Id: e.point2Id,
+					edgeModifications: e.edgeModifications.map((em) => ({
+						id: em.id,
+						type: em.edgeType,
+						position: em.position ?? "Center",
+						distance: em.distance ?? 0,
+						depth: em.depth ?? 0,
+						width: em.width ?? 0,
+						sideAngleLeft: em.sideAngleLeft ?? 0,
+						sideAngleRight: em.sideAngleRight ?? 0,
+						fullRadiusDepth: em.fullRadiusDepth ?? 0,
+					})),
+				})),
 			}));
 
 			const texts: CanvasText[] = result.texts.map((t) => ({
@@ -162,7 +199,7 @@ export const designRouter = createTRPCRouter({
 					xPos: true,
 					yPos: true,
 					rotation: true,
-					points: { select: { xPos: true, yPos: true } },
+					points: { select: { id: true, xPos: true, yPos: true } },
 				},
 			});
 
@@ -323,4 +360,88 @@ export const designRouter = createTRPCRouter({
 			},
 		});
 	}),
+	createShapeEdge: publicProcedure
+		.input(
+			z.object({
+				shapeId: z.string(),
+				edgePoint1Id: z.string(),
+				edgePoint2Id: z.string(),
+				edgeModification: z.object({
+					edgeType: z.nativeEnum(EdgeModificationType),
+					position: z.nativeEnum(EdgeShapePosition),
+					distance: z.number(),
+					depth: z.number(),
+					width: z.number(),
+					sideAngleLeft: z.number(),
+					sideAngleRight: z.number(),
+					fullRadiusDepth: z.number().default(0),
+				}),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const edge = await ctx.db.edge.create({
+				data: {
+					shapeId: input.shapeId,
+					point1Id: input.edgePoint1Id,
+					point2Id: input.edgePoint2Id,
+				},
+			});
+			return await ctx.db.edgeModification.create({
+				data: {
+					...input.edgeModification,
+					edgeId: edge.id,
+				},
+			});
+		}),
+	updateShapeEdge: publicProcedure
+		.input(
+			z.object({
+				edgeId: z.string(),
+				shapeId: z.string(),
+				edgeModificationId: z.string().nullable(), // Is nullable because we can create a new edge modification or update an existing one
+				edgeModification: z.object({
+					edgeType: z.nativeEnum(EdgeModificationType),
+					position: z.nativeEnum(EdgeShapePosition),
+					distance: z.number(),
+					depth: z.number(),
+					width: z.number(),
+					sideAngleLeft: z.number(),
+					sideAngleRight: z.number(),
+					fullRadiusDepth: z.number().default(0),
+				}),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			// If edge modification id is provided, update existing edge modification
+			if (input.edgeModificationId) {
+				return await ctx.db.edgeModification.update({
+					where: { id: input.edgeModificationId },
+					data: input.edgeModification,
+				});
+			}
+			return await ctx.db.edgeModification.create({
+				data: {
+					...input.edgeModification,
+					edgeId: input.edgeId,
+				},
+			});
+		}),
+
+	removeShapeEdgeModification: publicProcedure
+		.input(z.object({ edgeModificationId: z.string() }))
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.edgeModification.update({
+				where: { id: input.edgeModificationId },
+				data: {
+					edgeType: EdgeModificationType.None,
+					position: "Center",
+					distance: 0,
+					depth: 0,
+					width: 0,
+					sideAngleLeft: 0,
+					sideAngleRight: 0,
+					fullRadiusDepth: 0,
+				},
+			});
+		}),
 });

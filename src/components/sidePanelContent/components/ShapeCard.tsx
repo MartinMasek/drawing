@@ -2,6 +2,7 @@ import type { FC, ReactNode } from "react";
 import { cn } from "~/utils/ui-utils";
 
 interface ShapeCardProps {
+	id: string
 	name: string;
 	icon: ReactNode;
 	onClick?: () => void;
@@ -14,7 +15,7 @@ const ShapeCard: FC<ShapeCardProps> = ({ name, icon, onClick, isActive }) => {
 			className={cn(
 				"flex h-[116px] cursor-pointer flex-col rounded-md border border-border-button-gray-default",
 				isActive &&
-					"border-border-checkboxes-active bg-background-button-secondary-brand-active",
+				"border-border-checkboxes-active bg-background-button-secondary-brand-active",
 			)}
 			onClick={onClick}
 		>

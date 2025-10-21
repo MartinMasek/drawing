@@ -255,6 +255,8 @@ const Shape = ({
 
 	const handleEdgeClick = (
 		edgeIndex: number,
+		point1Id: string,
+		point2Id: string,
 		e: KonvaEventObject<MouseEvent>,
 	) => {
 		if (isDrawing || e.evt.button !== 0) return;
@@ -264,38 +266,31 @@ const Shape = ({
 
 		if (!startPoint || !endPoint) return;
 
-		const length = calculateDistance(startPoint, endPoint);
+		const doesEdgeExist = shape.edges.find((edge) => edge.point1Id === point1Id && edge.point2Id === point2Id);
 
-		console.log("Edge Info:", {
-			shapeId: shape.id,
-			edgeIndex,
-			startPoint: {
-				x: startPoint.xPos.toFixed(2),
-				y: startPoint.yPos.toFixed(2),
-			},
-			endPoint: {
-				x: endPoint.xPos.toFixed(2),
-				y: endPoint.yPos.toFixed(2),
-			},
-			length: length.toFixed(2),
-		});
+		const hasModification = doesEdgeExist?.edgeModifications.length && doesEdgeExist?.edgeModifications.length > 0;
+		const modification = hasModification ? doesEdgeExist?.edgeModifications[0] : null;
 
-		// Get this from SHAPE, edit endpoint
+		setCursorType(CursorTypes.Curves);
+
 		setSelectedEdge({
 			shapeId: shape.id,
 			edgeIndex,
+			edgeId: doesEdgeExist?.id ?? null,
+			edgePoint1Id: point1Id,
+			edgePoint2Id: point2Id,
 			edgeModification: {
-				type: EdgeModificationType.None,
-				position: EdgeShapePosition.Center,
-				distance: 0,
-				depth: 0,
-				width: 0,
-				sideAngleLeft: 0,
-				sideAngleRight: 0,
-				fullRadiusDepth: 0,
+				id: modification?.id ?? null,
+				type: modification?.type ?? EdgeModificationType.None,
+				position: modification?.position ?? EdgeShapePosition.Center,
+				distance: modification?.distance ?? 0,
+				depth: modification?.depth ?? 0,
+				width: modification?.width ?? 0,
+				sideAngleLeft: modification?.sideAngleLeft ?? 0,
+				sideAngleRight: modification?.sideAngleRight ?? 0,
+				fullRadiusDepth: modification?.fullRadiusDepth ?? 0,
 			},
 		});
-		setCursorType(CursorTypes.Curves);
 		setSelectedPoint(null);
 		onClick(e);
 	};
@@ -404,7 +399,8 @@ const Shape = ({
 						if (!nextPoint) return null;
 
 						const isEdgeHovered = hoveredEdgeIndex === index;
-						const isEdgeSelected = selectedEdge?.edgeIndex === index;
+						const isEdgeSelected = selectedEdge?.edgeIndex === index &&
+							selectedEdge?.shapeId === shape.id;
 
 						return (
 							<Line
@@ -429,7 +425,7 @@ const Shape = ({
 								}
 								hitStrokeWidth={EDGE_HIT_STROKE_WIDTH}
 								listening={!isDrawing}
-								onClick={(e) => handleEdgeClick(index, e)}
+								onClick={(e) => handleEdgeClick(index, point.id, nextPoint.id, e)}
 								onMouseEnter={() => handleEdgeMouseEnter(index)}
 								onMouseLeave={handleEdgeMouseLeave}
 							/>

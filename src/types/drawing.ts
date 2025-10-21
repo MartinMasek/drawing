@@ -2,7 +2,8 @@
 // IMPORTANT: Drawing types are for now just prepared for demo version. It will be changed to match correct data model.
 // #########################################################
 
-import type { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
+import { EdgeModificationType, type EdgeShapePosition } from "@prisma/client";
+import { DrawingTab } from "~/components/header/header/drawing-types";
 
 export interface Design {
 	id: string;
@@ -157,8 +158,14 @@ export type CanvasShape = {
 	xPos: number;
 	yPos: number;
 	rotation: number;
-	points: ReadonlyArray<Coordinate>;
+	points: ReadonlyArray<Point>;
 	material?: MaterialExtended;
+	edges: {
+		id: string;
+		point1Id: string;
+		point2Id: string;
+		edgeModifications: EdgeModification[];
+	}[];
 };
 
 export type CanvasText = {
@@ -201,10 +208,14 @@ export type SelectedPoint = {
 export type SelectedEdge = {
 	shapeId: string;
 	edgeIndex: number;
-	edgeModification: EdgeModification;
+	edgeId: string | null;
+	edgePoint1Id: string;
+	edgePoint2Id: string;
+	edgeModification: EdgeModification | undefined;
 };
 
 export type EdgeModification = {
+	id: string | null;
 	type: EdgeModificationType;
 	position: EdgeShapePosition;
 	distance: number;
@@ -214,3 +225,15 @@ export type EdgeModification = {
 	sideAngleRight: number;
 	fullRadiusDepth: number;
 };
+
+export const EdgeModificationList: {
+	id: EdgeModificationType;
+	label: string;
+}[] = [
+	{ id: EdgeModificationType.BumpIn, label: "Bump-In" },
+	{ id: EdgeModificationType.BumpOut, label: "Bump-Out" },
+	{ id: EdgeModificationType.BumpInCurve, label: "Bump-In Curve" },
+	{ id: EdgeModificationType.BumpOutCurve, label: "Bump-Out Curve" },
+	{ id: EdgeModificationType.FullCurve, label: "Full Curve" },
+	{ id: EdgeModificationType.None, label: "None" },
+];

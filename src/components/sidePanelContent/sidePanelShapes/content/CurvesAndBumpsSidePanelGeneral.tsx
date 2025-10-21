@@ -1,8 +1,13 @@
 import type { FC } from "react";
+import { useRouter } from "next/router";
+import { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
+import { useUpdateEdgeModification } from "~/hooks/mutations/edges/useUpdateEdgeModification";
 import { useShape } from "~/components/header/context/ShapeContext";
 import { SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import ShapeCard from "../../components/ShapeCard";
 import type { ShapeSidePanelView } from "../ShapeSidePanel";
+import { useCreateEdgeModification } from "~/hooks/mutations/edges/useCreateEdgeModification";
+import { useDeleteEdgeModification } from "~/hooks/mutations/edges/useDeleteEdgeModification";
 
 interface CurvesAndBumpsSidePanelGeneralProps {
 	setView: (value: ShapeSidePanelView) => void;
@@ -11,12 +16,64 @@ interface CurvesAndBumpsSidePanelGeneralProps {
 const CurvesAndBumpsSidePanelGeneral: FC<
 	CurvesAndBumpsSidePanelGeneralProps
 > = ({ setView }) => {
-	const { selectedEdge } = useShape();
+	const { selectedEdge, selectedShape } = useShape();
+	const router = useRouter();
+	const idParam = router.query.id;
+	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
+	const updateEdge = useUpdateEdgeModification(designId);
+	const createEdge = useCreateEdgeModification(designId);
+	const deleteEdgeModification = useDeleteEdgeModification(designId);
 
-	const handleSelectModification = () => {
-		// Mutation + optimistic update
-		// setView("editCurves")
-		// That should be enough, since we pull the type from the selected edge, we dont need to pass it to the EditCurvesAndBumps component
+	const handleSelectModification = (type: EdgeModificationType) => {
+		if (!selectedEdge) return;
+		if (!selectedShape) return;
+		if (!selectedEdge.edgeModification) return;
+
+		if (!selectedEdge.edgeId) { // If no edge id, create a new edge
+			createEdge.mutate({
+				shapeId: selectedShape.id,
+				edgePoint1Id: selectedEdge.edgePoint1Id,
+				edgePoint2Id: selectedEdge.edgePoint2Id,
+				edgeModification: {
+					edgeType: type,
+					position: selectedEdge.edgeModification.position,
+					distance: selectedEdge.edgeModification.distance,
+					depth: selectedEdge.edgeModification.depth,
+					width: selectedEdge.edgeModification.width,
+					sideAngleLeft: selectedEdge.edgeModification.sideAngleLeft,
+					sideAngleRight: selectedEdge.edgeModification.sideAngleRight,
+					fullRadiusDepth: selectedEdge.edgeModification.fullRadiusDepth,
+				},
+			});
+		} else { // If edge id, update the existing edge
+			updateEdge.mutate({
+				edgeId: selectedEdge.edgeId,
+				shapeId: selectedShape.id,
+				edgeModificationId: selectedEdge.edgeModification.id,
+				edgeModification: {
+					edgeType: type,
+					position: selectedEdge.edgeModification.position,
+					distance: selectedEdge.edgeModification.distance,
+					depth: selectedEdge.edgeModification.depth,
+					width: selectedEdge.edgeModification.width,
+					sideAngleLeft: selectedEdge.edgeModification.sideAngleLeft,
+					sideAngleRight: selectedEdge.edgeModification.sideAngleRight,
+					fullRadiusDepth: selectedEdge.edgeModification.fullRadiusDepth,
+				}
+			});
+		}
+
+		setView("editCurves");
+	};
+
+
+	const handleDeleteEdgeModification = () => {
+		if (!selectedEdge?.edgeModification?.id) return;
+		if (!selectedShape) return;
+
+		deleteEdgeModification.mutate({
+			edgeModificationId: selectedEdge.edgeModification.id,
+		});
 	};
 	return (
 		<>
@@ -37,6 +94,7 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 					</p>
 					<div className="grid grid-cols-2 gap-4 p-4">
 						<ShapeCard
+							id='BumpOut'
 							name={"Bump-Out"}
 							icon={
 								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
@@ -55,11 +113,12 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 									/>
 								</svg>
 							}
-							onClick={() => setView("editCurves")}
-							isActive={false}
+							onClick={() => handleSelectModification(EdgeModificationType.BumpOut)}
+							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpOut}
 						/>
 
 						<ShapeCard
+							id="BumpIn"
 							name={"Bump-In"}
 							icon={
 								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
@@ -78,11 +137,12 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 									/>
 								</svg>
 							}
-							onClick={() => setView("editCurves")}
-							isActive={false}
+							onClick={() => handleSelectModification(EdgeModificationType.BumpIn)}
+							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpIn}
 						/>
 
 						<ShapeCard
+							id='BumpOutCurve'
 							name={"Bump-Out Curve"}
 							icon={
 								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
@@ -101,11 +161,12 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 									/>
 								</svg>
 							}
-							onClick={() => setView("editCurves")}
-							isActive={false}
+							onClick={() => handleSelectModification(EdgeModificationType.BumpOutCurve)}
+							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpOutCurve}
 						/>
 
 						<ShapeCard
+							id='BumpInCurve'
 							name={"Bump-In Curve"}
 							icon={
 								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
@@ -124,11 +185,12 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 									/>
 								</svg>
 							}
-							onClick={() => setView("editCurves")}
-							isActive={false}
+							onClick={() => handleSelectModification(EdgeModificationType.BumpInCurve)}
+							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpInCurve}
 						/>
 
 						<ShapeCard
+							id='FullCurve'
 							name={"Full Curve"}
 							icon={
 								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
@@ -147,11 +209,12 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 									/>
 								</svg>
 							}
-							onClick={() => setView("editCurves")}
-							isActive={false}
+							onClick={() => handleSelectModification(EdgeModificationType.FullCurve)}
+							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.FullCurve}
 						/>
 
 						<ShapeCard
+							id='None'
 							name={"None"}
 							icon={
 								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
@@ -170,7 +233,8 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 									/>
 								</svg>
 							}
-							isActive={true}
+							onClick={handleDeleteEdgeModification}
+							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.None}
 						/>
 					</div>
 				</>

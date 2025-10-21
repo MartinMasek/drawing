@@ -1,5 +1,5 @@
-import { Input } from "@headlessui/react";
 import type { FC } from "react";
+import { Input } from "~/components/Input";
 
 interface CurvesSizeInputProps {
 	onChange: (value: { depth: number; width: number }) => void;
@@ -15,10 +15,18 @@ const CurvesSizeInput: FC<CurvesSizeInputProps> = ({
 	return (
 		<div className="flex flex-col gap-2">
 			<p className="text-sm text-text-input-label">Size (DxW)</p>
-			<div className="flex items-center gap-1">
-				<Input className="h-[36px] w-[140px] rounded-lg border border-border-input-default text-center text-sm" />
+			<div className="flex w-[305px] items-center justify-between">
+				<Input className="h-[36px] w-[140px]"
+					value={depth}
+					inputSize="sm"
+					endAdornment={<p className="text-sm">in</p>}
+				/>
 				<p className="text-sm text-text-neutral-disabled">x</p>
-				<Input className="h-[36px] w-[140px] rounded-lg border border-border-input-default text-center text-sm" />
+				<Input className="h-[36px] w-[140px]"
+					value={width}
+					inputSize="sm"
+					endAdornment={<p className="text-sm">in</p>}
+				/>
 			</div>
 		</div>
 	);

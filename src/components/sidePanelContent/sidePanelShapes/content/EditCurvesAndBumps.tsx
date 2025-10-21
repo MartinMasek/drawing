@@ -9,6 +9,8 @@ import CurvesAnglesInput from "../components/CurvesAnglesInput";
 import PositioningInput from "../components/PositioningInput";
 import DistanceInput from "../components/DistanceInput";
 import { useShape } from "~/components/header/context/ShapeContext";
+import { EdgeModificationList } from "~/types/drawing";
+import { EdgeShapePosition } from "@prisma/client";
 
 interface EditCurvesAndBumpsProps {
 	setView: (value: ShapeSidePanelView) => void;
@@ -55,29 +57,29 @@ const EditCurvesAndBumps: FC<EditCurvesAndBumpsProps> = ({ setView }) => {
 				<p>
 					Bump Type:{" "}
 					<span className="text-text-colors-secondary">
-						{selectedEdge?.edgeModification.type}
+						{EdgeModificationList.find((em) => em.id === selectedEdge?.edgeModification?.type)?.label}
 					</span>
 				</p>
-				<div className="flex h-[170px] rounded-md border border-border-neutral">
-					img
+				<div className="flex h-[170px] items-center justify-center rounded-md border border-border-neutral">
+					<span className="text-sm text-text-neutral-disabled">TBD.</span>
 				</div>
 				<CurvesSizeInput
 					onChange={handleSizeChange}
-					depth={selectedEdge?.edgeModification.depth ?? 0}
-					width={selectedEdge?.edgeModification.width ?? 0}
+					depth={selectedEdge?.edgeModification?.depth ?? 0}
+					width={selectedEdge?.edgeModification?.width ?? 0}
 				/>
 				<CurvesAnglesInput
 					onChange={handleAnglesChange}
-					left={selectedEdge?.edgeModification.sideAngleLeft ?? 0}
-					right={selectedEdge?.edgeModification.sideAngleRight ?? 0}
+					left={selectedEdge?.edgeModification?.sideAngleLeft ?? 0}
+					right={selectedEdge?.edgeModification?.sideAngleRight ?? 0}
 				/>
 				<PositioningInput
 					onChange={handlePositionChange}
-					position={selectedEdge?.edgeModification.position ?? "Center"}
+					position={selectedEdge?.edgeModification?.position ?? EdgeShapePosition.Center}
 				/>
 				<DistanceInput
 					onChange={handleDistanceChange}
-					distance={selectedEdge?.edgeModification.distance ?? 0}
+					distance={selectedEdge?.edgeModification?.distance ?? 0}
 				/>
 			</div>
 			<SheetFooter>

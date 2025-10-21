@@ -23,6 +23,7 @@ import { useDrawing } from "./header/context/DrawingContext";
 import { useShape } from "./header/context/ShapeContext";
 import CanvasTextInput from "./canvasTextInput/CanvasTextInput";
 import type { KonvaEventObject } from "konva/lib/Node";
+import { DrawingTab } from "./header/header/drawing-types";
 
 interface DrawingCanvasProps {
 	shapes?: ReadonlyArray<CanvasShape>;
@@ -122,7 +123,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		if (isInteractiveCursor) {
 			setSelectedShape(shape);
 			setIsOpenSideDialog(true);
-			
+
 			// Open context menu on left click as well
 			setContextMenu({
 				shapeId: shape.id,
@@ -331,7 +332,8 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 				designId &&
 				(() => {
 					const shape = shapes.find((s) => s.id === contextMenu.shapeId);
-					if (!shape) return null;
+
+					if (!shape || activeTab !== DrawingTab.Dimensions) return null;
 
 					return (
 						<ShapeContextMenu
