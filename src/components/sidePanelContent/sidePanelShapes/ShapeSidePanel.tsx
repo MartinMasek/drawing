@@ -1,4 +1,4 @@
-import { type FC, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 import { SheetContent } from "../../ui/sheet";
 import CurvesAndBumpsSidePanelGeneral from "./content/CurvesAndBumpsSidePanelGeneral";
 import EditCurvesAndBumps from "./content/EditCurvesAndBumps";
@@ -6,6 +6,7 @@ import CornersSidePanelGeneral from "./content/CornersSidePanelGeneral";
 import { useDrawing } from "~/components/header/context/DrawingContext";
 import { CursorTypes } from "~/components/header/header/drawing-types";
 import EditCorner from "./content/EditCorner";
+import { useShape } from "~/components/header/context/ShapeContext";
 
 export type ShapeSidePanelView =
 	| "generalCurves"
@@ -15,9 +16,17 @@ export type ShapeSidePanelView =
 
 const ShapeSidePanel: FC = () => {
 	const { cursorType } = useDrawing();
+	const { selectedEdge } = useShape();
 	const [view, setView] = useState<ShapeSidePanelView>(
 		cursorType === CursorTypes.Curves ? "generalCurves" : "generalCorners",
 	);
+
+	// We need this useEffect to ensure that the view is updated when selected edge is changed
+	useEffect(() => {
+		if (selectedEdge?.edgeIndex) {
+			setView("generalCurves");
+		}
+	}, [selectedEdge?.edgeIndex]);
 
 	const renderContent = () => {
 		switch (view) {

@@ -1,6 +1,6 @@
 import type { FC } from "react";
 import { useRouter } from "next/router";
-import { EdgeModificationType } from "@prisma/client";
+import { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
 import { useUpdateEdgeModification } from "~/hooks/mutations/edges/useUpdateEdgeModification";
 import { useShape } from "~/components/header/context/ShapeContext";
 import { SheetHeader, SheetTitle } from "~/components/ui/sheet";
