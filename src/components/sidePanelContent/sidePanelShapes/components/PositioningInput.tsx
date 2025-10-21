@@ -1,5 +1,5 @@
 import { EdgeShapePosition } from "@prisma/client";
-import type { FC } from "react";
+import { useState, type FC } from "react";
 import Button from "~/components/header/header/Button";
 
 interface PositioningInputProps {
@@ -11,18 +11,36 @@ const PositioningInput: FC<PositioningInputProps> = ({
 	onChange,
 	position,
 }) => {
+	const [localPosition, setLocalPosition] = useState(position);
+
+	const handlePositionChange = (value: string) => {
+		setLocalPosition(value as EdgeShapePosition);
+		onChange(value);
+	};
 	return (
 		<div className="flex flex-col gap-2">
 			<p className="text-sm text-text-input-label">Positioning</p>
 
 			<div className="flex h-[36px] w-[305px] items-center justify-between rounded-lg">
-				<Button variant="outlined" color={position === EdgeShapePosition.Left ? "primary" : "neutral"} className="h-[36px] flex-1 justify-center rounded-r-none border-r-0">
+				<Button variant="outlined"
+					color={localPosition === EdgeShapePosition.Left ? "primary" : "neutral"}
+					className="h-[36px] flex-1 justify-center rounded-r-none border-r-0"
+					onClick={() => handlePositionChange(EdgeShapePosition.Left)}
+				>
 					Left
 				</Button>
-				<Button variant="outlined" color={position === EdgeShapePosition.Center ? "primary" : "neutral"} className="h-[36px] flex-1 justify-center rounded-none">
+				<Button variant="outlined"
+					color={localPosition === EdgeShapePosition.Center ? "primary" : "neutral"}
+					className="h-[36px] flex-1 justify-center rounded-none"
+					onClick={() => handlePositionChange(EdgeShapePosition.Center)}
+				>
 					Center
 				</Button>
-				<Button variant="outlined" color={position === EdgeShapePosition.Right ? "primary" : "neutral"} className="h-[36px] flex-1 justify-center rounded-l-none border-l-0">
+				<Button variant="outlined"
+					color={localPosition === EdgeShapePosition.Right ? "primary" : "neutral"}
+					className="h-[36px] flex-1 justify-center rounded-l-none border-l-0"
+					onClick={() => handlePositionChange(EdgeShapePosition.Right)}
+				>
 					Right
 				</Button>
 			</div>

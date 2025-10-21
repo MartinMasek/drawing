@@ -29,6 +29,11 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 		if (!selectedShape) return;
 		if (!selectedEdge.edgeModification) return;
 
+		if (selectedEdge.edgeModification.type === type) {
+			setView("editCurves");
+			return;
+		};
+
 		if (!selectedEdge.edgeId) { // If no edge id, create a new edge
 			createEdge.mutate({
 				shapeId: selectedShape.id,
