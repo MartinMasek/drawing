@@ -451,4 +451,57 @@ export const designRouter = createTRPCRouter({
 				},
 			});
 		}),
+
+	edgeModificationUpdateSize: publicProcedure
+		.input(
+			z.object({
+				edgeModificationId: z.string(),
+				depth: z.number(),
+				width: z.number(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.edgeModification.update({
+				where: { id: input.edgeModificationId },
+				data: { depth: input.depth, width: input.width },
+			});
+		}),
+	edgeModificationUpdateAngles: publicProcedure
+		.input(
+			z.object({
+				edgeModificationId: z.string(),
+				sideAngleLeft: z.number(),
+				sideAngleRight: z.number(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.edgeModification.update({
+				where: { id: input.edgeModificationId },
+				data: {
+					sideAngleLeft: input.sideAngleLeft,
+					sideAngleRight: input.sideAngleRight,
+				},
+			});
+		}),
+	edgeModificationUpdatePosition: publicProcedure
+		.input(
+			z.object({
+				edgeModificationId: z.string(),
+				position: z.nativeEnum(EdgeShapePosition),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.edgeModification.update({
+				where: { id: input.edgeModificationId },
+				data: { position: input.position },
+			});
+		}),
+	edgeModificationUpdateDistance: publicProcedure
+		.input(z.object({ edgeModificationId: z.string(), distance: z.number() }))
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.edgeModification.update({
+				where: { id: input.edgeModificationId },
+				data: { distance: input.distance },
+			});
+		}),
 });

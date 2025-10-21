@@ -20,12 +20,14 @@ const CurvesSizeInput: FC<CurvesSizeInputProps> = ({
 					value={depth}
 					inputSize="sm"
 					endAdornment={<p className="text-sm">in</p>}
+					onChange={(e) => onChange({ depth: Number.parseFloat(e.target.value), width: width })}
 				/>
 				<p className="text-sm text-text-neutral-disabled">x</p>
 				<Input className="h-[36px] w-[140px]"
 					value={width}
 					inputSize="sm"
 					endAdornment={<p className="text-sm">in</p>}
+					onChange={(e) => onChange({ depth: depth, width: Number.parseFloat(e.target.value) })}
 				/>
 			</div>
 		</div>
