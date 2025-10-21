@@ -12,6 +12,7 @@ interface EdgeMeasurementProps {
 	startPoint: Coordinate;
 	endPoint: Coordinate;
 	length: number;
+	scale: number;
 }
 
 /**
@@ -21,19 +22,20 @@ const EdgeMeasurement = ({
 	startPoint,
 	endPoint,
 	length,
+	scale,
 }: EdgeMeasurementProps) => {
 	// Calculate edge properties
 	const dx = endPoint.xPos - startPoint.xPos;
 	const dy = endPoint.yPos - startPoint.yPos;
 	const edgeLength = Math.sqrt(dx * dx + dy * dy);
 
-	// Skip if edge is too short to display measurement
-	if (edgeLength < 20) return null;
+	// Skip if edge is too short to display measurement (scaled threshold)
+	if (edgeLength < 20 / scale) return null;
 
-	// Calculate perpendicular offset for the arrow line
+	// Calculate perpendicular offset for the arrow line (scaled to maintain constant visual distance)
 	const perpX = -dy / edgeLength;
 	const perpY = dx / edgeLength;
-	const offset = 20; // Distance from edge to arrow line
+	const offset = 20 / scale; // Distance from edge to arrow line, scaled inversely
 
 	// Calculate arrow line endpoints (parallel to the edge but offset)
 	const arrowStartX = startPoint.xPos + perpX * offset;
@@ -45,9 +47,9 @@ const EdgeMeasurement = ({
 	const midX = (arrowStartX + arrowEndX) / 2;
 	const midY = (arrowStartY + arrowEndY) / 2;
 
-	// Arrow properties
+	// Arrow properties (scaled inversely to maintain constant visual size)
 	const arrowAngle = Math.atan2(dy, dx);
-	const headLength = 8; // Length of arrow head lines
+	const headLength = 8 / scale; // Length of arrow head lines, scaled inversely
 
 	// Left arrow head angles (pointing toward the center/right)
 	const leftHeadAngle1 = arrowAngle + Math.PI * 0.2; // Pointing right
@@ -74,13 +76,20 @@ const EdgeMeasurement = ({
 
 	const lengthText = formatInches(inches);
 
+	// Scale-independent visual properties
+	const strokeWidth = 2 / scale;
+	const fontSize = 12 / scale;
+	const textPadding = 4 / scale;
+	const charWidth = 6 / scale;
+	const cornerRadius = 2 / scale;
+
 	return (
 		<Group listening={false}>
 			{/* Main arrow line spanning the full edge length */}
 			<Line
 				points={[arrowStartX, arrowStartY, arrowEndX, arrowEndY]}
 				stroke={MEASUREMENT_LINE_STROKE}
-				strokeWidth={2}
+				strokeWidth={strokeWidth}
 				listening={false}
 			/>
 
@@ -88,13 +97,13 @@ const EdgeMeasurement = ({
 			<Line
 				points={[arrowStartX, arrowStartY, leftHead1X, leftHead1Y]}
 				stroke={MEASUREMENT_LINE_STROKE}
-				strokeWidth={2}
+				strokeWidth={strokeWidth}
 				listening={false}
 			/>
 			<Line
 				points={[arrowStartX, arrowStartY, leftHead2X, leftHead2Y]}
 				stroke={MEASUREMENT_LINE_STROKE}
-				strokeWidth={2}
+				strokeWidth={strokeWidth}
 				listening={false}
 			/>
 
@@ -102,24 +111,24 @@ const EdgeMeasurement = ({
 			<Line
 				points={[arrowEndX, arrowEndY, rightHead1X, rightHead1Y]}
 				stroke={MEASUREMENT_LINE_STROKE}
-				strokeWidth={2}
+				strokeWidth={strokeWidth}
 				listening={false}
 			/>
 			<Line
 				points={[arrowEndX, arrowEndY, rightHead2X, rightHead2Y]}
 				stroke={MEASUREMENT_LINE_STROKE}
-				strokeWidth={2}
+				strokeWidth={strokeWidth}
 				listening={false}
 			/>
 
 			{/* White background for text */}
 			<Rect
-				x={midX - lengthText.length * 3 - 4}
-				y={midY - 8}
-				width={lengthText.length * 6 + 8}
-				height={16}
+				x={midX - lengthText.length * charWidth / 2 - textPadding}
+				y={midY - fontSize / 2 - textPadding}
+				width={lengthText.length * charWidth + textPadding * 2}
+				height={fontSize + textPadding * 2}
 				fill={MEASUREMENT_TEXT_BACKGROUND_COLOR}
-				cornerRadius={2}
+				cornerRadius={cornerRadius}
 				listening={false}
 			/>
 
@@ -128,12 +137,12 @@ const EdgeMeasurement = ({
 				x={midX}
 				y={midY}
 				text={lengthText}
-				fontSize={12}
+				fontSize={fontSize}
 				fill={MEASUREMENT_TEXT_COLOR}
 				align="center"
 				verticalAlign="middle"
-				offsetX={lengthText.length * 3} // Approximate text width offset
-				offsetY={6} // Half font size for vertical centering
+				offsetX={lengthText.length * charWidth / 2}
+				offsetY={fontSize / 2}
 				listening={false}
 			/>
 		</Group>

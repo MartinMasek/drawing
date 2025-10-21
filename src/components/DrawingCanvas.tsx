@@ -9,10 +9,11 @@ import type {
 	CanvasTextData,
 } from "~/types/drawing";
 import { getTotalAreaOfShapes } from "~/utils/ui-utils";
-import { useCreateShape } from "../hooks/mutations/useCreateShape";
+import { useCreateShape, isTempShapeId, registerPendingUpdate } from "../hooks/mutations/useCreateShape";
 import { useUpdateShape } from "../hooks/mutations/useUpdateShape";
 import { useMouseInteractions } from "../hooks/useMouseInteractions";
 import { useText } from "../hooks/useText";
+import { api } from "~/utils/api";
 import CursorPanel from "./CursorPanel";
 import DebugSidePanel from "./DebugSidePanel";
 import DrawingPreview from "./canvasShapes/DrawingPreview";
@@ -82,7 +83,8 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		}
 	}, [shapes, setTotalArea]);
 
-	// Shape mutations
+	// Shape mutations and utils
+	const utils = api.useUtils();
 	const createShapeMutation = useCreateShape(designId);
 	const updateShapeMutation = useUpdateShape(designId);
 
@@ -133,12 +135,66 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		}
 	};
 
+	const handleShapeDragMove = (
+		shape: CanvasShape,
+		newX: number,
+		newY: number,
+	) => {
+		if (!designId) return;
+
+		// For shapes with temp IDs, continuously update cache position during drag
+		// Why: When createShape completes, the cache gets updated with the real ID.
+		// By keeping the cached position in sync with drag position, the shape appears
+		// in the correct location after the temp->real ID transition (no visual jump).
+		if (isTempShapeId(shape.id)) {
+			const currentData = utils.design.getById.getData({ id: designId });
+			if (currentData) {
+				utils.design.getById.setData(
+					{ id: designId },
+					{
+						...currentData,
+						shapes: currentData.shapes.map((s) =>
+							s.id === shape.id
+								? { ...s, xPos: newX, yPos: newY }
+								: s,
+						),
+					},
+				);
+			}
+		}
+	};
+
 	const handleShapeDragEnd = (
 		shape: CanvasShape,
 		newX: number,
 		newY: number,
 	) => {
 		if (!designId) return;
+
+		// If shape has temp ID, register pending update instead of calling server
+		if (isTempShapeId(shape.id)) {
+			registerPendingUpdate(shape.id, {
+				xPos: newX,
+				yPos: newY,
+			});
+
+			// Update the cache optimistically (final position)
+			const currentData = utils.design.getById.getData({ id: designId });
+			if (currentData) {
+				utils.design.getById.setData(
+					{ id: designId },
+					{
+						...currentData,
+						shapes: currentData.shapes.map((s) =>
+							s.id === shape.id
+								? { ...s, xPos: newX, yPos: newY }
+								: s,
+						),
+					},
+				);
+			}
+			return;
+		}
 
 		updateShapeMutation.mutate({
 			shapeId: shape.id,
@@ -269,7 +325,9 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 
 						return (
 							<Shape
-								key={shape.id}
+								// Use clientId as key to prevent remounting when temp ID becomes real ID
+								// Falls back to shape.id for shapes loaded from database (which don't have clientId)
+								key={shape.clientId || shape.id}
 								shape={shape}
 								isSelected={isSelected || hasContextMenuOpen}
 								isHovered={isHovered}
@@ -278,11 +336,16 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 								onClick={(e) => handleSelectShape(shape, e)}
 								onMouseEnter={() => setHoveredId(shape.id)}
 								onMouseLeave={() => setHoveredId(null)}
+								onDragMove={(newX, newY) =>
+									handleShapeDragMove(shape, newX, newY)
+								}
 								onDragEnd={(newX, newY) =>
 									handleShapeDragEnd(shape, newX, newY)
 								}
 								onContextMenu={(e) => handleShapeContextMenu(shape, e)}
 								activeTab={activeTab}
+								isDebugMode={isDebugMode}
+								scale={scale}
 							/>
 						);
 					})}
@@ -291,6 +354,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 						bounds={previewBounds}
 						directionChangingPoints={previewShape?.changedDirectionPoints}
 						isDebugMode={isDebugMode}
+						scale={scale}
 					/>
 
 					{/* Render saved texts with optimistic updates */}

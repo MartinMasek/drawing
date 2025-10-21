@@ -36,9 +36,12 @@ interface ShapeProps {
 	onClick: (e: KonvaEventObject<MouseEvent>) => void;
 	onMouseEnter: () => void;
 	onMouseLeave: () => void;
+	onDragMove?: (newX: number, newY: number) => void;
 	onDragEnd: (newX: number, newY: number) => void;
 	onContextMenu: (e: KonvaEventObject<PointerEvent>) => void;
 	activeTab?: number;
+	isDebugMode: boolean;
+	scale: number;
 }
 
 interface BoundingBox {
@@ -176,31 +179,40 @@ const Shape = ({
 	onClick,
 	onMouseEnter,
 	onMouseLeave,
+	onDragMove: onDragMoveCallback,
 	onDragEnd,
 	onContextMenu,
 	activeTab,
+	isDebugMode,
+	scale,
 }: ShapeProps) => {
 	const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 	const [hoveredEdgeIndex, setHoveredEdgeIndex] = useState<number | null>(null);
 	const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(
 		null,
 	);
+	const [isDragging, setIsDragging] = useState(false);
 	const prevShapePos = useRef({ x: shape.xPos, y: shape.yPos });
 	const { cursorType, setCursorType } = useDrawing();
 	const { selectedEdge, selectedPoint, setSelectedEdge, setSelectedPoint } =
 		useShape();
 
 	// Reset drag offset when shape position changes (after optimistic update)
+	// But only if we're not currently dragging (to prevent snap-back during drag)
 	useEffect(() => {
 		const positionChanged =
 			prevShapePos.current.x !== shape.xPos ||
 			prevShapePos.current.y !== shape.yPos;
 
-		if (positionChanged) {
+		if (positionChanged && !isDragging) {
 			setDragOffset({ x: 0, y: 0 });
 			prevShapePos.current = { x: shape.xPos, y: shape.yPos };
+		} else if (positionChanged && isDragging) {
+			// Position changed while dragging (e.g., temp ID replaced with real ID)
+			// Update the reference but keep the dragOffset to maintain visual position
+			prevShapePos.current = { x: shape.xPos, y: shape.yPos };
 		}
-	}, [shape.xPos, shape.yPos]);
+	}, [shape.xPos, shape.yPos, isDragging]);
 
 	const boundingBox = useMemo(
 		() => calculateBoundingBox(shape.points),
@@ -239,17 +251,29 @@ const Shape = ({
 		activeTab === DrawingTab.Edges || activeTab === DrawingTab.Shape;
 	const isShapeMode = activeTab === DrawingTab.Shape;
 
+	const handleDragStart = () => {
+		setIsDragging(true);
+	};
+
 	const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
 		const node = e.target;
 		const offsetX = node.x() - (shape.xPos + centerX);
 		const offsetY = node.y() - (shape.yPos + centerY);
 		setDragOffset({ x: offsetX, y: offsetY });
+
+		// Notify parent of drag position (for temp ID cache updates)
+		if (onDragMoveCallback) {
+			const newX = node.x() - centerX;
+			const newY = node.y() - centerY;
+			onDragMoveCallback(newX, newY);
+		}
 	};
 
 	const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
 		const node = e.target;
 		const newX = node.x() - centerX;
 		const newY = node.y() - centerY;
+		setIsDragging(false);
 		onDragEnd(newX, newY);
 	};
 
@@ -375,6 +399,7 @@ const Shape = ({
 					rotation={shape.rotation}
 					draggable={isDraggable && !isDrawing}
 					listening={!isDrawing}
+					onDragStart={handleDragStart}
 					onDragMove={handleDragMove}
 					onDragEnd={handleDragEnd}
 					onContextMenu={onContextMenu}
@@ -459,8 +484,8 @@ const Shape = ({
 						})}
 				</Group>
 
-				{/* Edge measurements - outside of clipped group */}
-				<ShapeEdgeMeasurements points={absolutePoints} />
+			{/* Edge measurements - outside of clipped group */}
+			<ShapeEdgeMeasurements points={absolutePoints} scale={scale} />
 			</>
 		);
 	}
@@ -468,6 +493,14 @@ const Shape = ({
 	// Render mode: Default (simple closed polygon)
 	return (
 		<>
+			{isDebugMode && (
+				<ShapeDebugLayer
+					shape={shape}
+					centerX={centerX}
+					centerY={centerY}
+					dragOffset={dragOffset}
+				/>
+			)}
 			<Line
 				x={shape.xPos + centerX}
 				y={shape.yPos + centerY}
@@ -491,10 +524,60 @@ const Shape = ({
 				onContextMenu={onContextMenu}
 				onDragMove={handleDragMove}
 				onDragEnd={handleDragEnd}
-			/>
-			<ShapeEdgeMeasurements points={absolutePoints} />
-		</>
-	);
+			onDragStart={handleDragStart}
+		/>
+
+		<ShapeEdgeMeasurements points={absolutePoints} scale={scale} />
+	</>
+);
 };
 
 export default Shape;
+
+const ShapeDebugLayer = ({
+	shape,
+	centerX,
+	centerY,
+	dragOffset,
+}: {
+	shape: CanvasShape;
+	centerX: number;
+	centerY: number;
+	dragOffset: { x: number; y: number };
+}) => {
+	if (!shape.edgeIndices) return null;
+
+	return (
+		<Group
+			x={shape.xPos + centerX + dragOffset.x}
+			y={shape.yPos + centerY + dragOffset.y}
+			offsetX={centerX}
+			offsetY={centerY}
+			rotation={shape.rotation}
+			listening={false}
+		>
+			<Line
+				points={[
+					shape.points[shape.edgeIndices.startPoint1]?.xPos ?? 0,
+					shape.points[shape.edgeIndices.startPoint1]?.yPos ?? 0,
+					shape.points[shape.edgeIndices.startPoint2]?.xPos ?? 0,
+					shape.points[shape.edgeIndices.startPoint2]?.yPos ?? 0,
+				]}
+				stroke="red"
+				strokeWidth={6}
+				listening={false}
+			/>
+			<Line
+				points={[
+					shape.points[shape.edgeIndices.endPoint1]?.xPos ?? 0,
+					shape.points[shape.edgeIndices.endPoint1]?.yPos ?? 0,
+					shape.points[shape.edgeIndices.endPoint2]?.xPos ?? 0,
+					shape.points[shape.edgeIndices.endPoint2]?.yPos ?? 0,
+				]}
+				stroke="red"
+				strokeWidth={6}
+				listening={false}
+			/>
+		</Group>
+	);
+};

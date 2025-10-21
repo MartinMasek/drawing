@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { textCreateSchema, textUpdateSchema } from "~/server/types/text-types";
 import type { CanvasShape, CanvasText } from "~/types/drawing";
+import { getShapeEdgePointIndices } from "~/utils/shape-utils";
 
 export const designRouter = createTRPCRouter({
 	// Get all designs
@@ -92,6 +93,8 @@ export const designRouter = createTRPCRouter({
 				rotation: s.rotation,
 				points: s.points,
 				material: s.material ?? undefined,
+				// Pre-calculate edge indices for frontend visualization
+				edgeIndices: getShapeEdgePointIndices(s.points),
 				edges: s.edges.map((e) => ({
 					id: e.id,
 					point1Id: e.point1Id,
@@ -203,7 +206,11 @@ export const designRouter = createTRPCRouter({
 				},
 			});
 
-			return shape;
+			// Calculate edge indices for the created shape
+			return {
+				...shape,
+				edgeIndices: getShapeEdgePointIndices(shape.points),
+			};
 		}),
 
 	// Update shape position and points

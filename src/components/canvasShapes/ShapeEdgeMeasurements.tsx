@@ -3,12 +3,13 @@ import EdgeMeasurement from "./EdgeMeasurement";
 
 interface ShapeEdgeMeasurementsProps {
 	points: ReadonlyArray<Coordinate>;
+	scale: number;
 }
 
 /**
  * Renders edge measurements for a complete shape
  */
-const ShapeEdgeMeasurements = ({ points }: ShapeEdgeMeasurementsProps) => {
+const ShapeEdgeMeasurements = ({ points, scale }: ShapeEdgeMeasurementsProps) => {
 	if (points.length < 2) return null;
 
 	// compute current X width of the shape (maxX - minX)
@@ -52,6 +53,7 @@ const ShapeEdgeMeasurements = ({ points }: ShapeEdgeMeasurementsProps) => {
 					startPoint={edge.startPoint ?? { xPos: 0, yPos: 0 }}
 					endPoint={edge.endPoint ?? { xPos: 0, yPos: 0 }}
 					length={edge.length}
+					scale={scale}
 				/>
 			))}
 		</>
