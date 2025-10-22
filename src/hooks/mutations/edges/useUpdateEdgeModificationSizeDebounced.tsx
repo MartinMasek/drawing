@@ -1,12 +1,12 @@
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 import { useShape } from "~/components/header/context/ShapeContext";
 import { api } from "~/utils/api";
+import { useDebounceCallback } from "usehooks-ts";
+import { DEBOUNCE_DELAY } from "~/utils/canvas-constants";
 
 export const useUpdateEdgeModificationSizeDebounced = (designId: string | undefined) => {
     const utils = api.useUtils();
     const { selectedShape, setSelectedShape, selectedEdge, setSelectedEdge } = useShape();
-    const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const pendingUpdateRef = useRef<{ depth: number; width: number } | null>(null);
 
     // Function to perform optimistic update immediately
     const performOptimisticUpdate = useCallback((edgeModificationId: string, depth: number, width: number) => {
@@ -70,30 +70,25 @@ export const useUpdateEdgeModificationSizeDebounced = (designId: string | undefi
         },
     });
 
+    // Debounced function for the actual mutation
+    const debouncedMutation = useDebounceCallback(
+        (edgeModificationId: string, depth: number, width: number) => {
+            mutation.mutate({
+                edgeModificationId,
+                depth,
+                width,
+            });
+        },
+        DEBOUNCE_DELAY
+    );
+
     const updateSize = useCallback((edgeModificationId: string, depth: number, width: number) => {
         // Perform optimistic update immediately
         performOptimisticUpdate(edgeModificationId, depth, width);
 
-        // Clear any existing timeout
-        if (debounceTimeoutRef.current) {
-            clearTimeout(debounceTimeoutRef.current);
-        }
-
-        // Store the pending update
-        pendingUpdateRef.current = { depth, width };
-
-        // Set up new debounced mutation
-        debounceTimeoutRef.current = setTimeout(() => {
-            if (pendingUpdateRef.current) {
-                mutation.mutate({
-                    edgeModificationId,
-                    depth: pendingUpdateRef.current.depth,
-                    width: pendingUpdateRef.current.width,
-                });
-                pendingUpdateRef.current = null;
-            }
-        }, 300); // 300ms debounce delay
-    }, [mutation, performOptimisticUpdate]);
+        // Trigger debounced mutation
+        debouncedMutation(edgeModificationId, depth, width);
+    }, [performOptimisticUpdate, debouncedMutation]);
 
     return {
         updateSize,

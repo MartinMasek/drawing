@@ -1,12 +1,12 @@
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 import { useShape } from "~/components/header/context/ShapeContext";
 import { api } from "~/utils/api";
+import { useDebounceCallback } from "usehooks-ts";
+import { DEBOUNCE_DELAY } from "~/utils/canvas-constants";
 
 export const useUpdateEdgeModificationAnglesDebounced = (designId: string | undefined) => {
     const utils = api.useUtils();
     const { selectedShape, setSelectedShape, selectedEdge, setSelectedEdge } = useShape();
-    const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const pendingUpdateRef = useRef<{ left: number; right: number } | null>(null);
 
     // Function to perform optimistic update immediately
     const performOptimisticUpdate = useCallback((edgeModificationId: string, sideAngleLeft: number, sideAngleRight: number) => {
@@ -70,30 +70,25 @@ export const useUpdateEdgeModificationAnglesDebounced = (designId: string | unde
         },
     });
 
+    // Debounced function for the actual mutation
+    const debouncedMutation = useDebounceCallback(
+        (edgeModificationId: string, left: number, right: number) => {
+            mutation.mutate({
+                edgeModificationId,
+                sideAngleLeft: left,
+                sideAngleRight: right,
+            });
+        },
+        DEBOUNCE_DELAY
+    );
+
     const updateAngles = useCallback((edgeModificationId: string, left: number, right: number) => {
         // Perform optimistic update immediately
         performOptimisticUpdate(edgeModificationId, left, right);
 
-        // Clear any existing timeout
-        if (debounceTimeoutRef.current) {
-            clearTimeout(debounceTimeoutRef.current);
-        }
-
-        // Store the pending update
-        pendingUpdateRef.current = { left, right };
-
-        // Set up new debounced mutation
-        debounceTimeoutRef.current = setTimeout(() => {
-            if (pendingUpdateRef.current) {
-                mutation.mutate({
-                    edgeModificationId,
-                    sideAngleLeft: pendingUpdateRef.current.left,
-                    sideAngleRight: pendingUpdateRef.current.right,
-                });
-                pendingUpdateRef.current = null;
-            }
-        }, 300); // 300ms debounce delay
-    }, [mutation, performOptimisticUpdate]);
+        // Trigger debounced mutation
+        debouncedMutation(edgeModificationId, left, right);
+    }, [performOptimisticUpdate, debouncedMutation]);
 
     return {
         updateAngles,

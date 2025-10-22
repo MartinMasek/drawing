@@ -484,8 +484,8 @@ const Shape = ({
 						})}
 				</Group>
 
-			{/* Edge measurements - outside of clipped group */}
-			<ShapeEdgeMeasurements points={absolutePoints} scale={scale} />
+				{/* Edge measurements - outside of clipped group */}
+				<ShapeEdgeMeasurements points={absolutePoints} scale={scale} />
 			</>
 		);
 	}
@@ -524,12 +524,12 @@ const Shape = ({
 				onContextMenu={onContextMenu}
 				onDragMove={handleDragMove}
 				onDragEnd={handleDragEnd}
-			onDragStart={handleDragStart}
-		/>
+				onDragStart={handleDragStart}
+			/>
 
-		<ShapeEdgeMeasurements points={absolutePoints} scale={scale} />
-	</>
-);
+			<ShapeEdgeMeasurements points={absolutePoints} scale={scale} />
+		</>
+	);
 };
 
 export default Shape;

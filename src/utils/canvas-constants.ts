@@ -28,3 +28,6 @@ export const SHAPE_DEFAULT_COLOR = "#9CA3AF";
 export const SHAPE_SELECTED_FILL_COLOR = "#EFF6FF";
 export const SHAPE_HOVERED_FILL_COLOR = "#F3F4F6";
 export const SHAPE_DEFAULT_FILL_COLOR = "transparent";
+
+// Debounce timing
+export const DEBOUNCE_DELAY = 300; // Debounce delay in milliseconds
