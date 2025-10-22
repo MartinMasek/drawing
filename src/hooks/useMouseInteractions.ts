@@ -11,6 +11,7 @@ interface UseMouseInteractionsProps {
 	setHoveredId: (id: string | null) => void;
 	texts: ReadonlyArray<CanvasText>;
 	isPanning: boolean;
+	isDragging: boolean;
 	isDrawing: boolean;
 	editingText: CanvasText | null;
 	setEditingText: (text: CanvasText | null) => void;
@@ -35,6 +36,7 @@ export const useMouseInteractions = ({
 	setHoveredId,
 	texts,
 	isPanning,
+	isDragging,
 	isDrawing,
 	editingText,
 	setEditingText,
@@ -53,6 +55,7 @@ export const useMouseInteractions = ({
 		cursorType,
 		hoveredId,
 		isPanning,
+		isDragging,
 		texts,
 	});
 
@@ -63,20 +66,6 @@ export const useMouseInteractions = ({
 		handleMouseMove: handleNavMouseMove,
 		handleMouseUp: handleNavMouseUp,
 	} = useCanvasNavigation();
-
-	// Combined cursor logic that integrates drawing and our cursor system
-	const getCombinedCursor = useCallback(
-		(e?: KonvaEventObject<MouseEvent>) => {
-			// Drawing takes priority
-			if (isDrawing) {
-				return 'url("/cursors/draw_small.svg") 16 16, crosshair';
-			}
-
-			// Use our cursor logic for non-drawing states
-			return getCursorFromHook();
-		},
-		[isDrawing, getCursorFromHook],
-	);
 
 	// Text-specific mouse interactions
 	const handleTextMouseDown = useCallback(
@@ -193,7 +182,7 @@ export const useMouseInteractions = ({
 			handleMouseMove,
 			handleMouseUp,
 			handleWheel,
-			getCombinedCursor,
+			getCursorFromHook,
 
 			// Cursor logic
 			isInteractiveCursor,
@@ -206,7 +195,7 @@ export const useMouseInteractions = ({
 			handleMouseMove,
 			handleMouseUp,
 			handleWheel,
-			getCombinedCursor,
+			getCursorFromHook,
 			isInteractiveCursor,
 			handleSelectShape,
 		],

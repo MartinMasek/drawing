@@ -4,11 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Line, Group, Circle } from "react-konva";
 import type { CanvasShape, Coordinate } from "~/types/drawing";
 import {
-	SHAPE_DEFAULT_COLOR,
+	SHAPE_DEFAULT_STROKE_COLOR,
 	SHAPE_DEFAULT_FILL_COLOR,
-	SHAPE_HOVERED_COLOR,
+	SHAPE_HOVERED_STROKE_COLOR,
 	SHAPE_HOVERED_FILL_COLOR,
-	SHAPE_SELECTED_COLOR,
+	SHAPE_SELECTED_STROKE_COLOR,
 	SHAPE_SELECTED_FILL_COLOR,
 } from "~/utils/canvas-constants";
 import ShapeEdgeMeasurements from "./ShapeEdgeMeasurements";
@@ -36,6 +36,7 @@ interface ShapeProps {
 	onClick: (e: KonvaEventObject<MouseEvent>) => void;
 	onMouseEnter: () => void;
 	onMouseLeave: () => void;
+	onDragStart?: () => void;
 	onDragMove?: (newX: number, newY: number) => void;
 	onDragEnd: (newX: number, newY: number) => void;
 	onContextMenu: (e: KonvaEventObject<PointerEvent>) => void;
@@ -156,9 +157,9 @@ const createShapeClipFunc =
  * Get stroke color based on shape state
  */
 const getStrokeColor = (isSelected: boolean, isHovered: boolean): string => {
-	if (isSelected) return SHAPE_SELECTED_COLOR;
-	if (isHovered) return SHAPE_HOVERED_COLOR;
-	return SHAPE_DEFAULT_COLOR;
+	if (isSelected) return SHAPE_SELECTED_STROKE_COLOR;
+	if (isHovered) return SHAPE_HOVERED_STROKE_COLOR;
+	return SHAPE_DEFAULT_STROKE_COLOR;
 };
 
 /**
@@ -179,6 +180,7 @@ const Shape = ({
 	onClick,
 	onMouseEnter,
 	onMouseLeave,
+	onDragStart: onDragStartCallback,
 	onDragMove: onDragMoveCallback,
 	onDragEnd,
 	onContextMenu,
@@ -253,6 +255,7 @@ const Shape = ({
 
 	const handleDragStart = () => {
 		setIsDragging(true);
+		onDragStartCallback?.();
 	};
 
 	const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
@@ -438,7 +441,7 @@ const Shape = ({
 								]}
 								stroke={
 									isEdgeHovered
-										? SHAPE_HOVERED_COLOR
+										? SHAPE_HOVERED_STROKE_COLOR
 										: getStrokeColor(isSelected, false)
 								}
 								strokeWidth={

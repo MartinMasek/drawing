@@ -22,12 +22,16 @@ export const MEASUREMENT_TEXT_COLOR = "#6B7280";
 export const DPI = 4;
 
 // Shape colors
-export const SHAPE_SELECTED_COLOR = "#2563EB";
-export const SHAPE_HOVERED_COLOR = "#374151";
-export const SHAPE_DEFAULT_COLOR = "#9CA3AF";
+export const SHAPE_SELECTED_STROKE_COLOR = "#2563EB";
+export const SHAPE_HOVERED_STROKE_COLOR = "#93C5FD";
+export const SHAPE_DEFAULT_STROKE_COLOR = "#9CA3AF";
 export const SHAPE_SELECTED_FILL_COLOR = "#EFF6FF";
-export const SHAPE_HOVERED_FILL_COLOR = "#F3F4F6";
-export const SHAPE_DEFAULT_FILL_COLOR = "transparent";
+export const SHAPE_HOVERED_FILL_COLOR = "#FBFCFE";
+export const SHAPE_DEFAULT_FILL_COLOR = "#FBFCFE";
+
+export const SHAPE_DRAWING_DRAGGED_EDGE_COLOR = "#F59E0B";
+export const SHAPE_DRAWING_OUTLINE_COLOR = "#1D4ED8";
+export const SHAPE_DRAWING_FILL_COLOR = "#93C5FD";
 
 // Debounce timing
 export const DEBOUNCE_DELAY = 300; // Debounce delay in milliseconds
