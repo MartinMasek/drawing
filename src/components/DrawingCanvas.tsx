@@ -139,7 +139,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 
 	const handleShapeDragStart = (shape: CanvasShape) => {
 		setDraggingId(shape.id);
-		
+
 		if (!designId) return;
 
 		// Move the dragged shape to the end of the array (on top of others)
@@ -148,7 +148,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		if (currentData) {
 			const otherShapes = currentData.shapes.filter((s) => s.id !== shape.id);
 			const draggedShape = currentData.shapes.find((s) => s.id === shape.id);
-			
+
 			if (draggedShape) {
 				utils.design.getById.setData(
 					{ id: designId },
@@ -196,7 +196,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		newY: number,
 	) => {
 		setDraggingId(null);
-		
+
 		if (!designId) return;
 
 		// If shape has temp ID, register pending update instead of calling server
@@ -204,6 +204,11 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 			registerPendingUpdate(shape.id, {
 				xPos: newX,
 				yPos: newY,
+				points: shape.points.map((point) => ({
+					id: point.id,
+					xPos: point.xPos,
+					yPos: point.yPos,
+				})),
 			});
 
 			// Update the cache optimistically (final position)
