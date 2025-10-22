@@ -1,4 +1,4 @@
-import { useState, type FC } from "react";
+import type { FC } from "react";
 import { Input } from "~/components/Input";
 
 interface CurvesSizeInputProps {
@@ -12,31 +12,28 @@ const CurvesSizeInput: FC<CurvesSizeInputProps> = ({
 	depth,
 	width,
 }) => {
-	const [localDepth, setLocalDepth] = useState(depth);
-	const [localWidth, setLocalWidth] = useState(width);
-
 	const handleDepthChange = (value: string) => {
-		setLocalDepth(Number.parseFloat(value));
-		onChange({ depth: Number.parseFloat(value), width: localWidth });
+		const newDepth = Number.parseFloat(value);
+		onChange({ depth: newDepth, width });
 	};
 
 	const handleWidthChange = (value: string) => {
-		setLocalWidth(Number.parseFloat(value));
-		onChange({ depth: localDepth, width: Number.parseFloat(value) });
+		const newWidth = Number.parseFloat(value);
+		onChange({ depth, width: newWidth });
 	};
 	return (
 		<div className="flex flex-col gap-2">
 			<p className="text-sm text-text-input-label">Size (DxW)</p>
 			<div className="flex w-[305px] items-center justify-between">
 				<Input className="h-[36px] w-[140px]"
-					value={localDepth}
+					value={depth}
 					inputSize="sm"
 					endAdornment={<p className="text-sm">in</p>}
 					onChange={(e) => handleDepthChange(e.target.value)}
 				/>
 				<p className="text-sm text-text-neutral-disabled">x</p>
 				<Input className="h-[36px] w-[140px]"
-					value={localWidth}
+					value={width}
 					inputSize="sm"
 					endAdornment={<p className="text-sm">in</p>}
 					onChange={(e) => handleWidthChange(e.target.value)}

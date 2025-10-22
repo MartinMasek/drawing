@@ -1,4 +1,4 @@
-import { useState, type FC } from "react";
+import type { FC } from "react";
 import { SelectStyled } from "~/components/SelectStyled";
 
 interface AngleOption {
@@ -17,17 +17,14 @@ const CurvesAnglesInput: FC<CurvesAnglesInputProps> = ({
 	left,
 	right,
 }) => {
-	const [localLeft, setLocalLeft] = useState(left);
-	const [localRight, setLocalRight] = useState(right);
-
 	const handleLeftChange = (value: string) => {
-		setLocalLeft(Number.parseFloat(value));
-		onChange({ left: Number.parseFloat(value), right: localRight });
+		const newLeft = Number.parseFloat(value);
+		onChange({ left: newLeft, right });
 	};
 
 	const handleRightChange = (value: string) => {
-		setLocalRight(Number.parseFloat(value));
-		onChange({ left: localLeft, right: Number.parseFloat(value) });
+		const newRight = Number.parseFloat(value);
+		onChange({ left, right: newRight });
 	};
 	const anglesOptions: AngleOption[] = [
 		{ label: "0°", value: 0 },
@@ -47,7 +44,7 @@ const CurvesAnglesInput: FC<CurvesAnglesInputProps> = ({
 					inputSize="sm"
 					rounded
 					className="h-[36px] w-[140px]"
-					value={anglesOptions.find((option) => option.value === localLeft)}
+					value={anglesOptions.find((option) => option.value === left)}
 					onChange={(value) => handleLeftChange(value?.value?.toString() ?? "")}
 				/>
 				<p className="text-sm text-text-neutral-disabled">-</p>
@@ -56,7 +53,7 @@ const CurvesAnglesInput: FC<CurvesAnglesInputProps> = ({
 					inputSize="sm"
 					rounded
 					className="h-[36px] w-[140px]"
-					value={anglesOptions.find((option) => option.value === localRight)}
+					value={anglesOptions.find((option) => option.value === right)}
 					onChange={(value) => handleRightChange(value?.value?.toString() ?? "")}
 				/>
 

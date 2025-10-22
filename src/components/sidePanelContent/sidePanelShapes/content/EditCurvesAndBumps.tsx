@@ -13,10 +13,10 @@ import { EdgeModificationList } from "~/types/drawing";
 import { EdgeShapePosition } from "@prisma/client";
 import { useDeleteEdgeModification } from "~/hooks/mutations/edges/useDeleteEdgeModification";
 import { useRouter } from "next/router";
-import { useUpdateEdgeModificationAngles } from "~/hooks/mutations/edges/useUpdateEdgeModificationAngles";
-import { useUpdateEdgeModificationDistance } from "~/hooks/mutations/edges/useUpdateEdgeModificationDistance";
-import { useUpdateEdgeModificationPosition } from "~/hooks/mutations/edges/useUpdateEdgeModificationPosition";
-import { useUpdateEdgeModificationSize } from "~/hooks/mutations/edges/useUpdateEdgeModificationSize";
+import { useUpdateEdgeModificationAnglesDebounced } from "~/hooks/mutations/edges/useUpdateEdgeModificationAnglesDebounced";
+import { useUpdateEdgeModificationDistanceDebounced } from "~/hooks/mutations/edges/useUpdateEdgeModificationDistanceDebounced";
+import { useUpdateEdgeModificationPositionDebounced } from "~/hooks/mutations/edges/useUpdateEdgeModificationPositionDebounced";
+import { useUpdateEdgeModificationSizeDebounced } from "~/hooks/mutations/edges/useUpdateEdgeModificationSizeDebounced";
 
 interface EditCurvesAndBumpsProps {
 	setView: (value: ShapeSidePanelView) => void;
@@ -28,47 +28,48 @@ const EditCurvesAndBumps: FC<EditCurvesAndBumpsProps> = ({ setView }) => {
 	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
 	const { selectedEdge } = useShape();
 	const deleteEdgeModification = useDeleteEdgeModification(designId);
-	const updateEdgeModificationSize = useUpdateEdgeModificationSize(designId);
-	const updateEdgeModificationAngles = useUpdateEdgeModificationAngles(designId);
-	const updateEdgeModificationPosition = useUpdateEdgeModificationPosition(designId);
-	const updateEdgeModificationDistance = useUpdateEdgeModificationDistance(designId);
+	const updateEdgeModificationAngles = useUpdateEdgeModificationAnglesDebounced(designId);
+	const updateEdgeModificationPosition = useUpdateEdgeModificationPositionDebounced(designId);
+	const updateEdgeModificationDistance = useUpdateEdgeModificationDistanceDebounced(designId);
+
+	const updateEdgeModificationSize = useUpdateEdgeModificationSizeDebounced(designId);
 
 	const handleSizeChange = (value: { depth: number; width: number }) => {
 		if (!selectedEdge?.edgeModification?.id) return;
 
-		updateEdgeModificationSize.mutate({
-			edgeModificationId: selectedEdge.edgeModification.id,
-			depth: value.depth,
-			width: value.width,
-		});
+		updateEdgeModificationSize.updateSize(
+			selectedEdge.edgeModification.id,
+			value.depth,
+			value.width
+		);
 	};
 
 	const handleAnglesChange = (value: { left: number; right: number }) => {
 		if (!selectedEdge?.edgeModification?.id) return;
 
-		updateEdgeModificationAngles.mutate({
-			edgeModificationId: selectedEdge.edgeModification.id,
-			sideAngleLeft: value.left,
-			sideAngleRight: value.right,
-		});
+		updateEdgeModificationAngles.updateAngles(
+			selectedEdge.edgeModification.id,
+			value.left,
+			value.right
+		);
 	};
 
 	const handlePositionChange = (value: string) => {
 		if (!selectedEdge?.edgeModification?.id) return;
 
-		updateEdgeModificationPosition.mutate({
-			edgeModificationId: selectedEdge.edgeModification.id,
-			position: value as EdgeShapePosition,
-		});
+		updateEdgeModificationPosition.updatePosition(
+			selectedEdge.edgeModification.id,
+			value as EdgeShapePosition
+		);
 	};
 
 	const handleDistanceChange = (value: number) => {
 		if (!selectedEdge?.edgeModification?.id) return;
 
-		updateEdgeModificationDistance.mutate({
-			edgeModificationId: selectedEdge.edgeModification.id,
-			distance: value,
-		});
+		updateEdgeModificationDistance.updateDistance(
+			selectedEdge.edgeModification.id,
+			value
+		);
 	};
 
 	const handleDeleteEdgeModification = () => {
