@@ -26,7 +26,7 @@ export function useCanvasNavigation() {
 		panStart,
 		setPanStart,
 	} = useDrawing();
-	const { setSelectedShape } = useShape();
+	const { setSelectedShape, setSelectedEdge, setSelectedPoint } = useShape();
 	const { setIsOpenSideDialog } = useDrawing();
 
 	/** Zoom towards cursor on mouse wheel */
@@ -90,6 +90,8 @@ export function useCanvasNavigation() {
 
 		if (e.target === e.target.getStage()) {
 			setSelectedShape(null);
+			setSelectedEdge(null);
+			setSelectedPoint(null);
 			setIsOpenSideDialog(false);
 		}
 	};

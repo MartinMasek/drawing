@@ -2,6 +2,9 @@
 // IMPORTANT: Drawing types are for now just prepared for demo version. It will be changed to match correct data model.
 // #########################################################
 
+import { EdgeModificationType, type EdgeShapePosition } from "@prisma/client";
+import { DrawingTab } from "~/components/header/header/drawing-types";
+
 export interface Design {
 	id: string;
 	name: string;
@@ -154,14 +157,14 @@ export type CanvasShape = {
 	id: string;
 	/**
 	 * Stable client-side ID used as React component key.
-	 * 
+	 *
 	 * Why we need this:
 	 * When a shape is created, it gets a temporary ID (temp-xxx) for optimistic updates.
 	 * Once the server responds, we replace the temp ID with the real database ID.
-	 * 
+	 *
 	 * Problem: Changing the ID mid-drag causes React to unmount/remount the component
 	 * (because the key changes), which breaks Konva's internal drag state.
-	 * 
+	 *
 	 * Solution: clientId stays constant throughout the shape's lifetime, preventing
 	 * component remounting during temp->real ID transitions, thus preserving drag state.
 	 */
@@ -169,7 +172,7 @@ export type CanvasShape = {
 	xPos: number;
 	yPos: number;
 	rotation: number;
-	points: ReadonlyArray<Coordinate>;
+	points: ReadonlyArray<Point>;
 	material?: MaterialExtended;
 	/**
 	 * Pre-calculated edge point indices for start and end edges.
@@ -181,6 +184,12 @@ export type CanvasShape = {
 		endPoint1: number;
 		endPoint2: number;
 	} | null;
+	edges: {
+		id: string;
+		point1Id: string;
+		point2Id: string;
+		edgeModifications: EdgeModification[];
+	}[];
 };
 
 export type CanvasText = {
@@ -214,3 +223,41 @@ export type MaterialExtended = {
 	category: string;
 	subcategory: string;
 };
+
+export type SelectedPoint = {
+	shapeId: string;
+	pointIndex: number;
+};
+
+export type SelectedEdge = {
+	shapeId: string;
+	edgeIndex: number;
+	edgeId: string | null;
+	edgePoint1Id: string;
+	edgePoint2Id: string;
+	edgeModification: EdgeModification | undefined;
+};
+
+export type EdgeModification = {
+	id: string | null;
+	type: EdgeModificationType;
+	position: EdgeShapePosition;
+	distance: number;
+	depth: number;
+	width: number;
+	sideAngleLeft: number;
+	sideAngleRight: number;
+	fullRadiusDepth: number;
+};
+
+export const EdgeModificationList: {
+	id: EdgeModificationType;
+	label: string;
+}[] = [
+	{ id: EdgeModificationType.BumpIn, label: "Bump-In" },
+	{ id: EdgeModificationType.BumpOut, label: "Bump-Out" },
+	{ id: EdgeModificationType.BumpInCurve, label: "Bump-In Curve" },
+	{ id: EdgeModificationType.BumpOutCurve, label: "Bump-Out Curve" },
+	{ id: EdgeModificationType.FullCurve, label: "Full Curve" },
+	{ id: EdgeModificationType.None, label: "None" },
+];

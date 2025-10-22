@@ -12,15 +12,21 @@ import {
 	SHAPE_SELECTED_FILL_COLOR,
 } from "~/utils/canvas-constants";
 import ShapeEdgeMeasurements from "./ShapeEdgeMeasurements";
-import { DrawingTab } from "~/components/header/header/drawing-types";
+import {
+	CursorTypes,
+	DrawingTab,
+} from "~/components/header/header/drawing-types";
+import { useDrawing } from "../header/context/DrawingContext";
+import { useShape } from "../header/context/ShapeContext";
+import { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
 
 // Constants for interactive elements
 const EDGE_STROKE_WIDTH = 2;
 const EDGE_STROKE_WIDTH_HOVERED = 4;
-const EDGE_HIT_STROKE_WIDTH = 12;
+const EDGE_STROKE_WIDTH_SELECTED = 6;
+const EDGE_HIT_STROKE_WIDTH = 16;
 const POINT_HOVER_RADIUS = 20;
 const POINT_HOVER_OPACITY = 0.8;
-
 interface ShapeProps {
 	shape: CanvasShape;
 	isSelected: boolean;
@@ -189,6 +195,9 @@ const Shape = ({
 	);
 	const [isDragging, setIsDragging] = useState(false);
 	const prevShapePos = useRef({ x: shape.xPos, y: shape.yPos });
+	const { cursorType, setCursorType } = useDrawing();
+	const { selectedEdge, selectedPoint, setSelectedEdge, setSelectedPoint } =
+		useShape();
 
 	// Reset drag offset when shape position changes (after optimistic update)
 	// But only if we're not currently dragging (to prevent snap-back during drag)
@@ -273,6 +282,8 @@ const Shape = ({
 
 	const handleEdgeClick = (
 		edgeIndex: number,
+		point1Id: string,
+		point2Id: string,
 		e: KonvaEventObject<MouseEvent>,
 	) => {
 		if (isDrawing || e.evt.button !== 0) return;
@@ -282,22 +293,32 @@ const Shape = ({
 
 		if (!startPoint || !endPoint) return;
 
-		const length = calculateDistance(startPoint, endPoint);
+		const doesEdgeExist = shape.edges.find((edge) => edge.point1Id === point1Id && edge.point2Id === point2Id);
 
-		console.log("Edge Info:", {
+		const hasModification = doesEdgeExist?.edgeModifications.length && doesEdgeExist?.edgeModifications.length > 0;
+		const modification = hasModification ? doesEdgeExist?.edgeModifications[0] : null;
+
+		setCursorType(CursorTypes.Curves);
+
+		setSelectedEdge({
 			shapeId: shape.id,
 			edgeIndex,
-			startPoint: {
-				x: startPoint.xPos.toFixed(2),
-				y: startPoint.yPos.toFixed(2),
+			edgeId: doesEdgeExist?.id ?? null,
+			edgePoint1Id: point1Id,
+			edgePoint2Id: point2Id,
+			edgeModification: {
+				id: modification?.id ?? null,
+				type: modification?.type ?? EdgeModificationType.None,
+				position: modification?.position ?? EdgeShapePosition.Center,
+				distance: modification?.distance ?? 0,
+				depth: modification?.depth ?? 0,
+				width: modification?.width ?? 0,
+				sideAngleLeft: modification?.sideAngleLeft ?? 0,
+				sideAngleRight: modification?.sideAngleRight ?? 0,
+				fullRadiusDepth: modification?.fullRadiusDepth ?? 0,
 			},
-			endPoint: {
-				x: endPoint.xPos.toFixed(2),
-				y: endPoint.yPos.toFixed(2),
-			},
-			length: length.toFixed(2),
 		});
-
+		setSelectedPoint(null);
 		onClick(e);
 	};
 
@@ -340,6 +361,9 @@ const Shape = ({
 			adjacentEdgeLengths: adjacentEdges,
 		});
 
+		setSelectedPoint({ shapeId: shape.id, pointIndex });
+		setCursorType(CursorTypes.Corners);
+		setSelectedEdge(null);
 		onClick(e);
 	};
 
@@ -358,6 +382,7 @@ const Shape = ({
 	const handlePointMouseEnter = (index: number) => {
 		if (!isDrawing) {
 			setHoveredPointIndex(index);
+			onMouseEnter();
 		}
 	};
 
@@ -402,6 +427,8 @@ const Shape = ({
 						if (!nextPoint) return null;
 
 						const isEdgeHovered = hoveredEdgeIndex === index;
+						const isEdgeSelected = selectedEdge?.edgeIndex === index &&
+							selectedEdge?.shapeId === shape.id;
 
 						return (
 							<Line
@@ -418,11 +445,15 @@ const Shape = ({
 										: getStrokeColor(isSelected, false)
 								}
 								strokeWidth={
-									isEdgeHovered ? EDGE_STROKE_WIDTH_HOVERED : EDGE_STROKE_WIDTH
+									isEdgeSelected
+										? EDGE_STROKE_WIDTH_SELECTED
+										: isEdgeHovered
+											? EDGE_STROKE_WIDTH_HOVERED
+											: EDGE_STROKE_WIDTH
 								}
 								hitStrokeWidth={EDGE_HIT_STROKE_WIDTH}
 								listening={!isDrawing}
-								onClick={(e) => handleEdgeClick(index, e)}
+								onClick={(e) => handleEdgeClick(index, point.id, nextPoint.id, e)}
 								onMouseEnter={() => handleEdgeMouseEnter(index)}
 								onMouseLeave={handleEdgeMouseLeave}
 							/>
@@ -433,14 +464,18 @@ const Shape = ({
 					{isShapeMode &&
 						shape.points.map((point, index) => {
 							const isPointHovered = hoveredPointIndex === index;
-
+							const isPointSelected =
+								selectedPoint?.pointIndex === index &&
+								selectedPoint?.shapeId === shape.id;
 							return (
 								<Circle
 									key={`${shape.id}-point-${index}`}
 									x={point.xPos}
 									y={point.yPos}
 									radius={POINT_HOVER_RADIUS}
-									fill={isPointHovered ? "red" : "transparent"}
+									fill={
+										isPointHovered || isPointSelected ? "red" : "transparent"
+									}
 									opacity={isPointHovered ? POINT_HOVER_OPACITY : 1}
 									stroke="transparent"
 									listening={!isDrawing}
@@ -452,8 +487,8 @@ const Shape = ({
 						})}
 				</Group>
 
-			{/* Edge measurements - outside of clipped group */}
-			<ShapeEdgeMeasurements points={absolutePoints} scale={scale} />
+				{/* Edge measurements - outside of clipped group */}
+				<ShapeEdgeMeasurements points={absolutePoints} scale={scale} />
 			</>
 		);
 	}
@@ -492,12 +527,12 @@ const Shape = ({
 				onContextMenu={onContextMenu}
 				onDragMove={handleDragMove}
 				onDragEnd={handleDragEnd}
-			onDragStart={handleDragStart}
-		/>
+				onDragStart={handleDragStart}
+			/>
 
-		<ShapeEdgeMeasurements points={absolutePoints} scale={scale} />
-	</>
-);
+			<ShapeEdgeMeasurements points={absolutePoints} scale={scale} />
+		</>
+	);
 };
 
 export default Shape;

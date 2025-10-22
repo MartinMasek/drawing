@@ -10,9 +10,11 @@ import { CursorTypes, DrawingTab } from "./header/header/drawing-types";
 import Button from "./header/header/Button";
 import { Icon } from "./header/header/Icon";
 import { Divider } from "./header/header/Divider";
+import { useShape } from "./header/context/ShapeContext";
 
 const CursorPanel: FC = () => {
 	const { activeTab, cursorType, setCursorType } = useDrawing();
+	const { setSelectedEdge, setSelectedPoint, setSelectedShape } = useShape();
 
 	return (
 		<div className="absolute top-3 left-3 z-50 flex w-11 flex-col items-center gap-1 rounded-[10px] bg-white py-1 shadow-lg">
@@ -38,7 +40,12 @@ const CursorPanel: FC = () => {
 						size="sm"
 						variant={cursorType === CursorTypes.Curves ? "outlined" : "text"}
 						className="h-[36px] w-[36px]"
-						onClick={() => setCursorType(CursorTypes.Curves)}
+						onClick={() => {
+							setCursorType(CursorTypes.Curves);
+							setSelectedEdge(null);
+							setSelectedPoint(null);
+							setSelectedShape(null);
+						}}
 					>
 						<Icon size="md">
 							{/* biome-ignore lint/a11y/noSvgWithoutTitle: <explanation> */}
@@ -65,7 +72,12 @@ const CursorPanel: FC = () => {
 						size="sm"
 						variant={cursorType === CursorTypes.Corners ? "outlined" : "text"}
 						className="h-[36px] w-[36px]"
-						onClick={() => setCursorType(CursorTypes.Corners)}
+						onClick={() => {
+							setCursorType(CursorTypes.Corners);
+							setSelectedEdge(null);
+							setSelectedPoint(null);
+							setSelectedShape(null);
+						}}
 					>
 						<Icon size="md">
 							<IconBorderRadius />

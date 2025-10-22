@@ -8,7 +8,7 @@ import type {
 	CanvasText,
 	CanvasTextData,
 } from "~/types/drawing";
-import { getShapeArea, getTotalAreaOfShapes } from "~/utils/ui-utils";
+import { getTotalAreaOfShapes } from "~/utils/ui-utils";
 import { useCreateShape, isTempShapeId, registerPendingUpdate } from "../hooks/mutations/useCreateShape";
 import { useUpdateShape } from "../hooks/mutations/useUpdateShape";
 import { useMouseInteractions } from "../hooks/useMouseInteractions";
@@ -24,6 +24,7 @@ import { useDrawing } from "./header/context/DrawingContext";
 import { useShape } from "./header/context/ShapeContext";
 import CanvasTextInput from "./canvasTextInput/CanvasTextInput";
 import type { KonvaEventObject } from "konva/lib/Node";
+import { DrawingTab } from "./header/header/drawing-types";
 
 interface DrawingCanvasProps {
 	shapes?: ReadonlyArray<CanvasShape>;
@@ -35,7 +36,8 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 	const idParam = router.query.id;
 	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
 
-	const { selectedShape, setSelectedShape } = useShape();
+	const { selectedShape, setSelectedShape, setSelectedEdge, setSelectedPoint } =
+		useShape();
 	const [hoveredId, setHoveredId] = useState<string | null>(null);
 	const [draggingId, setDraggingId] = useState<string | null>(null);
 	const [isDebugMode, setIsDebugMode] = useState(false);
@@ -125,7 +127,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		if (isInteractiveCursor) {
 			setSelectedShape(shape);
 			setIsOpenSideDialog(true);
-			
+
 			// Open context menu on left click as well
 			setContextMenu({
 				shapeId: shape.id,
@@ -203,7 +205,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 				xPos: newX,
 				yPos: newY,
 			});
-			
+
 			// Update the cache optimistically (final position)
 			const currentData = utils.design.getById.getData({ id: designId });
 			if (currentData) {
@@ -248,6 +250,8 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 	const handleShapeDeleted = (shapeId: string) => {
 		// Clear selected shape if it's the one being deleted
 		setSelectedShape(null);
+		setSelectedEdge(null);
+		setSelectedPoint(null);
 		setIsOpenSideDialog(false);
 	};
 
@@ -463,7 +467,8 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 				designId &&
 				(() => {
 					const shape = shapes.find((s) => s.id === contextMenu.shapeId);
-					if (!shape) return null;
+
+					if (!shape || activeTab !== DrawingTab.Dimensions) return null;
 
 					return (
 						<ShapeContextMenu

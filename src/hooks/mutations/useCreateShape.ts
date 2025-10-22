@@ -3,11 +3,15 @@ import type { CanvasShape } from "~/types/drawing";
 import { getShapeEdgePointIndices } from "~/utils/shape-utils";
 
 // Store pending updates for shapes that are being created
-const pendingUpdates = new Map<string, {
-	xPos: number;
-	yPos: number;
-	rotation?: number;
-}>();
+const pendingUpdates = new Map<
+	string,
+	{
+		xPos: number;
+		yPos: number;
+		rotation?: number;
+		points: { id: string; xPos: number; yPos: number }[];
+	}
+>();
 
 /**
  * Hook for creating shapes with optimistic updates.
@@ -18,7 +22,12 @@ export function useCreateShape(designId: string | undefined) {
 
 	const mutation = api.design.createShape.useMutation({
 		onMutate: async (newShape) => {
-			if (!designId) return { previousData: undefined, tempId: undefined, clientId: undefined };
+			if (!designId)
+				return {
+					previousData: undefined,
+					tempId: undefined,
+					clientId: undefined,
+				};
 
 			// Cancel outgoing refetches
 			await utils.design.getById.cancel({ id: designId });
@@ -40,7 +49,12 @@ export function useCreateShape(designId: string | undefined) {
 					xPos: newShape.xPos,
 					yPos: newShape.yPos,
 					rotation: newShape.rotation ?? 0,
-					points: newShape.points,
+					points: newShape.points.map((point) => ({
+						id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+						xPos: point.xPos,
+						yPos: point.yPos,
+					})),
+					edges: [],
 					// Pre-calculate edge indices for immediate visualization
 					edgeIndices: getShapeEdgePointIndices(newShape.points),
 				};
@@ -70,7 +84,7 @@ export function useCreateShape(designId: string | undefined) {
 			if (currentData) {
 				// Check if there are pending updates for this temp ID
 				const pending = pendingUpdates.get(context.tempId);
-				
+
 				utils.design.getById.setData(
 					{ id: designId },
 					{
@@ -85,18 +99,25 @@ export function useCreateShape(designId: string | undefined) {
 										clientId: context.clientId,
 										// Use edge indices from server response (already calculated)
 										edgeIndices: data.edgeIndices,
-										// Apply pending updates if any
+										// Apply pending updates if any, otherwise use server data
 										...(pending && {
 											xPos: pending.xPos,
 											yPos: pending.yPos,
-											...(pending.rotation !== undefined && { rotation: pending.rotation }),
+											...(pending.rotation !== undefined && {
+												rotation: pending.rotation,
+											}),
+											points: pending.points,
+										}),
+										// If no pending updates, use the real points from server
+										...(!pending && {
+											points: data.points,
 										}),
 									}
 								: shape,
 						),
 					},
 				);
-				
+
 				// Clean up pending updates
 				pendingUpdates.delete(context.tempId);
 			}
@@ -110,7 +131,7 @@ export function useCreateShape(designId: string | undefined) {
  * Check if a shape ID is a temporary ID (not yet persisted to server)
  */
 export function isTempShapeId(shapeId: string): boolean {
-	return shapeId.startsWith('temp-');
+	return shapeId.startsWith("temp-");
 }
 
 /**
@@ -118,7 +139,12 @@ export function isTempShapeId(shapeId: string): boolean {
  */
 export function registerPendingUpdate(
 	tempId: string,
-	update: { xPos: number; yPos: number; rotation?: number }
+	update: {
+		xPos: number;
+		yPos: number;
+		rotation?: number;
+		points: { id: string; xPos: number; yPos: number }[];
+	},
 ): void {
 	pendingUpdates.set(tempId, update);
 }
