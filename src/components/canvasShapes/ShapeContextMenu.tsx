@@ -64,6 +64,11 @@ const ShapeContextMenu = ({
 				xPos: shape.xPos,
 				yPos: shape.yPos,
 				rotation: newRotation,
+				points: shape.points.map((point) => ({
+					id: point.id,
+					xPos: point.xPos,
+					yPos: point.yPos,
+				})),
 			});
 
 			// Update cache optimistically

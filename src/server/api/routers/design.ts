@@ -253,7 +253,7 @@ export const designRouter = createTRPCRouter({
 					xPos: true,
 					yPos: true,
 					rotation: true,
-					points: { select: { xPos: true, yPos: true } },
+					points: { select: { id: true, xPos: true, yPos: true } },
 				},
 			});
 
