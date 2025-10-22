@@ -3,6 +3,11 @@ import { useShape } from "~/components/header/context/ShapeContext";
 import { SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import ShapeCard from "../../components/ShapeCard";
 import type { ShapeSidePanelView } from "../ShapeSidePanel";
+import RadiusIcon from "~/components/icons/RadiusIcon";
+import ClipIcon from "~/components/icons/ClipIcon";
+import BumpOutCornerIcon from "~/components/icons/BumpOutCornerIcon";
+import NotchIcon from "~/components/icons/NotchIcon";
+import NoneCornerIcon from "~/components/icons/NoneCornerIcon";
 
 interface CornersSidePanelGeneralProps {
 	setView: (value: ShapeSidePanelView) => void;
@@ -33,23 +38,7 @@ const CornersSidePanelGeneral: FC<CornersSidePanelGeneralProps> = ({
 						<ShapeCard
 							id='Radius'
 							name={"Radius"}
-							icon={
-								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
-								<svg
-									width="53"
-									height="52"
-									viewBox="0 0 53 52"
-									fill="none"
-									xmlns="http://www.w3.org/2000/svg"
-								>
-									<path
-										d="M6.75 45.5H45.75V26C45.75 15.1667 37.0833 6.5 26.25 6.5H6.75V45.5Z"
-										stroke="#9CA3AF"
-										stroke-width="2"
-										stroke-linejoin="round"
-									/>
-								</svg>
-							}
+							icon={<RadiusIcon />}
 							onClick={() => setView("editCorners")}
 							isActive={false}
 						/>
@@ -57,23 +46,7 @@ const CornersSidePanelGeneral: FC<CornersSidePanelGeneralProps> = ({
 						<ShapeCard
 							id='Clip'
 							name={"Clip"}
-							icon={
-								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
-								<svg
-									width="53"
-									height="52"
-									viewBox="0 0 53 52"
-									fill="none"
-									xmlns="http://www.w3.org/2000/svg"
-								>
-									<path
-										d="M7.25 45.5H46.25V26L26.75 6.5H7.25V45.5Z"
-										stroke="#9CA3AF"
-										stroke-width="2"
-										stroke-linejoin="round"
-									/>
-								</svg>
-							}
+							icon={<ClipIcon />}
 							onClick={() => setView("editCorners")}
 							isActive={false}
 						/>
@@ -81,23 +54,7 @@ const CornersSidePanelGeneral: FC<CornersSidePanelGeneralProps> = ({
 						<ShapeCard
 							id='BumpOut'
 							name={"Bump-Out"}
-							icon={
-								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
-								<svg
-									width="53"
-									height="52"
-									viewBox="0 0 53 52"
-									fill="none"
-									xmlns="http://www.w3.org/2000/svg"
-								>
-									<path
-										d="M6.51465 14.7604H26.6056L35.4692 6.59766L45.5146 16.8767L36.651 25.0395V45.5977H6.51465V14.7604Z"
-										stroke="#9CA3AF"
-										stroke-width="2"
-										stroke-linejoin="round"
-									/>
-								</svg>
-							}
+							icon={<BumpOutCornerIcon />}
 							onClick={() => setView("editCorners")}
 							isActive={false}
 						/>
@@ -105,23 +62,7 @@ const CornersSidePanelGeneral: FC<CornersSidePanelGeneralProps> = ({
 						<ShapeCard
 							id='Notch'
 							name={"Notch"}
-							icon={
-								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
-								<svg
-									width="53"
-									height="52"
-									viewBox="0 0 53 52"
-									fill="none"
-									xmlns="http://www.w3.org/2000/svg"
-								>
-									<path
-										d="M7.25 6.5H31.0833V21.6667H46.25V45.5H7.25V6.5Z"
-										stroke="#9CA3AF"
-										stroke-width="2"
-										stroke-linejoin="round"
-									/>
-								</svg>
-							}
+							icon={<NotchIcon />}
 							onClick={() => setView("editCorners")}
 							isActive={false}
 						/>
@@ -129,23 +70,7 @@ const CornersSidePanelGeneral: FC<CornersSidePanelGeneralProps> = ({
 						<ShapeCard
 							id='None'
 							name={"None"}
-							icon={
-								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
-								<svg
-									width="53"
-									height="52"
-									viewBox="0 0 53 52"
-									fill="none"
-									xmlns="http://www.w3.org/2000/svg"
-								>
-									<path
-										d="M6.75 6.5H45.75V45.5H6.75V6.5Z"
-										stroke="#2563EB"
-										stroke-width="2"
-										stroke-linejoin="round"
-									/>
-								</svg>
-							}
+							icon={<NoneCornerIcon />}
 							isActive={true}
 						/>
 					</div>

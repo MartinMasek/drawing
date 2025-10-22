@@ -1,6 +1,6 @@
 import type { FC } from "react";
 import { useRouter } from "next/router";
-import { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
+import { EdgeModificationType } from "@prisma/client";
 import { useUpdateEdgeModification } from "~/hooks/mutations/edges/useUpdateEdgeModification";
 import { useShape } from "~/components/header/context/ShapeContext";
 import { SheetHeader, SheetTitle } from "~/components/ui/sheet";
@@ -8,6 +8,12 @@ import ShapeCard from "../../components/ShapeCard";
 import type { ShapeSidePanelView } from "../ShapeSidePanel";
 import { useCreateEdgeModification } from "~/hooks/mutations/edges/useCreateEdgeModification";
 import { useDeleteEdgeModification } from "~/hooks/mutations/edges/useDeleteEdgeModification";
+import BumpOutIcon from "~/components/icons/BumpOutIcon";
+import BumpInIcon from "~/components/icons/BumpInIcon";
+import BumpOutCurveIcon from "~/components/icons/BumpOutCurve";
+import BumpInCurveIcon from "~/components/icons/BumpInCurveIcon";
+import FullCurveIcon from "~/components/icons/FullCurveIcon";
+import CurvesNoneIcon from "~/components/icons/CurvesNoneIcon";
 
 interface CurvesAndBumpsSidePanelGeneralProps {
 	setView: (value: ShapeSidePanelView) => void;
@@ -101,23 +107,7 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 						<ShapeCard
 							id='BumpOut'
 							name={"Bump-Out"}
-							icon={
-								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
-								<svg
-									width="53"
-									height="52"
-									viewBox="0 0 53 52"
-									fill="none"
-									xmlns="http://www.w3.org/2000/svg"
-								>
-									<path
-										d="M6.75 41.1663H45.75V19.4997H37.0833L32.75 10.833H20.3947L16.0614 19.4997H6.75V41.1663Z"
-										stroke="#9CA3AF"
-										stroke-width="2"
-										stroke-linejoin="round"
-									/>
-								</svg>
-							}
+							icon={<BumpOutIcon />}
 							onClick={() => handleSelectModification(EdgeModificationType.BumpOut)}
 							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpOut}
 						/>
@@ -125,23 +115,7 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 						<ShapeCard
 							id="BumpIn"
 							name={"Bump-In"}
-							icon={
-								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
-								<svg
-									width="53"
-									height="52"
-									viewBox="0 0 53 52"
-									fill="none"
-									xmlns="http://www.w3.org/2000/svg"
-								>
-									<path
-										d="M7.25 41.1667H46.25V19.5H37.5833L33.25 28.1667H20.8947L16.5614 19.5H7.25V41.1667Z"
-										stroke="#9CA3AF"
-										stroke-width="2"
-										stroke-linejoin="round"
-									/>
-								</svg>
-							}
+							icon={<BumpInIcon />}
 							onClick={() => handleSelectModification(EdgeModificationType.BumpIn)}
 							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpIn}
 						/>
@@ -149,23 +123,7 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 						<ShapeCard
 							id='BumpOutCurve'
 							name={"Bump-Out Curve"}
-							icon={
-								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
-								<svg
-									width="53"
-									height="52"
-									viewBox="0 0 53 52"
-									fill="none"
-									xmlns="http://www.w3.org/2000/svg"
-								>
-									<path
-										d="M6.75 41.1663H45.75V19.4997H37.0833C37.0833 19.4997 34.9167 10.833 26.25 10.833C17.5833 10.833 16.0614 19.4997 16.0614 19.4997H6.75V41.1663Z"
-										stroke="#9CA3AF"
-										stroke-width="2"
-										stroke-linejoin="round"
-									/>
-								</svg>
-							}
+							icon={<BumpOutCurveIcon />}
 							onClick={() => handleSelectModification(EdgeModificationType.BumpOutCurve)}
 							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpOutCurve}
 						/>
@@ -173,23 +131,7 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 						<ShapeCard
 							id='BumpInCurve'
 							name={"Bump-In Curve"}
-							icon={
-								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
-								<svg
-									width="53"
-									height="52"
-									viewBox="0 0 53 52"
-									fill="none"
-									xmlns="http://www.w3.org/2000/svg"
-								>
-									<path
-										d="M7.25 41.1667H46.25V19.5H37.5833C37.5833 19.5 35.4167 28.1667 26.75 28.1667C18.0833 28.1667 16.5614 19.5 16.5614 19.5H7.25V41.1667Z"
-										stroke="#9CA3AF"
-										stroke-width="2"
-										stroke-linejoin="round"
-									/>
-								</svg>
-							}
+							icon={<BumpInCurveIcon />}
 							onClick={() => handleSelectModification(EdgeModificationType.BumpInCurve)}
 							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpInCurve}
 						/>
@@ -197,23 +139,7 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 						<ShapeCard
 							id='FullCurve'
 							name={"Full Curve"}
-							icon={
-								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
-								<svg
-									width="53"
-									height="52"
-									viewBox="0 0 53 52"
-									fill="none"
-									xmlns="http://www.w3.org/2000/svg"
-								>
-									<path
-										d="M6.75 41.1663H45.75V19.4997C45.75 19.4997 40.3333 10.833 26.25 10.833C12.1667 10.833 6.75 19.4997 6.75 19.4997V41.1663Z"
-										stroke="#9CA3AF"
-										stroke-width="2"
-										stroke-linejoin="round"
-									/>
-								</svg>
-							}
+							icon={<FullCurveIcon />}
 							onClick={() => handleSelectModification(EdgeModificationType.FullCurve)}
 							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.FullCurve}
 						/>
@@ -221,23 +147,7 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 						<ShapeCard
 							id='None'
 							name={"None"}
-							icon={
-								// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
-								<svg
-									width="53"
-									height="52"
-									viewBox="0 0 53 52"
-									fill="none"
-									xmlns="http://www.w3.org/2000/svg"
-								>
-									<path
-										d="M7.25 41.1667H46.25V19.5H7.25V41.1667Z"
-										stroke="#9CA3AF"
-										stroke-width="2"
-										stroke-linejoin="round"
-									/>
-								</svg>
-							}
+							icon={<CurvesNoneIcon />}
 							onClick={handleDeleteEdgeModification}
 							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.None}
 						/>
