@@ -5,12 +5,16 @@ import { Icon } from "~/components/header/header/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import type { ShapeSidePanelView } from "../ShapeSidePanel";
 import LengthInput from "../components/LengthInput";
+import { CornerModificationList } from "~/types/drawing";
+import { useShape } from "~/components/header/context/ShapeContext";
 
 interface EditCornerProps {
 	setView: (value: ShapeSidePanelView) => void;
 }
 
 const EditCorner: FC<EditCornerProps> = ({ setView }) => {
+	const { selectedCorner } = useShape();
+
 	return (
 		<>
 			<SheetHeader>
@@ -31,12 +35,15 @@ const EditCorner: FC<EditCornerProps> = ({ setView }) => {
 			</SheetHeader>
 			<div className="flex flex-col gap-4 p-4">
 				<p>
-					Corner Type: <span className="text-text-colors-secondary">XXXX</span>
+					Corner Type:{" "}
+					<span className="text-text-colors-secondary">
+						{CornerModificationList.find((c) => c.id === selectedCorner?.type)?.label}
+					</span>
 				</p>
-				<div className="flex h-[170px] rounded-md border border-border-neutral">
-					img
+				<div className="flex h-[170px] items-center justify-center rounded-md border border-border-neutral">
+					<span className="text-sm text-text-neutral-disabled">TBD.</span>
 				</div>
-				<LengthInput onChange={() => {}} length={0} />
+				<LengthInput onChange={() => { }} length={0} />
 			</div>
 			<SheetFooter>
 				<div className="flex w-full items-center gap-2">

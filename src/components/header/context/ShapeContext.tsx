@@ -2,8 +2,8 @@ import { createContext, useContext, useState } from "react";
 import type {
 	CanvasShape,
 	MaterialExtended,
+	SelectedCorner,
 	SelectedEdge,
-	SelectedPoint,
 } from "~/types/drawing";
 
 type ShapeContextType = {
@@ -17,8 +17,8 @@ type ShapeContextType = {
 	getAllShapesWithMaterial: (materialId?: string) => CanvasShape[];
 	selectedEdge: SelectedEdge | null;
 	setSelectedEdge: (edge: SelectedEdge | null) => void;
-	selectedPoint: SelectedPoint | null;
-	setSelectedPoint: (point: SelectedPoint | null) => void;
+	selectedCorner: SelectedCorner | null;
+	setSelectedCorner: (corner: SelectedCorner | null) => void;
 };
 
 const ShapeContext = createContext<ShapeContextType | null>(null);
@@ -31,9 +31,7 @@ export const ShapeProvider = ({
 }) => {
 	const [selectedShape, setSelectedShape] = useState<CanvasShape | null>(null);
 	const [selectedEdge, setSelectedEdge] = useState<SelectedEdge | null>(null);
-	const [selectedPoint, setSelectedPoint] = useState<SelectedPoint | null>(
-		null,
-	);
+	const [selectedCorner, setSelectedCorner] = useState<SelectedCorner | null>(null);
 
 	const [selectedMaterial, setSelectedMaterial] =
 		useState<MaterialExtended | null>(null);
@@ -83,8 +81,8 @@ export const ShapeProvider = ({
 		getAllShapesWithMaterial,
 		selectedEdge,
 		setSelectedEdge,
-		selectedPoint,
-		setSelectedPoint,
+		selectedCorner,
+		setSelectedCorner,
 	};
 
 	return (

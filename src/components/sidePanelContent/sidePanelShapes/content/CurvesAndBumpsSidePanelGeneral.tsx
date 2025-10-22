@@ -107,7 +107,7 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 						<ShapeCard
 							id='BumpOut'
 							name={"Bump-Out"}
-							icon={<BumpOutIcon />}
+							icon={<BumpOutIcon isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpOut} />}
 							onClick={() => handleSelectModification(EdgeModificationType.BumpOut)}
 							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpOut}
 						/>
@@ -115,7 +115,7 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 						<ShapeCard
 							id="BumpIn"
 							name={"Bump-In"}
-							icon={<BumpInIcon />}
+							icon={<BumpInIcon isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpIn} />}
 							onClick={() => handleSelectModification(EdgeModificationType.BumpIn)}
 							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpIn}
 						/>
@@ -123,7 +123,7 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 						<ShapeCard
 							id='BumpOutCurve'
 							name={"Bump-Out Curve"}
-							icon={<BumpOutCurveIcon />}
+							icon={<BumpOutCurveIcon isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpOutCurve} />}
 							onClick={() => handleSelectModification(EdgeModificationType.BumpOutCurve)}
 							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpOutCurve}
 						/>
@@ -131,7 +131,7 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 						<ShapeCard
 							id='BumpInCurve'
 							name={"Bump-In Curve"}
-							icon={<BumpInCurveIcon />}
+							icon={<BumpInCurveIcon isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpInCurve} />}
 							onClick={() => handleSelectModification(EdgeModificationType.BumpInCurve)}
 							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpInCurve}
 						/>
@@ -139,7 +139,7 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 						<ShapeCard
 							id='FullCurve'
 							name={"Full Curve"}
-							icon={<FullCurveIcon />}
+							icon={<FullCurveIcon isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.FullCurve} />}
 							onClick={() => handleSelectModification(EdgeModificationType.FullCurve)}
 							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.FullCurve}
 						/>
@@ -147,7 +147,7 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 						<ShapeCard
 							id='None'
 							name={"None"}
-							icon={<CurvesNoneIcon />}
+							icon={<CurvesNoneIcon isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.None} />}
 							onClick={handleDeleteEdgeModification}
 							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.None}
 						/>

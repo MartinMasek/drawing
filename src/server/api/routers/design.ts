@@ -1,4 +1,8 @@
-import { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
+import {
+	CornerType,
+	EdgeModificationType,
+	EdgeShapePosition,
+} from "@prisma/client";
 import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
@@ -66,6 +70,17 @@ export const designRouter = createTRPCRouter({
 									},
 								},
 							},
+							corners: {
+								select: {
+									id: true,
+									pointId: true,
+									type: true,
+									clip: true,
+									radius: true,
+									modificationLength: true,
+									modificationDepth: true,
+								},
+							},
 						},
 					},
 					texts: {
@@ -110,6 +125,15 @@ export const designRouter = createTRPCRouter({
 						sideAngleRight: em.sideAngleRight ?? 0,
 						fullRadiusDepth: em.fullRadiusDepth ?? 0,
 					})),
+				})),
+				corners: s.corners.map((c) => ({
+					id: c.id,
+					pointId: c.pointId,
+					type: c.type,
+					clip: c.clip ?? 0,
+					radius: c.radius ?? 0,
+					modificationLength: c.modificationLength ?? 0,
+					modificationDepth: c.modificationDepth ?? 0,
 				})),
 			}));
 
@@ -502,6 +526,56 @@ export const designRouter = createTRPCRouter({
 			return await ctx.db.edgeModification.update({
 				where: { id: input.edgeModificationId },
 				data: { distance: input.distance },
+			});
+		}),
+
+	createCornerModification: publicProcedure
+		.input(
+			z.object({
+				shapeId: z.string(),
+				pointId: z.string(),
+				type: z.nativeEnum(CornerType),
+				clip: z.number().optional(),
+				radius: z.number().optional(),
+				modificationLength: z.number(),
+				modificationDepth: z.number(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.corner.create({
+				data: {
+					shapeId: input.shapeId,
+					pointId: input.pointId,
+					type: input.type,
+					clip: input.clip ?? undefined,
+					radius: input.radius ?? undefined,
+					modificationLength: input.modificationLength ?? undefined,
+					modificationDepth: input.modificationDepth ?? undefined,
+				},
+			});
+		}),
+
+	updateCornerModification: publicProcedure
+		.input(
+			z.object({
+				cornerId: z.string(),
+				type: z.nativeEnum(CornerType),
+				clip: z.number().optional(),
+				radius: z.number().optional(),
+				modificationLength: z.number(),
+				modificationDepth: z.number(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.corner.update({
+				where: { id: input.cornerId },
+				data: {
+					type: input.type,
+					clip: input.clip ?? undefined,
+					radius: input.radius ?? undefined,
+					modificationLength: input.modificationLength ?? undefined,
+					modificationDepth: input.modificationDepth ?? undefined,
+				},
 			});
 		}),
 });

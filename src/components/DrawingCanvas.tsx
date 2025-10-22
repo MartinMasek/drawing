@@ -36,7 +36,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 	const idParam = router.query.id;
 	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
 
-	const { selectedShape, setSelectedShape, setSelectedEdge, setSelectedPoint } =
+	const { selectedShape, setSelectedShape, setSelectedEdge, setSelectedCorner } =
 		useShape();
 	const [hoveredId, setHoveredId] = useState<string | null>(null);
 	const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -256,7 +256,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		// Clear selected shape if it's the one being deleted
 		setSelectedShape(null);
 		setSelectedEdge(null);
-		setSelectedPoint(null);
+		setSelectedCorner(null);
 		setIsOpenSideDialog(false);
 	};
 

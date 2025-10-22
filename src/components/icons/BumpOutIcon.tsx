@@ -1,4 +1,4 @@
-const BumpOutIcon = () => {
+const BumpOutIcon = ({ isActive }: { isActive: boolean }) => {
     return (
         // biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
         <svg
@@ -10,7 +10,7 @@ const BumpOutIcon = () => {
         >
             <path
                 d="M6.75 41.1663H45.75V19.4997H37.0833L32.75 10.833H20.3947L16.0614 19.4997H6.75V41.1663Z"
-                stroke="#9CA3AF"
+                stroke={isActive ? "#2563EB" : "#9CA3AF"}
                 stroke-width="2"
                 stroke-linejoin="round"
             />

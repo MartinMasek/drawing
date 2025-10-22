@@ -31,7 +31,6 @@ const EditCurvesAndBumps: FC<EditCurvesAndBumpsProps> = ({ setView }) => {
 	const updateEdgeModificationAngles = useUpdateEdgeModificationAnglesDebounced(designId);
 	const updateEdgeModificationPosition = useUpdateEdgeModificationPositionDebounced(designId);
 	const updateEdgeModificationDistance = useUpdateEdgeModificationDistanceDebounced(designId);
-
 	const updateEdgeModificationSize = useUpdateEdgeModificationSizeDebounced(designId);
 
 	const handleSizeChange = (value: { depth: number; width: number }) => {

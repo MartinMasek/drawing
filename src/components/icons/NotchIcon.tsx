@@ -1,4 +1,4 @@
-const NotchIcon = () => {
+const NotchIcon = ({ isActive }: { isActive: boolean }) => {
     return (
         // biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
         <svg
@@ -10,7 +10,7 @@ const NotchIcon = () => {
         >
             <path
                 d="M7.25 6.5H31.0833V21.6667H46.25V45.5H7.25V6.5Z"
-                stroke="#9CA3AF"
+                stroke={isActive ? "#2563EB" : "#9CA3AF"}
                 stroke-width="2"
                 stroke-linejoin="round"
             />

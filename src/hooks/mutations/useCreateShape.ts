@@ -55,6 +55,7 @@ export function useCreateShape(designId: string | undefined) {
 						yPos: point.yPos,
 					})),
 					edges: [],
+					corners: [],
 					// Pre-calculate edge indices for immediate visualization
 					edgeIndices: getShapeEdgePointIndices(newShape.points),
 				};
