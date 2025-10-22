@@ -24,7 +24,7 @@ import { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
 const EDGE_STROKE_WIDTH = 2;
 const EDGE_STROKE_WIDTH_HOVERED = 4;
 const EDGE_STROKE_WIDTH_SELECTED = 6;
-const EDGE_HIT_STROKE_WIDTH = 12;
+const EDGE_HIT_STROKE_WIDTH = 16;
 const POINT_HOVER_RADIUS = 20;
 const POINT_HOVER_OPACITY = 0.8;
 interface ShapeProps {
