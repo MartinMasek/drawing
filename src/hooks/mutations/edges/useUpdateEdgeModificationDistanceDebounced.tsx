@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useShape } from "~/components/header/context/ShapeContext";
 import { api } from "~/utils/api";
-import { useDebounceCallback } from "usehooks-ts";
+import { useDebouncedCallback } from "use-debounce";
 import { DEBOUNCE_DELAY } from "~/utils/canvas-constants";
 
 export const useUpdateEdgeModificationDistanceDebounced = (designId: string | undefined) => {
@@ -70,7 +70,7 @@ export const useUpdateEdgeModificationDistanceDebounced = (designId: string | un
     });
 
     // Debounced function for the actual mutation
-    const debouncedMutation = useDebounceCallback(
+    const debouncedMutation = useDebouncedCallback(
         (edgeModificationId: string, distance: number) => {
             mutation.mutate({
                 edgeModificationId,

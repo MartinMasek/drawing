@@ -84,23 +84,30 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
                 };
                 setSelectedShape(optimisticShape);
 
-                // Update selected edge to point to the new edge
-                const newEdgeIndex = optimisticShape.edges.length - 1;
-                const newEdge = optimisticShape.edges[newEdgeIndex];
-                const newMod = newEdge?.edgeModifications[0];
-                if (newEdge && newMod) {
+                // Update selected edge
+                if (selectedEdge) {
                     setSelectedEdge({
                         shapeId: variables.shapeId,
                         edgeIndex: selectedEdge?.edgeIndex ?? 0,
                         edgeId: tempEdgeId,
                         edgePoint1Id: variables.edgePoint1Id,
                         edgePoint2Id: variables.edgePoint2Id,
-                        edgeModification: newMod,
+                        edgeModification: {
+                            id: tempModificationId,
+                            type: variables.edgeModification.edgeType,
+                            position: variables.edgeModification.position,
+                            distance: variables.edgeModification.distance,
+                            depth: variables.edgeModification.depth,
+                            width: variables.edgeModification.width,
+                            sideAngleLeft: variables.edgeModification.sideAngleLeft,
+                            sideAngleRight: variables.edgeModification.sideAngleRight,
+                            fullRadiusDepth: variables.edgeModification.fullRadiusDepth ?? 0,
+                        },
                     });
                 }
             }
 
-            return { previousData, tempEdgeId, tempModificationId };
+            return { previousData, tempEdgeId, tempModificationId, edgeIndex: selectedEdge?.edgeIndex ?? 0 };
         },
         onError: (_err, _variables, context) => {
             // If the mutation fails, use the context returned from onMutate to roll back
@@ -178,10 +185,9 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
                     };
                     setSelectedShape(updatedShape);
 
-                    // Update selected edge with real IDs
-                    if (selectedEdge && selectedEdge.edgeId === context.tempEdgeId) {
-                        const realEdgeIndex = updatedShape.edges.findIndex((e) => e.id === data.edgeId);
+                    if (selectedEdge && selectedEdge.edgeIndex === context.edgeIndex) {
                         const realMod = realEdge.edgeModifications[0];
+
                         if (realMod) {
                             setSelectedEdge({
                                 shapeId: variables.shapeId,

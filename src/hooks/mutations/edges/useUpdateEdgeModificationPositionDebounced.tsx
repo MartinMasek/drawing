@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { useShape } from "~/components/header/context/ShapeContext";
 import { api } from "~/utils/api";
 import type { EdgeShapePosition } from "@prisma/client";
-import { useDebounceCallback } from "usehooks-ts";
+import { useDebouncedCallback } from "use-debounce";
 import { DEBOUNCE_DELAY } from "~/utils/canvas-constants";
 
 export const useUpdateEdgeModificationPositionDebounced = (designId: string | undefined) => {
@@ -71,7 +71,7 @@ export const useUpdateEdgeModificationPositionDebounced = (designId: string | un
     });
 
     // Debounced function for the actual mutation
-    const debouncedMutation = useDebounceCallback(
+    const debouncedMutation = useDebouncedCallback(
         (edgeModificationId: string, position: EdgeShapePosition) => {
             mutation.mutate({
                 edgeModificationId,

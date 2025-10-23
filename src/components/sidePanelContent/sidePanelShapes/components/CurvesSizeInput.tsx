@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { Input } from "~/components/Input";
+import { NumberInput } from "~/components/NumberInput";
 
 interface CurvesSizeInputProps {
 	onChange: (value: { depth: number; width: number }) => void;
@@ -12,31 +12,29 @@ const CurvesSizeInput: FC<CurvesSizeInputProps> = ({
 	depth,
 	width,
 }) => {
-	const handleDepthChange = (value: string) => {
-		const newDepth = Number.parseFloat(value);
-		onChange({ depth: newDepth, width });
+	const handleDepthChange = (value: number) => {
+		onChange({ depth: value, width });
 	};
 
-	const handleWidthChange = (value: string) => {
-		const newWidth = Number.parseFloat(value);
-		onChange({ depth, width: newWidth });
+	const handleWidthChange = (value: number) => {
+		onChange({ depth, width: value });
 	};
 	return (
 		<div className="flex flex-col gap-2">
 			<p className="text-sm text-text-input-label">Size (DxW)</p>
 			<div className="flex w-[305px] items-center justify-between">
-				<Input className="h-[36px] w-[140px]"
+				<NumberInput className="h-[36px] w-[140px]"
 					value={depth}
 					inputSize="sm"
 					endAdornment={<p className="text-sm">in</p>}
-					onChange={(e) => handleDepthChange(e.target.value)}
+					onChange={handleDepthChange}
 				/>
 				<p className="text-sm text-text-neutral-disabled">x</p>
-				<Input className="h-[36px] w-[140px]"
+				<NumberInput className="h-[36px] w-[140px]"
 					value={width}
 					inputSize="sm"
 					endAdornment={<p className="text-sm">in</p>}
-					onChange={(e) => handleWidthChange(e.target.value)}
+					onChange={handleWidthChange}
 				/>
 			</div>
 		</div>
