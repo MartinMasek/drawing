@@ -16,7 +16,7 @@ export type ShapeSidePanelView =
 
 const ShapeSidePanel: FC = () => {
 	const { cursorType } = useDrawing();
-	const { selectedEdge } = useShape();
+	const { selectedEdge, selectedCorner } = useShape();
 	const [view, setView] = useState<ShapeSidePanelView>(
 		cursorType === CursorTypes.Curves ? "generalCurves" : "generalCorners",
 	);
@@ -27,6 +27,12 @@ const ShapeSidePanel: FC = () => {
 			setView("generalCurves");
 		}
 	}, [selectedEdge?.edgeIndex]);
+
+	useEffect(() => {
+		if (selectedCorner?.pointIndex) {
+			setView("generalCorners");
+		}
+	}, [selectedCorner?.pointIndex]);
 
 	const renderContent = () => {
 		switch (view) {
