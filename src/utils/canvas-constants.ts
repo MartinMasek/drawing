@@ -34,4 +34,4 @@ export const SHAPE_DRAWING_OUTLINE_COLOR = "#1D4ED8";
 export const SHAPE_DRAWING_FILL_COLOR = "#93C5FD";
 
 // Debounce timing
-export const DEBOUNCE_DELAY = 3000; // Debounce delay in milliseconds
+export const DEBOUNCE_DELAY = 500; // Debounce delay in milliseconds
