@@ -1,6 +1,6 @@
 import type { FC } from "react";
 import { useRouter } from "next/router";
-import { EdgeModificationType } from "@prisma/client";
+import { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
 import { useUpdateEdgeModification } from "~/hooks/mutations/edges/useUpdateEdgeModification";
 import { useShape } from "~/components/header/context/ShapeContext";
 import { SheetHeader, SheetTitle } from "~/components/ui/sheet";
@@ -14,6 +14,7 @@ import BumpOutCurveIcon from "~/components/icons/BumpOutCurve";
 import BumpInCurveIcon from "~/components/icons/BumpInCurveIcon";
 import FullCurveIcon from "~/components/icons/FullCurveIcon";
 import CurvesNoneIcon from "~/components/icons/CurvesNoneIcon";
+import { getDefaultValueForEdgeModification } from "~/types/defaultValues";
 
 interface CurvesAndBumpsSidePanelGeneralProps {
 	setView: (value: ShapeSidePanelView) => void;
@@ -40,6 +41,8 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 			return;
 		};
 
+		const defaultValues = getDefaultValueForEdgeModification(type);
+
 		if (!selectedEdge.edgeId) { // If no edge id, create a new edge
 			createEdge.mutate({
 				shapeId: selectedShape.id,
@@ -47,13 +50,7 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 				edgePoint2Id: selectedEdge.edgePoint2Id,
 				edgeModification: {
 					edgeType: type,
-					position: selectedEdge.edgeModification.position,
-					distance: selectedEdge.edgeModification.distance,
-					depth: selectedEdge.edgeModification.depth,
-					width: selectedEdge.edgeModification.width,
-					sideAngleLeft: selectedEdge.edgeModification.sideAngleLeft,
-					sideAngleRight: selectedEdge.edgeModification.sideAngleRight,
-					fullRadiusDepth: selectedEdge.edgeModification.fullRadiusDepth,
+					...defaultValues,
 				},
 			});
 		} else { // If edge id, update the existing edge
@@ -61,15 +58,10 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 				edgeId: selectedEdge.edgeId,
 				shapeId: selectedShape.id,
 				edgeModificationId: selectedEdge.edgeModification.id,
+				// When modification is changed, we want to reset to default values
 				edgeModification: {
 					edgeType: type,
-					position: selectedEdge.edgeModification.position,
-					distance: selectedEdge.edgeModification.distance,
-					depth: selectedEdge.edgeModification.depth,
-					width: selectedEdge.edgeModification.width,
-					sideAngleLeft: selectedEdge.edgeModification.sideAngleLeft,
-					sideAngleRight: selectedEdge.edgeModification.sideAngleRight,
-					fullRadiusDepth: selectedEdge.edgeModification.fullRadiusDepth,
+					...defaultValues,
 				}
 			});
 		}

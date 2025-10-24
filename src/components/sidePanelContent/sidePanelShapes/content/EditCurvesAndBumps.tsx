@@ -10,13 +10,15 @@ import PositioningInput from "../components/PositioningInput";
 import DistanceInput from "../components/DistanceInput";
 import { useShape } from "~/components/header/context/ShapeContext";
 import { EdgeModificationList } from "~/types/drawing";
-import { EdgeShapePosition } from "@prisma/client";
+import { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
 import { useDeleteEdgeModification } from "~/hooks/mutations/edges/useDeleteEdgeModification";
 import { useRouter } from "next/router";
 import { useUpdateEdgeModificationAnglesDebounced } from "~/hooks/mutations/edges/useUpdateEdgeModificationAnglesDebounced";
 import { useUpdateEdgeModificationDistanceDebounced } from "~/hooks/mutations/edges/useUpdateEdgeModificationDistanceDebounced";
 import { useUpdateEdgeModificationPositionDebounced } from "~/hooks/mutations/edges/useUpdateEdgeModificationPositionDebounced";
 import { useUpdateEdgeModificationSizeDebounced } from "~/hooks/mutations/edges/useUpdateEdgeModificationSizeDebounced";
+import FullRadiusDepthInput from "../components/FullRadiusDepthInput";
+import useUpdateEdgeModificationFullRadiusDebounced from "~/hooks/mutations/edges/useUpdateEdgeModificationFullRadiusDebounced";
 
 interface EditCurvesAndBumpsProps {
 	setView: (value: ShapeSidePanelView) => void;
@@ -31,6 +33,7 @@ const EditCurvesAndBumps: FC<EditCurvesAndBumpsProps> = ({ setView }) => {
 	const updateEdgeModificationAngles = useUpdateEdgeModificationAnglesDebounced(designId);
 	const updateEdgeModificationPosition = useUpdateEdgeModificationPositionDebounced(designId);
 	const updateEdgeModificationDistance = useUpdateEdgeModificationDistanceDebounced(designId);
+	const updateEdgeModificationFullRadiusDepth = useUpdateEdgeModificationFullRadiusDebounced(designId);
 	const updateEdgeModificationSize = useUpdateEdgeModificationSizeDebounced(designId);
 
 	const handleSizeChange = (value: { depth: number; width: number }) => {
@@ -71,6 +74,15 @@ const EditCurvesAndBumps: FC<EditCurvesAndBumpsProps> = ({ setView }) => {
 		);
 	};
 
+	const handleFullRadiusDepthChange = (value: number) => {
+		if (!selectedEdge?.edgeModification?.id) return;
+
+		updateEdgeModificationFullRadiusDepth.updateFullRadiusDepth(
+			selectedEdge.edgeModification.id,
+			value
+		);
+	}
+
 	const handleDeleteEdgeModification = () => {
 		if (!selectedEdge?.edgeModification?.id) return;
 
@@ -81,6 +93,9 @@ const EditCurvesAndBumps: FC<EditCurvesAndBumpsProps> = ({ setView }) => {
 		setView("generalCurves");
 	};
 
+	const bumpTypeLabel = EdgeModificationList.find((em) => em.id === selectedEdge?.edgeModification?.type)?.label;
+	const bumpType = selectedEdge?.edgeModification?.type;
+	const hasPosition = selectedEdge?.edgeModification?.position !== EdgeShapePosition.Center;
 	return (
 		<>
 			<SheetHeader>
@@ -103,30 +118,44 @@ const EditCurvesAndBumps: FC<EditCurvesAndBumpsProps> = ({ setView }) => {
 				<p>
 					Bump Type:{" "}
 					<span className="text-text-colors-secondary">
-						{EdgeModificationList.find((em) => em.id === selectedEdge?.edgeModification?.type)?.label}
+						{bumpTypeLabel}
 					</span>
 				</p>
 				<div className="flex h-[170px] items-center justify-center rounded-md border border-border-neutral">
 					<span className="text-sm text-text-neutral-disabled">TBD.</span>
 				</div>
-				<CurvesSizeInput
-					onChange={handleSizeChange}
-					depth={selectedEdge?.edgeModification?.depth ?? 0}
-					width={selectedEdge?.edgeModification?.width ?? 0}
-				/>
-				<CurvesAnglesInput
-					onChange={handleAnglesChange}
-					left={selectedEdge?.edgeModification?.sideAngleLeft ?? 0}
-					right={selectedEdge?.edgeModification?.sideAngleRight ?? 0}
-				/>
-				<PositioningInput
-					onChange={handlePositionChange}
-					position={selectedEdge?.edgeModification?.position ?? EdgeShapePosition.Center}
-				/>
-				<DistanceInput
-					onChange={handleDistanceChange}
-					distance={selectedEdge?.edgeModification?.distance ?? 0}
-				/>
+				{bumpType !== EdgeModificationType.FullCurve &&
+					<CurvesSizeInput
+						onChange={handleSizeChange}
+						depth={selectedEdge?.edgeModification?.depth ?? 0}
+						width={selectedEdge?.edgeModification?.width ?? 0}
+					/>
+				}
+				{(bumpType === EdgeModificationType.BumpOut || bumpType === EdgeModificationType.BumpIn) &&
+					<CurvesAnglesInput
+						onChange={handleAnglesChange}
+						left={selectedEdge?.edgeModification?.sideAngleLeft ?? 0}
+						right={selectedEdge?.edgeModification?.sideAngleRight ?? 0}
+					/>
+				}
+				{bumpType !== EdgeModificationType.FullCurve &&
+					<PositioningInput
+						onChange={handlePositionChange}
+						position={selectedEdge?.edgeModification?.position ?? EdgeShapePosition.Center}
+					/>
+				}
+				{bumpType !== EdgeModificationType.FullCurve && hasPosition &&
+					<DistanceInput
+						onChange={handleDistanceChange}
+						distance={selectedEdge?.edgeModification?.distance ?? 0}
+					/>
+				}
+				{bumpType === EdgeModificationType.FullCurve &&
+					<FullRadiusDepthInput
+						onChange={handleFullRadiusDepthChange}
+						fullRadiusDepth={selectedEdge?.edgeModification?.fullRadiusDepth ?? 0}
+					/>
+				}
 			</div>
 			<SheetFooter>
 				<div className="flex w-full items-center gap-2">

@@ -528,6 +528,16 @@ export const designRouter = createTRPCRouter({
 				data: { distance: input.distance },
 			});
 		}),
+	edgeModificationUpdateFullRadiusDepth: publicProcedure
+		.input(
+			z.object({ edgeModificationId: z.string(), fullRadiusDepth: z.number() }),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.edgeModification.update({
+				where: { id: input.edgeModificationId },
+				data: { fullRadiusDepth: input.fullRadiusDepth },
+			});
+		}),
 
 	createCornerModification: publicProcedure
 		.input(
