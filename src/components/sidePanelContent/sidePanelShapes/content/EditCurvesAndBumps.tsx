@@ -17,6 +17,8 @@ import { useUpdateEdgeModificationAnglesDebounced } from "~/hooks/mutations/edge
 import { useUpdateEdgeModificationDistanceDebounced } from "~/hooks/mutations/edges/useUpdateEdgeModificationDistanceDebounced";
 import { useUpdateEdgeModificationPositionDebounced } from "~/hooks/mutations/edges/useUpdateEdgeModificationPositionDebounced";
 import { useUpdateEdgeModificationSizeDebounced } from "~/hooks/mutations/edges/useUpdateEdgeModificationSizeDebounced";
+import FullRadiusDepthInput from "../components/FullRadiusDepthInput";
+import useUpdateEdgeModificationFullRadiusDebounced from "~/hooks/mutations/edges/useUpdateEdgeModificationFullRadiusDebounced";
 
 interface EditCurvesAndBumpsProps {
 	setView: (value: ShapeSidePanelView) => void;
@@ -31,7 +33,7 @@ const EditCurvesAndBumps: FC<EditCurvesAndBumpsProps> = ({ setView }) => {
 	const updateEdgeModificationAngles = useUpdateEdgeModificationAnglesDebounced(designId);
 	const updateEdgeModificationPosition = useUpdateEdgeModificationPositionDebounced(designId);
 	const updateEdgeModificationDistance = useUpdateEdgeModificationDistanceDebounced(designId);
-
+	const updateEdgeModificationFullRadiusDepth = useUpdateEdgeModificationFullRadiusDebounced(designId);
 	const updateEdgeModificationSize = useUpdateEdgeModificationSizeDebounced(designId);
 
 	const handleSizeChange = (value: { depth: number; width: number }) => {
@@ -72,6 +74,15 @@ const EditCurvesAndBumps: FC<EditCurvesAndBumpsProps> = ({ setView }) => {
 		);
 	};
 
+	const handleFullRadiusDepthChange = (value: number) => {
+		if (!selectedEdge?.edgeModification?.id) return;
+
+		updateEdgeModificationFullRadiusDepth.updateFullRadiusDepth(
+			selectedEdge.edgeModification.id,
+			value
+		);
+	}
+
 	const handleDeleteEdgeModification = () => {
 		if (!selectedEdge?.edgeModification?.id) return;
 
@@ -84,7 +95,7 @@ const EditCurvesAndBumps: FC<EditCurvesAndBumpsProps> = ({ setView }) => {
 
 	const bumpTypeLabel = EdgeModificationList.find((em) => em.id === selectedEdge?.edgeModification?.type)?.label;
 	const bumpType = selectedEdge?.edgeModification?.type;
-
+	const hasPosition = selectedEdge?.edgeModification?.position !== EdgeShapePosition.Center;
 	return (
 		<>
 			<SheetHeader>
@@ -133,10 +144,16 @@ const EditCurvesAndBumps: FC<EditCurvesAndBumpsProps> = ({ setView }) => {
 						position={selectedEdge?.edgeModification?.position ?? EdgeShapePosition.Center}
 					/>
 				}
-				{bumpType === EdgeModificationType.FullCurve &&
+				{bumpType !== EdgeModificationType.FullCurve && hasPosition &&
 					<DistanceInput
 						onChange={handleDistanceChange}
 						distance={selectedEdge?.edgeModification?.distance ?? 0}
+					/>
+				}
+				{bumpType === EdgeModificationType.FullCurve &&
+					<FullRadiusDepthInput
+						onChange={handleFullRadiusDepthChange}
+						fullRadiusDepth={selectedEdge?.edgeModification?.fullRadiusDepth ?? 0}
 					/>
 				}
 			</div>
