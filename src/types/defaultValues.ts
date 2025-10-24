@@ -1,4 +1,8 @@
-import { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
+import {
+	CornerType,
+	EdgeModificationType,
+	EdgeShapePosition,
+} from "@prisma/client";
 
 type EdgeDefaults = {
 	depth: number;
@@ -9,6 +13,14 @@ type EdgeDefaults = {
 	fullRadiusDepth: number;
 	position: EdgeShapePosition;
 };
+
+type CornerDefaults = {
+	clip: number;
+	radius: number;
+	modificationLength: number;
+	modificationDepth: number;
+};
+
 export const defaultEdgeBumpOutValues = {
 	depth: 3,
 	width: 30,
@@ -59,6 +71,34 @@ export const defaultEdgeFullCurveValues = {
 	position: EdgeShapePosition.Center,
 };
 
+export const defaultCornerRadiusValues = {
+	clip: 0,
+	radius: 4,
+	modificationLength: 0,
+	modificationDepth: 0,
+};
+
+export const defaultCornerClipValues = {
+	clip: 4,
+	radius: 0,
+	modificationLength: 0,
+	modificationDepth: 0,
+};
+
+export const defaultCornerBumpOutValues = {
+	clip: 0,
+	radius: 0,
+	modificationLength: 4,
+	modificationDepth: 2,
+};
+
+export const defaultCornerNotchValues = {
+	clip: 0,
+	radius: 0,
+	modificationLength: 4,
+	modificationDepth: 4,
+};
+
 export const getDefaultValueForEdgeModification = (
 	type: EdgeModificationType,
 ): EdgeDefaults => {
@@ -75,5 +115,22 @@ export const getDefaultValueForEdgeModification = (
 			return defaultEdgeFullCurveValues;
 		default:
 			return defaultEdgeBumpOutValues;
+	}
+};
+
+export const getDefaultValueForCornerModification = (
+	type: CornerType,
+): CornerDefaults => {
+	switch (type) {
+		case CornerType.Radius:
+			return defaultCornerRadiusValues;
+		case CornerType.Clip:
+			return defaultCornerClipValues;
+		case CornerType.BumpOut:
+			return defaultCornerBumpOutValues;
+		case CornerType.Notch:
+			return defaultCornerNotchValues;
+		default:
+			return defaultCornerRadiusValues;
 	}
 };

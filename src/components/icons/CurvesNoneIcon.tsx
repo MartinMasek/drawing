@@ -1,4 +1,4 @@
-const CurvesNoneIcon = () => {
+const CurvesNoneIcon = ({ isActive }: { isActive: boolean }) => {
     return (
         // biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
         <svg
@@ -10,7 +10,7 @@ const CurvesNoneIcon = () => {
         >
             <path
                 d="M7.25 41.1667H46.25V19.5H7.25V41.1667Z"
-                stroke="#9CA3AF"
+                stroke={isActive ? "#2563EB" : "#9CA3AF"}
                 stroke-width="2"
                 stroke-linejoin="round"
             />

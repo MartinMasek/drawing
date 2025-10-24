@@ -17,14 +17,12 @@ const SidePanel: FC = () => {
 			{isOpenSideDialog && (
 				<>
 					{cursorType === CursorTypes.Dimesions && <SidePanelDimensions />}
-					{(cursorType === CursorTypes.Curves ||
-						cursorType === CursorTypes.Corners) && <ShapeSidePanel />}
-
+					{cursorType === CursorTypes.Curves && <ShapeSidePanel />}
+					{cursorType === CursorTypes.Corners && <ShapeSidePanel />}
 					{cursorType === CursorTypes.Egdes && <SidePanelEdges />}
 					{cursorType === CursorTypes.Cutouts && <SidePanelCutouts />}
 				</>
 			)}
-			{/* Missing last 2 tabs, no designs for now */}
 		</Sheet>
 	);
 };

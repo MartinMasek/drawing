@@ -18,7 +18,7 @@ import {
 } from "~/components/header/header/drawing-types";
 import { useDrawing } from "../header/context/DrawingContext";
 import { useShape } from "../header/context/ShapeContext";
-import { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
+import { CornerType, EdgeModificationType, EdgeShapePosition } from "@prisma/client";
 
 // Constants for interactive elements
 const EDGE_STROKE_WIDTH = 2;
@@ -196,7 +196,7 @@ const Shape = ({
 	const [isDragging, setIsDragging] = useState(false);
 	const prevShapePos = useRef({ x: shape.xPos, y: shape.yPos });
 	const { cursorType, setCursorType } = useDrawing();
-	const { selectedEdge, selectedPoint, setSelectedEdge, setSelectedPoint } =
+	const { selectedEdge, selectedCorner, setSelectedEdge, setSelectedCorner } =
 		useShape();
 
 	// Reset drag offset when shape position changes (after optimistic update)
@@ -318,12 +318,13 @@ const Shape = ({
 				fullRadiusDepth: modification?.fullRadiusDepth ?? 0,
 			},
 		});
-		setSelectedPoint(null);
+		setSelectedCorner(null);
 		onClick(e);
 	};
 
 	const handlePointClick = (
 		pointIndex: number,
+		pointId: string,
 		e: KonvaEventObject<MouseEvent>,
 	) => {
 		e.cancelBubble = true;
@@ -332,37 +333,21 @@ const Shape = ({
 		const point = absolutePoints[pointIndex];
 		if (!point) return;
 
-		const prevIndex =
-			(pointIndex - 1 + absolutePoints.length) % absolutePoints.length;
-		const nextIndex = (pointIndex + 1) % absolutePoints.length;
-		const prevPoint = absolutePoints[prevIndex];
-		const nextPoint = absolutePoints[nextIndex];
+		const doesCornerExist = shape.corners.find((corner) => corner.pointId === pointId);
 
-		const adjacentEdges: { edge1Length?: string; edge2Length?: string } = {};
+		setCursorType(CursorTypes.Corners);
 
-		if (prevPoint) {
-			adjacentEdges.edge1Length = calculateDistance(prevPoint, point).toFixed(
-				2,
-			);
-		}
-		if (nextPoint) {
-			adjacentEdges.edge2Length = calculateDistance(point, nextPoint).toFixed(
-				2,
-			);
-		}
-
-		console.log("Point Info:", {
+		setSelectedCorner({
 			shapeId: shape.id,
 			pointIndex,
-			position: {
-				x: point.xPos.toFixed(2),
-				y: point.yPos.toFixed(2),
-			},
-			adjacentEdgeLengths: adjacentEdges,
+			pointId,
+			cornerId: doesCornerExist?.id ?? null,
+			type: doesCornerExist?.type ?? CornerType.None,
+			clip: doesCornerExist?.clip ?? undefined,
+			radius: doesCornerExist?.radius ?? undefined,
+			modificationLength: doesCornerExist?.modificationLength ?? undefined,
+			modificationDepth: doesCornerExist?.modificationDepth ?? undefined
 		});
-
-		setSelectedPoint({ shapeId: shape.id, pointIndex });
-		setCursorType(CursorTypes.Corners);
 		setSelectedEdge(null);
 		onClick(e);
 	};
@@ -465,8 +450,8 @@ const Shape = ({
 						shape.points.map((point, index) => {
 							const isPointHovered = hoveredPointIndex === index;
 							const isPointSelected =
-								selectedPoint?.pointIndex === index &&
-								selectedPoint?.shapeId === shape.id;
+								selectedCorner?.pointIndex === index &&
+								selectedCorner?.shapeId === shape.id;
 							return (
 								<Circle
 									key={`${shape.id}-point-${index}`}
@@ -474,12 +459,12 @@ const Shape = ({
 									y={point.yPos}
 									radius={POINT_HOVER_RADIUS}
 									fill={
-										isPointHovered || isPointSelected ? "red" : "transparent"
+										isPointSelected ? SHAPE_SELECTED_STROKE_COLOR : (isPointHovered ? SHAPE_HOVERED_STROKE_COLOR : "transparent")
 									}
 									opacity={isPointHovered ? POINT_HOVER_OPACITY : 1}
 									stroke="transparent"
 									listening={!isDrawing}
-									onClick={(e) => handlePointClick(index, e)}
+									onClick={(e) => handlePointClick(index, point.id, e)}
 									onMouseEnter={() => handlePointMouseEnter(index)}
 									onMouseLeave={handlePointMouseLeave}
 								/>

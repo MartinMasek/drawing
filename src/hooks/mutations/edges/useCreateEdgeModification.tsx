@@ -88,7 +88,7 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
                 if (selectedEdge) {
                     setSelectedEdge({
                         shapeId: variables.shapeId,
-                        edgeIndex: selectedEdge?.edgeIndex ?? 0,
+                        edgeIndex: selectedEdge.edgeIndex,
                         edgeId: tempEdgeId,
                         edgePoint1Id: variables.edgePoint1Id,
                         edgePoint2Id: variables.edgePoint2Id,
@@ -190,9 +190,9 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
 
                         if (realMod) {
                             setSelectedEdge({
-                                shapeId: variables.shapeId,
-                                edgeIndex: selectedEdge?.edgeIndex ?? 0,
                                 edgeId: data.edgeId,
+                                shapeId: variables.shapeId,
+                                edgeIndex: selectedEdge.edgeIndex,
                                 edgePoint1Id: variables.edgePoint1Id,
                                 edgePoint2Id: variables.edgePoint2Id,
                                 edgeModification: realMod,
