@@ -1,6 +1,6 @@
 import type { FC } from "react";
 import { useRouter } from "next/router";
-import { EdgeModificationType } from "@prisma/client";
+import { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
 import { useUpdateEdgeModification } from "~/hooks/mutations/edges/useUpdateEdgeModification";
 import { useShape } from "~/components/header/context/ShapeContext";
 import { SheetHeader, SheetTitle } from "~/components/ui/sheet";
@@ -61,15 +61,16 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 				edgeId: selectedEdge.edgeId,
 				shapeId: selectedShape.id,
 				edgeModificationId: selectedEdge.edgeModification.id,
+				// When modification is changed, we want to reset to default values
 				edgeModification: {
 					edgeType: type,
-					position: selectedEdge.edgeModification.position,
-					distance: selectedEdge.edgeModification.distance,
-					depth: selectedEdge.edgeModification.depth,
-					width: selectedEdge.edgeModification.width,
-					sideAngleLeft: selectedEdge.edgeModification.sideAngleLeft,
-					sideAngleRight: selectedEdge.edgeModification.sideAngleRight,
-					fullRadiusDepth: selectedEdge.edgeModification.fullRadiusDepth,
+					position: EdgeShapePosition.Center,
+					distance: 0,
+					depth: 0,
+					width: 0,
+					sideAngleLeft: 0,
+					sideAngleRight: 0,
+					fullRadiusDepth: 0,
 				}
 			});
 		}
