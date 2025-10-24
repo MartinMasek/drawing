@@ -578,4 +578,42 @@ export const designRouter = createTRPCRouter({
 				},
 			});
 		}),
+	deleteCornerModification: publicProcedure
+		.input(z.object({ cornerId: z.string() }))
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.corner.update({
+				where: { id: input.cornerId },
+				data: {
+					type: CornerType.None,
+					clip: undefined,
+					radius: undefined,
+					modificationLength: undefined,
+					modificationDepth: undefined,
+				},
+			});
+		}),
+	updateCornerRadius: publicProcedure
+		.input(z.object({ cornerId: z.string(), radius: z.number() }))
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.corner.update({
+				where: { id: input.cornerId },
+				data: { radius: input.radius },
+			});
+		}),
+	updateCornerLength: publicProcedure
+		.input(z.object({ cornerId: z.string(), length: z.number() }))
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.corner.update({
+				where: { id: input.cornerId },
+				data: { modificationLength: input.length },
+			});
+		}),
+	updateCornerDepth: publicProcedure
+		.input(z.object({ cornerId: z.string(), depth: z.number() }))
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.corner.update({
+				where: { id: input.cornerId },
+				data: { modificationDepth: input.depth },
+			});
+		}),
 });

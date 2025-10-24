@@ -7,14 +7,62 @@ import type { ShapeSidePanelView } from "../ShapeSidePanel";
 import LengthInput from "../components/LengthInput";
 import { CornerModificationList } from "~/types/drawing";
 import { useShape } from "~/components/header/context/ShapeContext";
+import RadiusInput from "../components/RadiusInput";
+import DepthInput from "../components/DepthInput";
+import { CornerType } from "@prisma/client";
+import useDeleteCornerModification from "~/hooks/mutations/corners/useDeleteCornerModification";
+import { useRouter } from "next/router";
+import useUpdateCornerLengthDebounced from "~/hooks/mutations/corners/useUpdateCornerLengthDebounced";
+import useUpdateCornerRadiusDebounced from "~/hooks/mutations/corners/useUpdateCornerRadiusDebounced";
+import useUpdateCornerDepthDebounced from "~/hooks/mutations/corners/useUpdateCornerDepthDebounced";
 
 interface EditCornerProps {
 	setView: (value: ShapeSidePanelView) => void;
 }
 
 const EditCorner: FC<EditCornerProps> = ({ setView }) => {
-	const { selectedCorner } = useShape();
+	const router = useRouter();
+	const idParam = router.query.id;
+	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
+	const { selectedCorner, selectedShape } = useShape();
+	const deleteCornerModification = useDeleteCornerModification(designId);
+	const updateCornerRadius = useUpdateCornerRadiusDebounced(designId);
+	const updateCornerLength = useUpdateCornerLengthDebounced(designId);
+	const updateCornerDepth = useUpdateCornerDepthDebounced(designId);
 
+	const handleRadiusChange = (value: number) => {
+		if (!selectedCorner?.cornerId) return;
+		updateCornerRadius.updateRadius(
+			selectedCorner.cornerId,
+			value,
+		);
+	};
+	const handleLengthChange = (value: number) => {
+		if (!selectedCorner?.cornerId) return;
+		updateCornerLength.updateLength(
+			selectedCorner.cornerId,
+			value,
+		);
+	};
+	const handleDepthChange = (value: number) => {
+		if (!selectedCorner?.cornerId) return;
+		updateCornerDepth.updateDepth(
+			selectedCorner.cornerId,
+			value
+		);
+	};
+
+	const handleDeleteCornerModification = () => {
+		if (!selectedCorner?.cornerId) return;
+		if (!selectedShape) return;
+
+		deleteCornerModification.mutate({
+			cornerId: selectedCorner.cornerId,
+		});
+		setView("generalCorners");
+	};
+	const cornerTypeLabel = CornerModificationList.find((c) => c.id === selectedCorner?.type)?.label;
+	const cornerType = selectedCorner?.type;
 	return (
 		<>
 			<SheetHeader>
@@ -37,13 +85,21 @@ const EditCorner: FC<EditCornerProps> = ({ setView }) => {
 				<p>
 					Corner Type:{" "}
 					<span className="text-text-colors-secondary">
-						{CornerModificationList.find((c) => c.id === selectedCorner?.type)?.label}
+						{cornerTypeLabel}
 					</span>
 				</p>
 				<div className="flex h-[170px] items-center justify-center rounded-md border border-border-neutral">
 					<span className="text-sm text-text-neutral-disabled">TBD.</span>
 				</div>
-				<LengthInput onChange={() => { }} length={0} />
+				{cornerType === CornerType.Radius &&
+					<RadiusInput onChange={handleRadiusChange} radius={selectedCorner?.radius ?? 0} />
+				}
+				{cornerType !== CornerType.Radius &&
+					<LengthInput onChange={handleLengthChange} length={selectedCorner?.modificationLength ?? 0} />
+				}
+				{(cornerType === CornerType.BumpOut || cornerType === CornerType.Notch) &&
+					<DepthInput onChange={handleDepthChange} depth={selectedCorner?.modificationDepth ?? 0} />
+				}
 			</div>
 			<SheetFooter>
 				<div className="flex w-full items-center gap-2">
@@ -69,6 +125,7 @@ const EditCorner: FC<EditCornerProps> = ({ setView }) => {
 						}
 						color="danger"
 						className="flex-1 justify-center"
+						onClick={handleDeleteCornerModification}
 					>
 						Remove
 					</Button>

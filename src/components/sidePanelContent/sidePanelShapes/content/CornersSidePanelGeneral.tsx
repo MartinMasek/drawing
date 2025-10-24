@@ -12,6 +12,7 @@ import { CornerType } from "@prisma/client";
 import useCreateCornerModification from "~/hooks/mutations/corners/useCreateCornerModification";
 import useUpdateCornerModification from "~/hooks/mutations/corners/useUpdateCornerModification";
 import { useRouter } from "next/router";
+import useDeleteCornerModification from "~/hooks/mutations/corners/useDeleteCornerModification";
 
 interface CornersSidePanelGeneralProps {
 	setView: (value: ShapeSidePanelView) => void;
@@ -26,6 +27,7 @@ const CornersSidePanelGeneral: FC<CornersSidePanelGeneralProps> = ({
 	const { selectedCorner, selectedShape } = useShape();
 	const createCornerModification = useCreateCornerModification(designId);
 	const updateCornerModification = useUpdateCornerModification(designId);
+	const deleteCornerModification = useDeleteCornerModification(designId);
 
 	const handleSelectModification = (type: CornerType) => {
 		if (!selectedCorner) return;
@@ -47,13 +49,14 @@ const CornersSidePanelGeneral: FC<CornersSidePanelGeneralProps> = ({
 				modificationDepth: selectedCorner.modificationDepth ?? 0,
 			});
 		} else {
+			// When we change the type of the corner, we want to set default values
 			updateCornerModification.mutate({
 				cornerId: selectedCorner.cornerId,
 				type: type,
-				clip: selectedCorner.clip,
-				radius: selectedCorner.radius,
-				modificationLength: selectedCorner.modificationLength ?? 0,
-				modificationDepth: selectedCorner.modificationDepth ?? 0,
+				clip: 0,
+				radius: 0,
+				modificationLength: 0,
+				modificationDepth: 0,
 			});
 		}
 
@@ -61,11 +64,12 @@ const CornersSidePanelGeneral: FC<CornersSidePanelGeneralProps> = ({
 	};
 
 	const handleDeleteCornerModification = () => {
-
 		if (!selectedCorner?.cornerId) return;
 		if (!selectedShape) return;
 
-		// Delete mutation
+		deleteCornerModification.mutate({
+			cornerId: selectedCorner.cornerId,
+		});
 	};
 
 	return (
