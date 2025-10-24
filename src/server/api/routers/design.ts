@@ -626,4 +626,12 @@ export const designRouter = createTRPCRouter({
 				data: { modificationDepth: input.depth },
 			});
 		}),
+	updateCornerClip: publicProcedure
+		.input(z.object({ cornerId: z.string(), clip: z.number() }))
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.corner.update({
+				where: { id: input.cornerId },
+				data: { clip: input.clip },
+			});
+		}),
 });

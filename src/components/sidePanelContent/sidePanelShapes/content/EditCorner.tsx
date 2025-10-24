@@ -15,6 +15,8 @@ import { useRouter } from "next/router";
 import useUpdateCornerLengthDebounced from "~/hooks/mutations/corners/useUpdateCornerLengthDebounced";
 import useUpdateCornerRadiusDebounced from "~/hooks/mutations/corners/useUpdateCornerRadiusDebounced";
 import useUpdateCornerDepthDebounced from "~/hooks/mutations/corners/useUpdateCornerDepthDebounced";
+import useUpdateCornerClipDebounced from "~/hooks/mutations/corners/useUpdateCornerClipDebounced";
+import ClipInput from "../components/ClipInput";
 
 interface EditCornerProps {
 	setView: (value: ShapeSidePanelView) => void;
@@ -29,6 +31,7 @@ const EditCorner: FC<EditCornerProps> = ({ setView }) => {
 	const updateCornerRadius = useUpdateCornerRadiusDebounced(designId);
 	const updateCornerLength = useUpdateCornerLengthDebounced(designId);
 	const updateCornerDepth = useUpdateCornerDepthDebounced(designId);
+	const updateCornerClip = useUpdateCornerClipDebounced(designId);
 
 	const handleRadiusChange = (value: number) => {
 		if (!selectedCorner?.cornerId) return;
@@ -47,6 +50,14 @@ const EditCorner: FC<EditCornerProps> = ({ setView }) => {
 	const handleDepthChange = (value: number) => {
 		if (!selectedCorner?.cornerId) return;
 		updateCornerDepth.updateDepth(
+			selectedCorner.cornerId,
+			value
+		);
+	};
+
+	const handleClipChange = (value: number) => {
+		if (!selectedCorner?.cornerId) return;
+		updateCornerClip.updateClip(
 			selectedCorner.cornerId,
 			value
 		);
@@ -94,11 +105,14 @@ const EditCorner: FC<EditCornerProps> = ({ setView }) => {
 				{cornerType === CornerType.Radius &&
 					<RadiusInput onChange={handleRadiusChange} radius={selectedCorner?.radius ?? 0} />
 				}
-				{cornerType !== CornerType.Radius &&
-					<LengthInput onChange={handleLengthChange} length={selectedCorner?.modificationLength ?? 0} />
+				{cornerType === CornerType.Clip &&
+					<ClipInput onChange={handleClipChange} clip={selectedCorner?.clip ?? 0} />
 				}
 				{(cornerType === CornerType.BumpOut || cornerType === CornerType.Notch) &&
-					<DepthInput onChange={handleDepthChange} depth={selectedCorner?.modificationDepth ?? 0} />
+					<>
+						<LengthInput onChange={handleLengthChange} length={selectedCorner?.modificationLength ?? 0} />
+						<DepthInput onChange={handleDepthChange} depth={selectedCorner?.modificationDepth ?? 0} />
+					</>
 				}
 			</div>
 			<SheetFooter>

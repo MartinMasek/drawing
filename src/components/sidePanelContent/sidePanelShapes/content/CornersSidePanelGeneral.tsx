@@ -13,6 +13,7 @@ import useCreateCornerModification from "~/hooks/mutations/corners/useCreateCorn
 import useUpdateCornerModification from "~/hooks/mutations/corners/useUpdateCornerModification";
 import { useRouter } from "next/router";
 import useDeleteCornerModification from "~/hooks/mutations/corners/useDeleteCornerModification";
+import { getDefaultValueForCornerModification } from "~/types/defaultValues";
 
 interface CornersSidePanelGeneralProps {
 	setView: (value: ShapeSidePanelView) => void;
@@ -37,26 +38,21 @@ const CornersSidePanelGeneral: FC<CornersSidePanelGeneralProps> = ({
 			setView("editCorners");
 			return;
 		}
+		const defaultValues = getDefaultValueForCornerModification(type);
 
 		if (!selectedCorner.cornerId) {
 			createCornerModification.mutate({
 				shapeId: selectedShape.id,
 				pointId: selectedCorner.pointId,
 				type: type,
-				clip: selectedCorner.clip,
-				radius: selectedCorner.radius,
-				modificationLength: selectedCorner.modificationLength ?? 0,
-				modificationDepth: selectedCorner.modificationDepth ?? 0,
+				...defaultValues,
 			});
 		} else {
 			// When we change the type of the corner, we want to set default values
 			updateCornerModification.mutate({
 				cornerId: selectedCorner.cornerId,
 				type: type,
-				clip: 0,
-				radius: 0,
-				modificationLength: 0,
-				modificationDepth: 0,
+				...defaultValues,
 			});
 		}
 
