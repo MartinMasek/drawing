@@ -71,6 +71,8 @@ export const getDefaultValueForEdgeModification = (
 			return defaultEdgeBumpInCurveValues;
 		case EdgeModificationType.BumpOutCurve:
 			return defaultEdgeBumpOutCurveValues;
+		case EdgeModificationType.FullCurve:
+			return defaultEdgeFullCurveValues;
 		default:
 			return defaultEdgeBumpOutValues;
 	}

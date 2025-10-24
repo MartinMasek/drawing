@@ -41,6 +41,8 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 			return;
 		};
 
+		const defaultValues = getDefaultValueForEdgeModification(type);
+
 		if (!selectedEdge.edgeId) { // If no edge id, create a new edge
 			createEdge.mutate({
 				shapeId: selectedShape.id,
@@ -48,17 +50,10 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 				edgePoint2Id: selectedEdge.edgePoint2Id,
 				edgeModification: {
 					edgeType: type,
-					position: selectedEdge.edgeModification.position,
-					distance: selectedEdge.edgeModification.distance,
-					depth: selectedEdge.edgeModification.depth,
-					width: selectedEdge.edgeModification.width,
-					sideAngleLeft: selectedEdge.edgeModification.sideAngleLeft,
-					sideAngleRight: selectedEdge.edgeModification.sideAngleRight,
-					fullRadiusDepth: selectedEdge.edgeModification.fullRadiusDepth,
+					...defaultValues,
 				},
 			});
 		} else { // If edge id, update the existing edge
-			const defaultValues = getDefaultValueForEdgeModification(type);
 			updateEdge.mutate({
 				edgeId: selectedEdge.edgeId,
 				shapeId: selectedShape.id,
