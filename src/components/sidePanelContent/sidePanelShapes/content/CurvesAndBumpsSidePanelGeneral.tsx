@@ -14,6 +14,7 @@ import BumpOutCurveIcon from "~/components/icons/BumpOutCurve";
 import BumpInCurveIcon from "~/components/icons/BumpInCurveIcon";
 import FullCurveIcon from "~/components/icons/FullCurveIcon";
 import CurvesNoneIcon from "~/components/icons/CurvesNoneIcon";
+import { getDefaultValueForEdgeModification } from "~/types/defaultValues";
 
 interface CurvesAndBumpsSidePanelGeneralProps {
 	setView: (value: ShapeSidePanelView) => void;
@@ -57,6 +58,7 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 				},
 			});
 		} else { // If edge id, update the existing edge
+			const defaultValues = getDefaultValueForEdgeModification(type);
 			updateEdge.mutate({
 				edgeId: selectedEdge.edgeId,
 				shapeId: selectedShape.id,
@@ -64,13 +66,7 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 				// When modification is changed, we want to reset to default values
 				edgeModification: {
 					edgeType: type,
-					position: EdgeShapePosition.Center,
-					distance: 0,
-					depth: 0,
-					width: 0,
-					sideAngleLeft: 0,
-					sideAngleRight: 0,
-					fullRadiusDepth: 0,
+					...defaultValues,
 				}
 			});
 		}
