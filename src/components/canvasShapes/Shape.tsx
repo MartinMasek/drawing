@@ -459,7 +459,6 @@ const Shape = ({
 									y={point.yPos}
 									radius={POINT_HOVER_RADIUS}
 									fill={
-										// isPointHovered || isPointSelected ? SHAPE_HOVERED_STROKE_COLOR : "transparent"
 										isPointSelected ? SHAPE_SELECTED_STROKE_COLOR : (isPointHovered ? SHAPE_HOVERED_STROKE_COLOR : "transparent")
 									}
 									opacity={isPointHovered ? POINT_HOVER_OPACITY : 1}
