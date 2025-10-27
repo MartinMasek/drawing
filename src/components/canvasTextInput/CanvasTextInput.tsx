@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type FC, useLayoutEffect, useContext } from "react";
+import { useState, useEffect, useRef, type FC, useLayoutEffect } from "react";
 import type { CanvasText, CanvasTextData } from "~/types/drawing";
 import TextInputToolbar from "./TextInputToolbar";
 import { useDrawing } from "../header/context/DrawingContext";

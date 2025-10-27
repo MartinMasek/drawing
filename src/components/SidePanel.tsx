@@ -1,4 +1,4 @@
-import { useEffect, type FC } from "react";
+import type { FC } from "react";
 import { useDrawing } from "./header/context/DrawingContext";
 import { Sheet } from "./ui/sheet";
 import SidePanelTriggerButton from "./drawing-old/SidePanelTriggerButton";
