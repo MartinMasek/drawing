@@ -1,3 +1,4 @@
+import type { CornerType, EdgeModificationType } from "@prisma/client";
 import { createContext, useContext, useState } from "react";
 import type {
 	CanvasShape,
@@ -19,7 +20,13 @@ type ShapeContextType = {
 	setSelectedEdge: (edge: SelectedEdge | null) => void;
 	selectedCorner: SelectedCorner | null;
 	setSelectedCorner: (corner: SelectedCorner | null) => void;
+	mostRecentlyUsedEdgeModification: EdgeModificationType[];
+	addToMostRecentlyUsedEdgeModification: (modification: EdgeModificationType) => void;
+	mostRecentlyUsedCornerModification: CornerType[];
+	addToMostRecentlyUsedCornerModification: (modification: CornerType) => void;
+
 };
+const MAX_STACK_ITEMS = 4;
 
 const ShapeContext = createContext<ShapeContextType | null>(null);
 export const ShapeProvider = ({
@@ -33,8 +40,26 @@ export const ShapeProvider = ({
 	const [selectedEdge, setSelectedEdge] = useState<SelectedEdge | null>(null);
 	const [selectedCorner, setSelectedCorner] = useState<SelectedCorner | null>(null);
 
+	const [mostRecentlyUsedEdgeModification, setMostRecentlyUsedEdgeModification] = useState<EdgeModificationType[]>([]);
+	const [mostRecentlyUsedCornerModification, setMostRecentlyUsedCornerModification] = useState<CornerType[]>([]);
+
 	const [selectedMaterial, setSelectedMaterial] =
 		useState<MaterialExtended | null>(null);
+
+	const addToMostRecentlyUsedEdgeModification = (modification: EdgeModificationType) => {
+		setMostRecentlyUsedEdgeModification(prev => {
+			// Prepend new item and take only the first MAX_STACK_ITEMS
+			return [modification, ...prev].slice(0, MAX_STACK_ITEMS);
+		});
+	};
+
+	const addToMostRecentlyUsedCornerModification = (modification: CornerType) => {
+		setMostRecentlyUsedCornerModification(prev => {
+			// Prepend new item and take only the first MAX_STACK_ITEMS
+			return [modification, ...prev].slice(0, MAX_STACK_ITEMS);
+		});
+	};
+
 
 	// All material ids that are applied to the shapes
 	const [materials, setMaterials] = useState<MaterialExtended[]>(() => {
@@ -83,6 +108,10 @@ export const ShapeProvider = ({
 		setSelectedEdge,
 		selectedCorner,
 		setSelectedCorner,
+		mostRecentlyUsedEdgeModification,
+		addToMostRecentlyUsedEdgeModification,
+		mostRecentlyUsedCornerModification,
+		addToMostRecentlyUsedCornerModification,
 	};
 
 	return (
