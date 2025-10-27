@@ -7,7 +7,6 @@ import {
 	EdgeModificationType,
 	type EdgeShapePosition,
 } from "@prisma/client";
-import { DrawingTab } from "~/components/header/header/drawing-types";
 
 export interface Design {
 	id: string;

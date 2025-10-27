@@ -1,4 +1,4 @@
-import type { FC } from "react";
+import type { FC, JSX } from "react";
 import { useShape } from "~/components/header/context/ShapeContext";
 import { SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import ShapeCard from "../../components/ShapeCard";
@@ -14,10 +14,19 @@ import useUpdateCornerModification from "~/hooks/mutations/corners/useUpdateCorn
 import { useRouter } from "next/router";
 import useDeleteCornerModification from "~/hooks/mutations/corners/useDeleteCornerModification";
 import { getDefaultValueForCornerModification } from "~/types/defaultValues";
+import { CornerModificationList, EdgeModificationList } from "~/types/drawing";
 
 interface CornersSidePanelGeneralProps {
 	setView: (value: ShapeSidePanelView) => void;
 }
+
+const cornerIcons: Record<CornerType, JSX.Element> = {
+	[CornerType.Radius]: <RadiusIcon isActive={false} />,
+	[CornerType.Clip]: <ClipIcon isActive={false} />,
+	[CornerType.BumpOut]: <BumpOutCornerIcon isActive={false} />,
+	[CornerType.Notch]: <NotchIcon isActive={false} />,
+	[CornerType.None]: <NoneCornerIcon isActive={false} />,
+};
 
 const CornersSidePanelGeneral: FC<CornersSidePanelGeneralProps> = ({
 	setView,
@@ -25,7 +34,7 @@ const CornersSidePanelGeneral: FC<CornersSidePanelGeneralProps> = ({
 	const router = useRouter();
 	const idParam = router.query.id;
 	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
-	const { selectedCorner, selectedShape } = useShape();
+	const { selectedCorner, selectedShape, addToMostRecentlyUsedCornerModification, mostRecentlyUsedCornerModification } = useShape();
 	const createCornerModification = useCreateCornerModification(designId);
 	const updateCornerModification = useUpdateCornerModification(designId);
 	const deleteCornerModification = useDeleteCornerModification(designId);
@@ -47,6 +56,7 @@ const CornersSidePanelGeneral: FC<CornersSidePanelGeneralProps> = ({
 				type: type,
 				...defaultValues,
 			});
+			addToMostRecentlyUsedCornerModification(type);
 		} else {
 			// When we change the type of the corner, we want to set default values
 			updateCornerModification.mutate({
@@ -54,6 +64,7 @@ const CornersSidePanelGeneral: FC<CornersSidePanelGeneralProps> = ({
 				type: type,
 				...defaultValues,
 			});
+			addToMostRecentlyUsedCornerModification(type);
 		}
 
 		setView("editCorners");
@@ -81,6 +92,30 @@ const CornersSidePanelGeneral: FC<CornersSidePanelGeneralProps> = ({
 				</div>
 			) : (
 				<>
+					{mostRecentlyUsedCornerModification.length > 0 && (
+						<>
+							<p className=" px-4 pt-4 font-semibold text-text-neutral-secondary text-xs">
+								USED
+							</p>
+							<div className="grid grid-cols-2 gap-4 p-4">
+								{mostRecentlyUsedCornerModification.map((modification) => {
+									const label = CornerModificationList.find(item => item.id === modification)?.label ?? '';
+									const icon = cornerIcons[modification as CornerType];
+
+									return (
+										<ShapeCard
+											key={modification}
+											id={modification}
+											name={label}
+											icon={icon}
+											isActive={false} // We don't want to show the active state for the MRU modifications
+											onClick={() => handleSelectModification(modification)}
+										/>
+									);
+								})}
+							</div>
+						</>
+					)}
 					<p className=" px-4 pt-4 font-semibold text-text-neutral-secondary text-xs">
 						GENERAL
 					</p>

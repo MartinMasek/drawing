@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, type FC, useLayoutEffect } from "react";
 import type { CanvasText, CanvasTextData } from "~/types/drawing";
 import TextInputToolbar from "./TextInputToolbar";
+import { useDrawing } from "../header/context/DrawingContext";
+import { CursorTypes } from "../header/header/drawing-types";
 
 interface CanvasTextInputProps {
 	position: { x: number; y: number };
@@ -31,6 +33,7 @@ const CanvasTextInput: FC<CanvasTextInputProps> = ({
 	const [inputHeight, setInputHeight] = useState(24);
 	const [manualResize, setManualResize] = useState(false); // track manual resize
 
+	const { cursorType } = useDrawing();
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 	const spanRef = useRef<HTMLSpanElement>(null);
 
@@ -47,6 +50,14 @@ const CanvasTextInput: FC<CanvasTextInputProps> = ({
 			setInputHeight(spanRef.current.offsetHeight + 2);
 		}
 	}, [inputValue, fontSize, isBold, isItalic]);
+
+
+	// If we change the cursor type, escape the text input
+	useEffect(() => {
+		if (cursorType !== CursorTypes.Text) {
+			onEscape();
+		}
+	}, [cursorType, onEscape]);
 
 	const handleSaveText = () => {
 		if (!inputValue.trim()) return;

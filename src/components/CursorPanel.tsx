@@ -13,7 +13,7 @@ import { Divider } from "./header/header/Divider";
 import { useShape } from "./header/context/ShapeContext";
 
 const CursorPanel: FC = () => {
-	const { activeTab, cursorType, setCursorType } = useDrawing();
+	const { activeTab, cursorType, setCursorType, setIsOpenSideDialog } = useDrawing();
 	const { setSelectedEdge, setSelectedCorner, setSelectedShape } = useShape();
 
 	return (
@@ -150,7 +150,10 @@ const CursorPanel: FC = () => {
 				size="sm"
 				variant={cursorType === CursorTypes.Text ? "outlined" : "text"}
 				className="h-[36px] w-[36px]"
-				onClick={() => setCursorType(CursorTypes.Text)}
+				onClick={() => {
+					setCursorType(CursorTypes.Text);
+					setIsOpenSideDialog(false);
+				}}
 			>
 				<Icon size="md">
 					<IconTextSize />

@@ -195,7 +195,7 @@ const Shape = ({
 	);
 	const [isDragging, setIsDragging] = useState(false);
 	const prevShapePos = useRef({ x: shape.xPos, y: shape.yPos });
-	const { cursorType, setCursorType } = useDrawing();
+	const { setCursorType } = useDrawing();
 	const { selectedEdge, selectedCorner, setSelectedEdge, setSelectedCorner } =
 		useShape();
 
