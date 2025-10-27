@@ -248,6 +248,7 @@ export type EdgeModification = {
 	sideAngleLeft: number;
 	sideAngleRight: number;
 	fullRadiusDepth: number;
+	points: Point[];
 };
 
 export const EdgeModificationList: {

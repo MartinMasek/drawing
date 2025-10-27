@@ -1,5 +1,7 @@
 import { api } from "~/utils/api";
 import { useShape } from "~/components/header/context/ShapeContext";
+import { generateEdgePoints } from "~/components/canvasShapes/edgeUtils";
+import type { Point } from "~/types/drawing";
 
 export const useCreateEdgeModification = (designId: string | undefined) => {
     const utils = api.useUtils();
@@ -14,6 +16,45 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
 
             // Snapshot the previous value
             const previousData = utils.design.getById.getData({ id: designId });
+
+            // Calculate points for the edge modification
+            let calculatedPoints: Point[] = [];
+            if (previousData) {
+                const shape = previousData.shapes.find((s) => s.id === variables.shapeId);
+                if (shape) {
+                    const point1 = shape.points.find((p) => p.id === variables.edgePoint1Id);
+                    const point2 = shape.points.find((p) => p.id === variables.edgePoint2Id);
+                    
+                    if (point1 && point2) {
+                        const edgeModification = {
+                            id: null,
+                            type: variables.edgeModification.edgeType,
+                            position: variables.edgeModification.position,
+                            distance: variables.edgeModification.distance,
+                            depth: variables.edgeModification.depth,
+                            width: variables.edgeModification.width,
+                            sideAngleLeft: variables.edgeModification.sideAngleLeft,
+                            sideAngleRight: variables.edgeModification.sideAngleRight,
+                            fullRadiusDepth: variables.edgeModification.fullRadiusDepth ?? 0,
+                            points: [],
+                        };
+                        
+                        const pointsWithoutIds = generateEdgePoints(
+                            point1,
+                            point2,
+                            [edgeModification],
+                            0.05 // Point density for rendering
+                        );
+                        
+                        // Convert Coordinate[] to Point[] (without IDs since they'll be created by backend)
+                        calculatedPoints = pointsWithoutIds.map((coord) => ({
+                            id: '', // Empty ID, will be set by backend
+                            xPos: coord.xPos,
+                            yPos: coord.yPos,
+                        }));
+                    }
+                }
+            }
 
             // Create temporary IDs for optimistic update
             const tempEdgeId = `temp-edge-${Date.now()}`;
@@ -46,6 +87,7 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
                                                 sideAngleLeft: variables.edgeModification.sideAngleLeft,
                                                 sideAngleRight: variables.edgeModification.sideAngleRight,
                                                 fullRadiusDepth: variables.edgeModification.fullRadiusDepth ?? 0,
+                                                points: calculatedPoints,
                                             },
                                         ],
                                     },
@@ -77,6 +119,7 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
                                     sideAngleLeft: variables.edgeModification.sideAngleLeft,
                                     sideAngleRight: variables.edgeModification.sideAngleRight,
                                     fullRadiusDepth: variables.edgeModification.fullRadiusDepth ?? 0,
+                                    points: calculatedPoints,
                                 },
                             ],
                         },
@@ -102,10 +145,14 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
                             sideAngleLeft: variables.edgeModification.sideAngleLeft,
                             sideAngleRight: variables.edgeModification.sideAngleRight,
                             fullRadiusDepth: variables.edgeModification.fullRadiusDepth ?? 0,
+                            points: calculatedPoints,
                         },
                     });
                 }
             }
+
+            // Inject calculated points into variables for the actual mutation
+            variables.edgeModification.points = calculatedPoints;
 
             return { previousData, tempEdgeId, tempModificationId, edgeIndex: selectedEdge?.edgeIndex ?? 0 };
         },
@@ -148,6 +195,7 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
                                                     sideAngleLeft: data.sideAngleLeft ?? 0,
                                                     sideAngleRight: data.sideAngleRight ?? 0,
                                                     fullRadiusDepth: data.fullRadiusDepth ?? 0,
+                                                    points: data.points ?? [],
                                                 };
                                             }
                                             return mod;
@@ -165,7 +213,7 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
                         id: data.edgeId,
                         point1Id: variables.edgePoint1Id,
                         point2Id: variables.edgePoint2Id,
-                        edgeModifications: [
+                            edgeModifications: [
                             {
                                 id: data.id,
                                 type: data.edgeType,
@@ -176,6 +224,7 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
                                 sideAngleLeft: data.sideAngleLeft ?? 0,
                                 sideAngleRight: data.sideAngleRight ?? 0,
                                 fullRadiusDepth: data.fullRadiusDepth ?? 0,
+                                points: data.points ?? [],
                             },
                         ],
                     };

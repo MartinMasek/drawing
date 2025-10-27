@@ -350,6 +350,10 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		setHoveredId(null);
 	};
 
+	const allModifications = useMemo(() => {
+		return shapes.flatMap((shape) => shape.edges.flatMap((edge) => edge.edgeModifications));
+	}, [shapes]);
+
 	return (
 		<div
 			ref={containerRef}
@@ -368,6 +372,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 				canChangeDirectionNow={canChangeDirectionNow}
 				lastDirection={lastDirection}
 				onDebugModeChange={setIsDebugMode}
+				allModifications={allModifications}
 			/>
 
 			<Stage

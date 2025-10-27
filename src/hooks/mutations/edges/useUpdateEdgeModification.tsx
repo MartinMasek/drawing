@@ -1,5 +1,7 @@
 import { api } from "~/utils/api";
 import { useShape } from "~/components/header/context/ShapeContext";
+import { generateEdgePoints } from "~/components/canvasShapes/edgeUtils";
+import type { Point } from "~/types/drawing";
 
 export const useUpdateEdgeModification = (designId: string | undefined) => {
     const utils = api.useUtils();
@@ -14,6 +16,51 @@ export const useUpdateEdgeModification = (designId: string | undefined) => {
 
             // Snapshot the previous value
             const previousData = utils.design.getById.getData({ id: designId });
+
+            // Calculate points for the edge modification
+            let calculatedPoints: Point[] = [];
+            if (previousData) {
+                // Find the edge to get point IDs
+                const shape = previousData.shapes.find((s) => 
+                    s.edges.some((e) => e.id === variables.edgeId)
+                );
+                
+                if (shape) {
+                    const edge = shape.edges.find((e) => e.id === variables.edgeId);
+                    if (edge) {
+                        const point1 = shape.points.find((p) => p.id === edge.point1Id);
+                        const point2 = shape.points.find((p) => p.id === edge.point2Id);
+                        
+                        if (point1 && point2) {
+                            const edgeModification = {
+                                id: null,
+                                type: variables.edgeModification.edgeType,
+                                position: variables.edgeModification.position,
+                                distance: variables.edgeModification.distance,
+                                depth: variables.edgeModification.depth,
+                                width: variables.edgeModification.width,
+                                sideAngleLeft: variables.edgeModification.sideAngleLeft,
+                                sideAngleRight: variables.edgeModification.sideAngleRight,
+                                fullRadiusDepth: variables.edgeModification.fullRadiusDepth ?? 0,
+                                points: [],
+                            };
+                            
+                            const pointsWithoutIds = generateEdgePoints(
+                                point1,
+                                point2,
+                                [edgeModification],
+                                0.05
+                            );
+                            
+                            calculatedPoints = pointsWithoutIds.map((coord) => ({
+                                id: '',
+                                xPos: coord.xPos,
+                                yPos: coord.yPos,
+                            }));
+                        }
+                    }
+                }
+            }
 
             if (previousData) {
                 // Update existing edge modification optimistically
@@ -42,6 +89,7 @@ export const useUpdateEdgeModification = (designId: string | undefined) => {
                                                         sideAngleLeft: variables.edgeModification.sideAngleLeft,
                                                         sideAngleRight: variables.edgeModification.sideAngleRight,
                                                         fullRadiusDepth: variables.edgeModification.fullRadiusDepth ?? 0,
+                                                        points: calculatedPoints
                                                     };
                                                 }
                                                 return mod;
@@ -76,6 +124,7 @@ export const useUpdateEdgeModification = (designId: string | undefined) => {
                                             sideAngleLeft: variables.edgeModification.sideAngleLeft,
                                             sideAngleRight: variables.edgeModification.sideAngleRight,
                                             fullRadiusDepth: variables.edgeModification.fullRadiusDepth ?? 0,
+                                            points: calculatedPoints,
                                         };
                                     }
                                     return mod;
@@ -99,6 +148,9 @@ export const useUpdateEdgeModification = (designId: string | undefined) => {
                     }
                 }
             }
+
+            // Inject calculated points into variables for the actual mutation
+            variables.edgeModification.points = calculatedPoints;
 
             return { previousData };
         },

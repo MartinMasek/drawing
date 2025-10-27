@@ -54,6 +54,7 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 					sideAngleLeft: selectedEdge.edgeModification.sideAngleLeft,
 					sideAngleRight: selectedEdge.edgeModification.sideAngleRight,
 					fullRadiusDepth: selectedEdge.edgeModification.fullRadiusDepth,
+					points: selectedEdge.edgeModification.points,
 				},
 			});
 		} else { // If edge id, update the existing edge
@@ -70,6 +71,7 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 					sideAngleLeft: selectedEdge.edgeModification.sideAngleLeft,
 					sideAngleRight: selectedEdge.edgeModification.sideAngleRight,
 					fullRadiusDepth: selectedEdge.edgeModification.fullRadiusDepth,
+					points: selectedEdge.edgeModification.points,
 				}
 			});
 		}

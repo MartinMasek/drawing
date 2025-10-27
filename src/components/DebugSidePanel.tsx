@@ -1,11 +1,13 @@
 import { IconBug } from "@tabler/icons-react";
 import { XIcon } from "lucide-react";
 import { type FC, useState } from "react";
-import type { CardinalDirection, Coordinate } from "~/types/drawing";
+import type { CardinalDirection, Coordinate, EdgeModification } from "~/types/drawing";
 import type { PreviewShape } from "~/hooks/useShapeDrawing";
 
 import { Icon } from "./header/header/Icon";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
+import { useDrawing } from "./header/context/DrawingContext";
+import { cn } from "~/lib/utils";
 
 interface DebugSidePanelProps {
 	previewBounds: Coordinate[] | null;
@@ -13,6 +15,7 @@ interface DebugSidePanelProps {
 	canChangeDirectionNow: boolean;
 	lastDirection: CardinalDirection | null;
 	onDebugModeChange: (enabled: boolean) => void;
+	allModifications: EdgeModification[];
 }
 
 const DebugSidePanel: FC<DebugSidePanelProps> = ({
@@ -21,7 +24,10 @@ const DebugSidePanel: FC<DebugSidePanelProps> = ({
 	canChangeDirectionNow,
 	lastDirection,
 	onDebugModeChange,
+	allModifications,
 }) => {
+		const { isOpenSideDialog} = useDrawing();
+
 	const [debugMode, setDebugMode] = useState(false);
 
 	const handleToggleDebugMode = (enabled: boolean) => {
@@ -44,7 +50,7 @@ const DebugSidePanel: FC<DebugSidePanelProps> = ({
 			</SheetTrigger>
 			<SheetContent
 				side="right"
-				className="w-[400px] gap-0 overflow-y-auto"
+				className={cn("w-[400px] gap-0 overflow-y-auto", isOpenSideDialog ? "right-[339px]" : "right-0")}
 				onInteractOutside={(e) => {
 					// Prevent the sheet from closing when clicking outside
 					e.preventDefault();
@@ -62,6 +68,13 @@ const DebugSidePanel: FC<DebugSidePanelProps> = ({
 								<XIcon className="size-4" />
 							</button>
 						</SheetTrigger>
+					</div>
+
+					<div className="rounded-lg bg-gray-100 p-4">
+						<h3 className="mb-2 font-semibold text-lg">All Modifications</h3>
+						<pre className="overflow-auto rounded bg-white p-3 text-xs">
+							{JSON.stringify(allModifications, null, 2)}
+						</pre>
 					</div>
 
 					<div className="rounded-lg bg-gray-100 p-4">

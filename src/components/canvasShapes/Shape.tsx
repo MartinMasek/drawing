@@ -19,6 +19,8 @@ import {
 import { useDrawing } from "../header/context/DrawingContext";
 import { useShape } from "../header/context/ShapeContext";
 import { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
+import { Edge } from "./Edge";
+import { drawEdgeWithModifications } from "./edgeUtils";
 
 // Constants for interactive elements
 const EDGE_STROKE_WIDTH = 2;
@@ -136,6 +138,35 @@ const calculateDistance = (p1: Coordinate, p2: Coordinate): number => {
 };
 
 /**
+ * Draw complete shape path including all edge modifications to canvas context
+ */
+const drawCompleteShapePath = (ctx: Context, shape: CanvasShape): void => {
+	for (let i = 0; i < shape.points.length; i++) {
+		const point = shape.points[i];
+		const nextIndex = (i + 1) % shape.points.length;
+		const nextPoint = shape.points[nextIndex];
+
+		if (!point || !nextPoint) continue;
+
+		// Find edge modifications for this edge
+		const edge = shape.edges.find(
+			(e) => e.point1Id === point.id && e.point2Id === nextPoint.id,
+		);
+
+		if (edge && edge.edgeModifications.length > 0) {
+			// Use shared utility - skip moveTo for all edges except the first
+			drawEdgeWithModifications(ctx, point, nextPoint, edge.edgeModifications, i > 0);
+		} else {
+			// Simple edge - draw straight line
+			if (i === 0) {
+				ctx.moveTo(point.xPos, point.yPos);
+			}
+			ctx.lineTo(nextPoint.xPos, nextPoint.yPos);
+		}
+	}
+};
+
+/**
  * Create clipping function for a polygon shape
  */
 const createShapeClipFunc =
@@ -150,6 +181,16 @@ const createShapeClipFunc =
 				ctx.lineTo(p.xPos, p.yPos);
 			}
 		}
+		ctx.closePath();
+	};
+
+/**
+ * Create clipping function for a shape with edge modifications
+ */
+const createShapeClipFuncWithModifications =
+	(shape: CanvasShape) => (ctx: Context) => {
+		ctx.beginPath();
+		drawCompleteShapePath(ctx, shape);
 		ctx.closePath();
 	};
 
@@ -316,6 +357,7 @@ const Shape = ({
 				sideAngleLeft: modification?.sideAngleLeft ?? 0,
 				sideAngleRight: modification?.sideAngleRight ?? 0,
 				fullRadiusDepth: modification?.fullRadiusDepth ?? 0,
+				points: modification?.points ?? [],
 			},
 		});
 		setSelectedPoint(null);
@@ -390,6 +432,11 @@ const Shape = ({
 		setHoveredPointIndex(null);
 	};
 
+	// Check if shape has any edge modifications
+	const hasEdgeModifications = useMemo(() => {
+		return shape.edges.some((edge) => edge.edgeModifications.length > 0);
+	}, [shape.edges]);
+
 	// Render mode: Edges and Shape tabs (individual edge/point interaction)
 	if (isEdgesMode) {
 		return (
@@ -406,7 +453,11 @@ const Shape = ({
 					onDragMove={handleDragMove}
 					onDragEnd={handleDragEnd}
 					onContextMenu={onContextMenu}
-					clipFunc={createShapeClipFunc(shape.points)}
+					clipFunc={
+						hasEdgeModifications
+							? createShapeClipFuncWithModifications(shape)
+							: createShapeClipFunc(shape.points)
+					}
 				>
 					{/* Draggable background fill - handles drag interactions */}
 					<Line
@@ -415,7 +466,6 @@ const Shape = ({
 						closed
 						listening={!isDrawing}
 						draggable={false}
-						onClick={onClick}
 						onMouseEnter={onMouseEnter}
 						onMouseLeave={onMouseLeave}
 					/>
@@ -430,32 +480,22 @@ const Shape = ({
 						const isEdgeSelected = selectedEdge?.edgeIndex === index &&
 							selectedEdge?.shapeId === shape.id;
 
+						const edge = shape.edges.find((edge) => edge.point1Id === point.id && edge.point2Id === nextPoint.id);
+
 						return (
-							<Line
+							<Edge
 								key={`${shape.id}-edge-${index}`}
-								points={[
-									point.xPos,
-									point.yPos,
-									nextPoint.xPos,
-									nextPoint.yPos,
-								]}
-								stroke={
-									isEdgeHovered
-										? SHAPE_HOVERED_STROKE_COLOR
-										: getStrokeColor(isSelected, false)
-								}
-								strokeWidth={
-									isEdgeSelected
-										? EDGE_STROKE_WIDTH_SELECTED
-										: isEdgeHovered
-											? EDGE_STROKE_WIDTH_HOVERED
-											: EDGE_STROKE_WIDTH
-								}
-								hitStrokeWidth={EDGE_HIT_STROKE_WIDTH}
-								listening={!isDrawing}
-								onClick={(e) => handleEdgeClick(index, point.id, nextPoint.id, e)}
-								onMouseEnter={() => handleEdgeMouseEnter(index)}
-								onMouseLeave={handleEdgeMouseLeave}
+								shape={shape}
+								index={index}
+								point={point}
+								nextPoint={nextPoint}
+								isEdgeHovered={isEdgeHovered}
+								isEdgeSelected={isEdgeSelected}
+								isDrawing={isDrawing}
+								handleEdgeClick={handleEdgeClick}
+								handleEdgeMouseEnter={handleEdgeMouseEnter}
+								handleEdgeMouseLeave={handleEdgeMouseLeave}
+								edgeModifications={edge?.edgeModifications ?? []}
 							/>
 						);
 					})}

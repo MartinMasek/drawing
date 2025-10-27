@@ -114,6 +114,8 @@ model Point {
     edgesAsPoint1 Edge[] @relation("EdgePoint1")
     edgesAsPoint2 Edge[] @relation("EdgePoint2")
 
+    edgeModificationsPoints EdgeModification[] @relation("EdgeModificationPoints")
+
     // Relations for shapes start and end points that use this point
     shapeStart1 Shape[] @relation("ShapeStartPoint1")
     shapeStart2 Shape[] @relation("ShapeStartPoint2")
@@ -174,6 +176,8 @@ model EdgeModification {
 
     edgeId String
     edge   Edge   @relation(fields: [edgeId], references: [id], onDelete: Cascade)
+
+    points Point[] @relation("EdgeModificationPoints")
 }
 
 enum EdgeShapePosition {
