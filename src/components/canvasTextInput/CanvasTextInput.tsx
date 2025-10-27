@@ -33,7 +33,7 @@ const CanvasTextInput: FC<CanvasTextInputProps> = ({
 	const [inputHeight, setInputHeight] = useState(24);
 	const [manualResize, setManualResize] = useState(false); // track manual resize
 
-	const { cursorType, activeTab } = useDrawing();
+	const { cursorType } = useDrawing();
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 	const spanRef = useRef<HTMLSpanElement>(null);
 
