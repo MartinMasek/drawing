@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { CursorTypes } from "../components/header/header/drawing-types";
 import type { CanvasText } from "~/types/drawing";
 
@@ -26,6 +25,7 @@ export const useCursorLogic = ({
 		isCursorDimesions: cursorType === CursorTypes.Dimesions,
 		isCursorCurves: cursorType === CursorTypes.Curves,
 		isCursorCorners: cursorType === CursorTypes.Corners,
+		isCursorCutouts: cursorType === CursorTypes.Cutouts,
 		isCursorEdges: cursorType === CursorTypes.Egdes,
 		isCursorText: cursorType === CursorTypes.Text,
 	};
@@ -35,6 +35,7 @@ export const useCursorLogic = ({
 		cursorFlags.isCursorDimesions ||
 		cursorFlags.isCursorCurves ||
 		cursorFlags.isCursorCorners ||
+		cursorFlags.isCursorCutouts ||
 		cursorFlags.isCursorEdges;
 
 	// Get the appropriate cursor based on current state
@@ -55,6 +56,11 @@ export const useCursorLogic = ({
 		// Pencil cursor
 		if (cursorFlags.isCursorDimesions && !hoveredId) {
 			return 'url("/cursors/pencil.svg") 0 0, crosshair';
+		}
+
+		// Cutout cursor
+		if (cursorFlags.isCursorCutouts && hoveredId) {
+			return 'url("/cursors/cutout.svg") 0 0, crosshair';
 		}
 
 		// Pointer cursor

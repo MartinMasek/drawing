@@ -30,6 +30,7 @@ interface UseMouseInteractionsProps {
 	selectedShape: CanvasShape | null;
 	drawingTab: number;
 	closeContextMenu: () => void;
+	closeCutoutContextMenu: () => void;
 }
 
 /**
@@ -55,6 +56,7 @@ export const useMouseInteractions = ({
 	selectedShape,
 	drawingTab,
 	closeContextMenu,
+	closeCutoutContextMenu,
 }: UseMouseInteractionsProps) => {
 	// Cursor logic
 	const { isInteractiveCursor, getCursor: getCursorFromHook } = useCursorLogic({
@@ -115,6 +117,7 @@ export const useMouseInteractions = ({
 			// Close context menu if clicking on empty canvas (stage)
 			if (e.target === e.target.getStage()) {
 				closeContextMenu();
+				closeCutoutContextMenu();
 			}
 
 			// Reset text editing if clicking on empty canvas
@@ -150,6 +153,7 @@ export const useMouseInteractions = ({
 		},
 		[
 			closeContextMenu,
+			closeCutoutContextMenu,
 			editingText,
 			setEditingText,
 			setHoveredId,

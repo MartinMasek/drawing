@@ -25,6 +25,7 @@ import { useShape } from "./header/context/ShapeContext";
 import CanvasTextInput from "./canvasTextInput/CanvasTextInput";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { DrawingTab } from "./header/header/drawing-types";
+import CutoutContextMenu from "./canvasShapes/CutoutContextMenu";
 
 interface DrawingCanvasProps {
 	shapes?: ReadonlyArray<CanvasShape>;
@@ -42,6 +43,11 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 	const [draggingId, setDraggingId] = useState<string | null>(null);
 	const [isDebugMode, setIsDebugMode] = useState(false);
 	const [contextMenu, setContextMenu] = useState<{
+		shapeId: string;
+		x: number;
+		y: number;
+	} | null>(null);
+	const [cutoutContextMenu, setCutoutContextMenu] = useState<{
 		shapeId: string;
 		x: number;
 		y: number;
@@ -134,6 +140,14 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 				x: e.evt.clientX,
 				y: e.evt.clientY,
 			});
+
+			if (activeTab === DrawingTab.Cutouts) {
+				setCutoutContextMenu({
+					shapeId: shape.id,
+					x: e.evt.clientX,
+					y: e.evt.clientY,
+				});
+			}
 		}
 	};
 
@@ -264,6 +278,10 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		setContextMenu(null);
 	};
 
+	const handleCloseCutoutContextMenu = () => {
+		setCutoutContextMenu(null);
+	};
+
 	const handleStageContextMenu = (e: KonvaEventObject<PointerEvent>) => {
 		// Prevent default browser context menu when right-clicking on empty canvas
 		if (e.target === e.target.getStage()) {
@@ -298,6 +316,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		selectedShape,
 		drawingTab: activeTab,
 		closeContextMenu: handleCloseContextMenu,
+		closeCutoutContextMenu: handleCloseCutoutContextMenu,
 	});
 
 	// Log draftBounds whenever it changes
@@ -484,6 +503,22 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 							selectedShapeId={selectedShape?.id ?? null}
 							onShapeDeleted={handleShapeDeleted}
 							onClose={handleCloseContextMenu}
+						/>
+					);
+				})()}
+
+			{cutoutContextMenu &&
+				designId &&
+				(() => {
+					const shape = shapes.find((s) => s.id === cutoutContextMenu.shapeId);
+
+					if (!shape || activeTab !== DrawingTab.Cutouts) return null;
+
+					return (
+						<CutoutContextMenu
+							x={cutoutContextMenu.x}
+							y={cutoutContextMenu.y}
+							onClose={handleCloseCutoutContextMenu}
 						/>
 					);
 				})()}
