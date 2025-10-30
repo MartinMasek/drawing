@@ -1,6 +1,9 @@
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useCallback, useMemo } from "react";
-import { CursorTypes, DrawingTab } from "../components/header/header/drawing-types";
+import {
+	CursorTypes,
+	DrawingTab,
+} from "../components/header/header/drawing-types";
 import type { CanvasText, CanvasShape, CanvasTextData } from "~/types/drawing";
 import { useCanvasNavigation } from "./useCanvasNavigation";
 import { useCursorLogic } from "./useCursorLogic";
@@ -20,7 +23,10 @@ interface UseMouseInteractionsProps {
 	handleDrawStart: (e: KonvaEventObject<MouseEvent>) => void;
 	handleDrawMove: (e: KonvaEventObject<MouseEvent>) => void;
 	handleDrawEnd: () => void;
-	handleSelectShape: (shape: CanvasShape, e: KonvaEventObject<MouseEvent>) => void;
+	handleSelectShape: (
+		shape: CanvasShape,
+		e: KonvaEventObject<MouseEvent>,
+	) => void;
 	selectedShape: CanvasShape | null;
 	drawingTab: number;
 	closeContextMenu: () => void;
@@ -119,7 +125,11 @@ export const useMouseInteractions = ({
 			}
 
 			// Handle text cursor logic first
-			if (cursorType === CursorTypes.Text) {
+			if (
+				cursorType === CursorTypes.Text &&
+				e.evt.button === 0 &&
+				!e.evt.shiftKey
+			) {
 				handleTextMouseDown(e);
 				return;
 			}

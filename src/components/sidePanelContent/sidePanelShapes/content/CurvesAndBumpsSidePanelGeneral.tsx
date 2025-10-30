@@ -1,6 +1,6 @@
-import type { FC } from "react";
+import type { FC, JSX } from "react";
 import { useRouter } from "next/router";
-import { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
+import { CornerType, EdgeModificationType, EdgeShapePosition } from "@prisma/client";
 import { useUpdateEdgeModification } from "~/hooks/mutations/edges/useUpdateEdgeModification";
 import { useShape } from "~/components/header/context/ShapeContext";
 import { SheetHeader, SheetTitle } from "~/components/ui/sheet";
@@ -16,15 +16,24 @@ import FullCurveIcon from "~/components/icons/FullCurveIcon";
 import CurvesNoneIcon from "~/components/icons/CurvesNoneIcon";
 import { getDefaultValueForEdgeModification } from "~/types/defaultValues";
 import { generateEdgePoints } from "~/components/shape/edgeUtils";
+import { EdgeModificationList } from "~/types/drawing";
 
 interface CurvesAndBumpsSidePanelGeneralProps {
 	setView: (value: ShapeSidePanelView) => void;
 }
+const curveAndBumpIcons: Record<EdgeModificationType, JSX.Element> = {
+	[EdgeModificationType.BumpIn]: <BumpInIcon isActive={false} />,
+	[EdgeModificationType.BumpOut]: <BumpOutIcon isActive={false} />,
+	[EdgeModificationType.BumpInCurve]: <BumpInCurveIcon isActive={false} />,
+	[EdgeModificationType.BumpOutCurve]: <BumpOutCurveIcon isActive={false} />,
+	[EdgeModificationType.FullCurve]: <FullCurveIcon isActive={false} />,
+	[EdgeModificationType.None]: <CurvesNoneIcon isActive={false} />,
+};
 
 const CurvesAndBumpsSidePanelGeneral: FC<
 	CurvesAndBumpsSidePanelGeneralProps
 > = ({ setView }) => {
-	const { selectedEdge, selectedShape } = useShape();
+	const { selectedEdge, selectedShape, addToMostRecentlyUsedEdgeModification, mostRecentlyUsedEdgeModification } = useShape();
 	const router = useRouter();
 	const idParam = router.query.id;
 	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
@@ -68,6 +77,8 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 					points,
 				},
 			});
+
+			addToMostRecentlyUsedEdgeModification(type);
 		} else { // If edge id, update the existing edge
 			updateEdge.mutate({
 				edgeId: selectedEdge.edgeId,
@@ -80,6 +91,8 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 					points,
 				}
 			});
+
+			addToMostRecentlyUsedEdgeModification(type);
 		}
 
 		setView("editCurves");
@@ -108,6 +121,31 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 				</div>
 			) : (
 				<>
+
+					{mostRecentlyUsedEdgeModification.length > 0 && (
+						<>
+							<p className=" px-4 pt-4 font-semibold text-text-neutral-secondary text-xs">
+								USED
+							</p>
+							<div className="grid grid-cols-2 gap-4 p-4">
+								{mostRecentlyUsedEdgeModification.map((modification) => {
+									const label = EdgeModificationList.find(item => item.id === modification)?.label ?? '';
+									const icon = curveAndBumpIcons[modification as EdgeModificationType];
+
+									return (
+										<ShapeCard
+											key={modification}
+											id={modification}
+											name={label}
+											icon={icon}
+											isActive={false} // We don't want to show the active state for the MRU modifications
+											onClick={() => handleSelectModification(modification)}
+										/>
+									);
+								})}
+							</div>
+						</>
+					)}
 					<p className=" px-4 pt-4 font-semibold text-text-neutral-secondary text-xs">
 						GENERAL
 					</p>
