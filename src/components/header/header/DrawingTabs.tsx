@@ -22,7 +22,7 @@ import { DrawingTabList } from "./drawing-types";
 
 const DrawingTabs: FC = () => {
 	const { activeTab, setActiveTab } = useDrawing();
-	const { setSelectedShape, setSelectedEdge, setSelectedPoint } = useShape();
+	const { setSelectedShape, setSelectedEdge, setSelectedCorner } = useShape();
 
 	const tabIcons = {
 		1: IconSquareRoundedNumber1,
@@ -46,7 +46,7 @@ const DrawingTabs: FC = () => {
 		setActiveTab(id);
 		setSelectedShape(null);
 		setSelectedEdge(null);
-		setSelectedPoint(null);
+		setSelectedCorner(null);
 	};
 
 	return (

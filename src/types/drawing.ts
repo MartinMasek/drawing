@@ -2,7 +2,11 @@
 // IMPORTANT: Drawing types are for now just prepared for demo version. It will be changed to match correct data model.
 // #########################################################
 
-import { EdgeModificationType, type EdgeShapePosition } from "@prisma/client";
+import {
+	CornerType,
+	EdgeModificationType,
+	type EdgeShapePosition,
+} from "@prisma/client";
 import { DrawingTab } from "~/components/header/header/drawing-types";
 
 export interface Design {
@@ -74,7 +78,6 @@ export interface EdgeShape {
 	sideAngleRight: number;
 }
 
-export type CornerType = "Clip" | "BumpOut" | "None";
 export type CornerModRotation = string; // TODO: Define specific rotation type
 
 export interface Corner {
@@ -190,6 +193,15 @@ export type CanvasShape = {
 		point2Id: string;
 		edgeModifications: EdgeModification[];
 	}[];
+	corners: {
+		id: string;
+		pointId: string;
+		type: CornerType;
+		clip?: number;
+		radius?: number;
+		modificationLength?: number;
+		modificationDepth?: number;
+	}[];
 };
 
 export type CanvasText = {
@@ -224,9 +236,16 @@ export type MaterialExtended = {
 	subcategory: string;
 };
 
-export type SelectedPoint = {
+export type SelectedCorner = {
 	shapeId: string;
 	pointIndex: number;
+	cornerId: string | null;
+	pointId: string;
+	type: CornerType;
+	clip?: number;
+	radius?: number;
+	modificationLength?: number;
+	modificationDepth?: number;
 };
 
 export type SelectedEdge = {
@@ -261,4 +280,15 @@ export const EdgeModificationList: {
 	{ id: EdgeModificationType.BumpOutCurve, label: "Bump-Out Curve" },
 	{ id: EdgeModificationType.FullCurve, label: "Full Curve" },
 	{ id: EdgeModificationType.None, label: "None" },
+];
+
+export const CornerModificationList: {
+	id: CornerType;
+	label: string;
+}[] = [
+	{ id: CornerType.Clip, label: "Clip" },
+	{ id: CornerType.Radius, label: "Radius" },
+	{ id: CornerType.BumpOut, label: "Bump-Out" },
+	{ id: CornerType.Notch, label: "Notch" },
+	{ id: CornerType.None, label: "None" },
 ];

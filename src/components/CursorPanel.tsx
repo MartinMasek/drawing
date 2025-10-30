@@ -14,7 +14,7 @@ import { useShape } from "./header/context/ShapeContext";
 
 const CursorPanel: FC = () => {
 	const { activeTab, cursorType, setCursorType } = useDrawing();
-	const { setSelectedEdge, setSelectedPoint, setSelectedShape } = useShape();
+	const { setSelectedEdge, setSelectedCorner, setSelectedShape } = useShape();
 
 	return (
 		<div className="absolute top-3 left-3 z-50 flex w-11 flex-col items-center gap-1 rounded-[10px] bg-white py-1 shadow-lg">
@@ -43,7 +43,7 @@ const CursorPanel: FC = () => {
 						onClick={() => {
 							setCursorType(CursorTypes.Curves);
 							setSelectedEdge(null);
-							setSelectedPoint(null);
+							setSelectedCorner(null);
 							setSelectedShape(null);
 						}}
 					>
@@ -75,7 +75,7 @@ const CursorPanel: FC = () => {
 						onClick={() => {
 							setCursorType(CursorTypes.Corners);
 							setSelectedEdge(null);
-							setSelectedPoint(null);
+							setSelectedCorner(null);
 							setSelectedShape(null);
 						}}
 					>

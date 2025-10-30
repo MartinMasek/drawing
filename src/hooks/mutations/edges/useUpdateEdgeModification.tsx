@@ -138,14 +138,22 @@ export const useUpdateEdgeModification = (designId: string | undefined) => {
 
                 // Update selected edge if it matches the one being updated
                 if (selectedEdge && selectedEdge.edgeId === variables.edgeId) {
-                    const updatedEdge = updatedShape.edges.find(e => e.id === variables.edgeId);
-                    const updatedMod = updatedEdge?.edgeModifications.find(m => m.id === variables.edgeModificationId);
-                    if (updatedEdge && updatedMod) {
-                        setSelectedEdge({
-                            ...selectedEdge,
-                            edgeModification: updatedMod,
-                        });
-                    }
+                    const optimisticEdge = {
+                        ...selectedEdge,
+                        edgeModification: {
+                            id: variables.edgeModificationId,
+                            type: variables.edgeModification.edgeType,
+                            position: variables.edgeModification.position,
+                            distance: variables.edgeModification.distance,
+                            depth: variables.edgeModification.depth,
+                            width: variables.edgeModification.width,
+                            sideAngleLeft: variables.edgeModification.sideAngleLeft,
+                            sideAngleRight: variables.edgeModification.sideAngleRight,
+                            fullRadiusDepth: variables.edgeModification.fullRadiusDepth ?? 0,
+                        }
+                    };
+
+                    setSelectedEdge(optimisticEdge);
                 }
             }
 
