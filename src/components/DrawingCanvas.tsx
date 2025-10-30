@@ -10,15 +10,15 @@ import type {
 } from "~/types/drawing";
 import { getTotalAreaOfShapes } from "~/utils/ui-utils";
 import { useCreateShape, isTempShapeId, registerPendingUpdate } from "../hooks/mutations/useCreateShape";
-import { useUpdateShape } from "../hooks/mutations/useUpdateShape";
+import { useUpdateShapePosition } from "../hooks/mutations/useUpdateShapePosition";
 import { useMouseInteractions } from "../hooks/useMouseInteractions";
 import { useText } from "../hooks/useText";
 import { api } from "~/utils/api";
 import CursorPanel from "./CursorPanel";
 import DebugSidePanel from "./DebugSidePanel";
-import DrawingPreview from "./canvasShapes/DrawingPreview";
-import Shape from "./canvasShapes/Shape";
-import ShapeContextMenu from "./canvasShapes/ShapeContextMenu";
+import DrawingPreview from "./shape/shape/drawingPreview/DrawingPreview";
+import Shape from "./shape/shape/Shape";
+import ShapeContextMenu from "./shape/shapeContextMenu/ShapeContextMenu";
 import SidePanel from "./SidePanel";
 import { useDrawing } from "./header/context/DrawingContext";
 import { useShape } from "./header/context/ShapeContext";
@@ -87,7 +87,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 	// Shape mutations and utils
 	const utils = api.useUtils();
 	const createShapeMutation = useCreateShape(designId);
-	const updateShapeMutation = useUpdateShape(designId);
+	const updateShapePositionMutation = useUpdateShapePosition(designId);
 
 	const handleShapeComplete = (shape: {
 		xPos: number;
@@ -204,11 +204,6 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 			registerPendingUpdate(shape.id, {
 				xPos: newX,
 				yPos: newY,
-				points: shape.points.map((point) => ({
-					id: point.id,
-					xPos: point.xPos,
-					yPos: point.yPos,
-				})),
 			});
 
 			// Update the cache optimistically (final position)
@@ -229,11 +224,11 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 			return;
 		}
 
-		updateShapeMutation.mutate({
+		// Use position-only mutation to preserve edges and modifications
+		updateShapePositionMutation.mutate({
 			shapeId: shape.id,
 			xPos: newX,
 			yPos: newY,
-			points: [...shape.points],
 		});
 	};
 
@@ -354,6 +349,10 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		return shapes.flatMap((shape) => shape.edges.flatMap((edge) => edge.edgeModifications));
 	}, [shapes]);
 
+	const shapePointsCount = useMemo(() => {
+		return shapes.reduce((sum, shape) => sum + shape.points.length, 0);
+	}, [shapes]);
+
 	return (
 		<div
 			ref={containerRef}
@@ -373,6 +372,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 				lastDirection={lastDirection}
 				onDebugModeChange={setIsDebugMode}
 				allModifications={allModifications}
+				shapePointsCount={shapePointsCount}
 			/>
 
 			<Stage

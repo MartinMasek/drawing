@@ -10,7 +10,7 @@ import { textCreateSchema, textUpdateSchema } from "~/server/types/text-types";
 import type { CanvasShape, CanvasText, EdgeModification } from "~/types/drawing";
 import { getShapeEdgePointIndices } from "~/utils/shape-utils";
 import type { PrismaClient } from "@prisma/client";
-import { generateEdgePoints } from "~/components/canvasShapes/edgeUtils";
+import { generateEdgePoints } from "~/components/shape/edgeUtils";
 
 /**
  * Regenerate and save all points for an edge with modifications
@@ -66,7 +66,6 @@ async function regenerateEdgePoints(
 		edge.point1,
 		edge.point2,
 		modifications,
-		0.05, // Lower density for database storage
 	);
 
 	// Delete old intermediate points
@@ -321,7 +320,37 @@ export const designRouter = createTRPCRouter({
 			};
 		}),
 
-	// Update shape position and points
+	// Update shape position only (preserves edges and modifications)
+	updateShapePosition: publicProcedure
+		.input(
+			z.object({
+				shapeId: z.string(),
+				xPos: z.number(),
+				yPos: z.number(),
+				rotation: z.number().optional(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const shape = await ctx.db.shape.update({
+				where: { id: input.shapeId },
+				data: {
+					xPos: input.xPos,
+					yPos: input.yPos,
+					...(input.rotation !== undefined && { rotation: input.rotation }),
+				},
+				select: {
+					id: true,
+					xPos: true,
+					yPos: true,
+					rotation: true,
+					points: { select: { id: true, xPos: true, yPos: true } },
+				},
+			});
+
+			return shape;
+		}),
+
+	// Update shape position and points (WARNING: This recreates points, breaking edges)
 	updateShape: publicProcedure
 		.input(
 			z.object({
@@ -554,8 +583,8 @@ export const designRouter = createTRPCRouter({
 				});
 
 				const result = await ctx.db.edgeModification.update({
-					where: { id: input.edgeModificationId },
-					data: {
+						where: { id: input.edgeModificationId },
+						data: {
 						edgeType: input.edgeModification.edgeType,
 						position: input.edgeModification.position,
 						distance: input.edgeModification.distance,
@@ -564,19 +593,19 @@ export const designRouter = createTRPCRouter({
 						sideAngleLeft: input.edgeModification.sideAngleLeft,
 						sideAngleRight: input.edgeModification.sideAngleRight,
 						fullRadiusDepth: input.edgeModification.fullRadiusDepth,
-						points: {
-							create: input.edgeModification.points.map((p) => ({
-								xPos: p.xPos,
-								yPos: p.yPos,
-							})),
+							points: {
+								create: input.edgeModification.points.map((p) => ({
+									xPos: p.xPos,
+									yPos: p.yPos,
+								})),
+							},
 						},
-					},
 				});
 				return result;
 			}
 			
 			const result = await ctx.db.edgeModification.create({
-				data: {
+						data: {
 					edgeType: input.edgeModification.edgeType,
 					position: input.edgeModification.position,
 					distance: input.edgeModification.distance,
@@ -585,15 +614,15 @@ export const designRouter = createTRPCRouter({
 					sideAngleLeft: input.edgeModification.sideAngleLeft,
 					sideAngleRight: input.edgeModification.sideAngleRight,
 					fullRadiusDepth: input.edgeModification.fullRadiusDepth,
-					edgeId: input.edgeId,
-					points: {
-						create: input.edgeModification.points.map((p) => ({
-							xPos: p.xPos,
-							yPos: p.yPos,
-						})),
-					},
-				},
-			});
+							edgeId: input.edgeId,
+							points: {
+								create: input.edgeModification.points.map((p) => ({
+									xPos: p.xPos,
+									yPos: p.yPos,
+								})),
+							},
+						},
+				  });
 			return result;
 		}),
 

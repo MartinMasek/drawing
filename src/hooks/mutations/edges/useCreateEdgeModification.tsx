@@ -1,6 +1,6 @@
 import { api } from "~/utils/api";
 import { useShape } from "~/components/header/context/ShapeContext";
-import { generateEdgePoints } from "~/components/canvasShapes/edgeUtils";
+import { generateEdgePoints } from "~/components/shape/edgeUtils";
 import type { Point } from "~/types/drawing";
 
 export const useCreateEdgeModification = (designId: string | undefined) => {
@@ -43,7 +43,6 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
                             point1,
                             point2,
                             [edgeModification],
-                            0.05 // Point density for rendering
                         );
                         
                         // Convert Coordinate[] to Point[] (without IDs since they'll be created by backend)
@@ -195,7 +194,7 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
                                                     sideAngleLeft: data.sideAngleLeft ?? 0,
                                                     sideAngleRight: data.sideAngleRight ?? 0,
                                                     fullRadiusDepth: data.fullRadiusDepth ?? 0,
-                                                    points: data.points ?? [],
+                                                    points: mod.points ?? [],
                                                 };
                                             }
                                             return mod;
@@ -224,7 +223,7 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
                                 sideAngleLeft: data.sideAngleLeft ?? 0,
                                 sideAngleRight: data.sideAngleRight ?? 0,
                                 fullRadiusDepth: data.fullRadiusDepth ?? 0,
-                                points: data.points ?? [],
+                                points: [],
                             },
                         ],
                     };

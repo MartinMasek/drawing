@@ -16,6 +16,7 @@ interface DebugSidePanelProps {
 	lastDirection: CardinalDirection | null;
 	onDebugModeChange: (enabled: boolean) => void;
 	allModifications: EdgeModification[];
+	shapePointsCount?: number;
 }
 
 const DebugSidePanel: FC<DebugSidePanelProps> = ({
@@ -25,6 +26,7 @@ const DebugSidePanel: FC<DebugSidePanelProps> = ({
 	lastDirection,
 	onDebugModeChange,
 	allModifications,
+	shapePointsCount = 0,
 }) => {
 		const { isOpenSideDialog} = useDrawing();
 
@@ -71,7 +73,53 @@ const DebugSidePanel: FC<DebugSidePanelProps> = ({
 					</div>
 
 					<div className="rounded-lg bg-gray-100 p-4">
-						<h3 className="mb-2 font-semibold text-lg">All Modifications</h3>
+						<h3 className="mb-2 font-semibold text-lg">Points Visualization</h3>
+						<div className="space-y-2">
+							<div className="flex items-center justify-between rounded bg-white px-3 py-2">
+								<span className="font-medium text-sm">
+									<span className="mr-2 inline-block size-3 rounded-full bg-[#00BFFF]" />
+									Shape Points:
+								</span>
+								<span className="font-mono text-sm">
+									{shapePointsCount}
+								</span>
+							</div>
+							<div className="flex items-center justify-between rounded bg-white px-3 py-2">
+								<span className="font-medium text-sm">
+									<span className="mr-2 inline-block size-3 rounded-full bg-[#FF00FF]" />
+									Modification Points:
+								</span>
+								<span className="font-mono text-sm">
+									{allModifications.reduce((sum, mod) => sum + (mod.points?.length || 0), 0)}
+								</span>
+							</div>
+							<div className="flex items-center justify-between rounded bg-white px-3 py-2">
+								<span className="font-medium text-sm">Total Modifications:</span>
+								<span className="font-mono text-sm">
+									{allModifications.length}
+								</span>
+							</div>
+							{allModifications.map((mod, idx) => (
+								<div key={mod.id || idx} className="rounded bg-white px-3 py-2">
+									<div className="flex items-center justify-between">
+										<span className="font-medium text-sm">Mod {idx + 1}:</span>
+										<span className="font-mono text-gray-600 text-xs">
+											{mod.type}
+										</span>
+									</div>
+									<div className="mt-1 flex items-center justify-between">
+										<span className="text-gray-600 text-xs">Points:</span>
+										<span className="font-mono text-xs">
+											{mod.points?.length || 0}
+										</span>
+									</div>
+								</div>
+							))}
+						</div>
+					</div>
+
+					<div className="rounded-lg bg-gray-100 p-4">
+						<h3 className="mb-2 font-semibold text-lg">All Modifications (Raw)</h3>
 						<pre className="overflow-auto rounded bg-white p-3 text-xs">
 							{JSON.stringify(allModifications, null, 2)}
 						</pre>

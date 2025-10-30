@@ -6,12 +6,12 @@ import {
 } from "@tabler/icons-react";
 import { useState } from "react";
 import type { CanvasShape } from "~/types/drawing";
-import { useCreateShape, isTempShapeId, registerPendingUpdate } from "../../hooks/mutations/useCreateShape";
-import { useDeleteShape } from "../../hooks/mutations/useDeleteShape";
-import { useUpdateShape } from "../../hooks/mutations/useUpdateShape";
-import { SelectStyled } from "../SelectStyled";
-import ButtonGroup from "../ui/ButtonGroup";
-import ToggleButton from "../ui/ToggleButton";
+import { useCreateShape, isTempShapeId, registerPendingUpdate } from "../../../hooks/mutations/useCreateShape";
+import { useDeleteShape } from "../../../hooks/mutations/useDeleteShape";
+import { useUpdateShape } from "../../../hooks/mutations/useUpdateShape";
+import { SelectStyled } from "../../SelectStyled";
+import ButtonGroup from "../../ui/ButtonGroup";
+import ToggleButton from "../../ui/ToggleButton";
 import { api } from "~/utils/api";
 
 interface RotationOption {

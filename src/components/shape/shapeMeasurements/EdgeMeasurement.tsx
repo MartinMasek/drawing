@@ -13,6 +13,8 @@ interface EdgeMeasurementProps {
 	endPoint: Coordinate;
 	length: number;
 	scale: number;
+	/** Additional offset distance to avoid overlapping with edge modifications (bump-outs, curves) */
+	additionalOffset?: number;
 }
 
 /**
@@ -23,6 +25,7 @@ const EdgeMeasurement = ({
 	endPoint,
 	length,
 	scale,
+	additionalOffset = 0,
 }: EdgeMeasurementProps) => {
 	// Calculate edge properties
 	const dx = endPoint.xPos - startPoint.xPos;
@@ -35,7 +38,8 @@ const EdgeMeasurement = ({
 	// Calculate perpendicular offset for the arrow line (scaled to maintain constant visual distance)
 	const perpX = -dy / edgeLength;
 	const perpY = dx / edgeLength;
-	const offset = 20 / scale; // Distance from edge to arrow line, scaled inversely
+	// Base offset plus any additional offset for edge modifications
+	const offset = 20 / scale + additionalOffset;
 
 	// Calculate arrow line endpoints (parallel to the edge but offset)
 	const arrowStartX = startPoint.xPos + perpX * offset;

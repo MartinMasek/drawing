@@ -3,7 +3,7 @@ import { useShape } from "~/components/header/context/ShapeContext";
 import { api } from "~/utils/api";
 import { useDebouncedCallback } from "use-debounce";
 import { DEBOUNCE_DELAY } from "~/utils/canvas-constants";
-import { generateEdgePoints } from "~/components/canvasShapes/edgeUtils";
+import { generateEdgePoints } from "~/components/shape/edgeUtils";
 import type { EdgeModification } from "~/types/drawing";
 import type { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
 
@@ -29,7 +29,7 @@ export const useUpdateEdgeModificationDebounced = (designId: string | undefined)
     ) => {
         if (!designId) return;
 
-        // Update cache immediately
+        // Update cache immediately with recalculated points
         const previousData = utils.design.getById.getData({ id: designId });
         if (previousData) {
             utils.design.getById.setData(
@@ -40,11 +40,41 @@ export const useUpdateEdgeModificationDebounced = (designId: string | undefined)
                         ...shape,
                         edges: shape.edges.map((edge) => ({
                             ...edge,
-                            edgeModifications: edge.edgeModifications.map((mod) =>
-                                mod.id === edgeModificationId
-                                    ? { ...mod, ...updates }
-                                    : mod
-                            ),
+                            edgeModifications: edge.edgeModifications.map((mod) => {
+                                if (mod.id === edgeModificationId) {
+                                    const updatedMod = { ...mod, ...updates };
+                                    
+                                    // Recalculate points with the new values
+                                    const point1 = shape.points.find((p) => p.id === edge.point1Id);
+                                    const point2 = shape.points.find((p) => p.id === edge.point2Id);
+                                    
+                                    if (point1 && point2) {
+                                        const calculatedCoords = generateEdgePoints(
+                                            point1,
+                                            point2,
+                                            [updatedMod],
+                                        );
+                                        
+                                        // Map coordinates to points, preserving existing IDs where possible
+                                        const calculatedPoints = calculatedCoords.map((coord, index) => {
+                                            const existingPoint = mod.points[index];
+                                            return {
+                                                id: existingPoint?.id || `temp-${Date.now()}-${index}`,
+                                                xPos: coord.xPos,
+                                                yPos: coord.yPos,
+                                            };
+                                        });
+                                        
+                                        return {
+                                            ...updatedMod,
+                                            points: calculatedPoints,
+                                        };
+                                    }
+                                    
+                                    return updatedMod;
+                                }
+                                return mod;
+                            }),
                         })),
                     })),
                 }
@@ -62,17 +92,47 @@ export const useUpdateEdgeModificationDebounced = (designId: string | undefined)
             });
         }
 
-        // Update selected shape immediately
+        // Update selected shape immediately with recalculated points
         if (selectedShape) {
             const updatedShape = {
                 ...selectedShape,
                 edges: selectedShape.edges.map((edge) => ({
                     ...edge,
-                    edgeModifications: edge.edgeModifications.map((mod) =>
-                        mod.id === edgeModificationId
-                            ? { ...mod, ...updates }
-                            : mod
-                    )
+                    edgeModifications: edge.edgeModifications.map((mod) => {
+                        if (mod.id === edgeModificationId) {
+                            const updatedMod = { ...mod, ...updates };
+                            
+                            // Recalculate points with the new values
+                            const point1 = selectedShape.points.find((p) => p.id === edge.point1Id);
+                            const point2 = selectedShape.points.find((p) => p.id === edge.point2Id);
+                            
+                            if (point1 && point2) {
+                                const calculatedCoords = generateEdgePoints(
+                                    point1,
+                                    point2,
+                                    [updatedMod],
+                                );
+                                
+                                // Map coordinates to points, preserving existing IDs where possible
+                                const calculatedPoints = calculatedCoords.map((coord, index) => {
+                                    const existingPoint = mod.points[index];
+                                    return {
+                                        id: existingPoint?.id || `temp-${Date.now()}-${index}`,
+                                        xPos: coord.xPos,
+                                        yPos: coord.yPos,
+                                    };
+                                });
+                                
+                                return {
+                                    ...updatedMod,
+                                    points: calculatedPoints,
+                                };
+                            }
+                            
+                            return updatedMod;
+                        }
+                        return mod;
+                    })
                 })),
             };
             setSelectedShape(updatedShape);
@@ -107,7 +167,6 @@ export const useUpdateEdgeModificationDebounced = (designId: string | undefined)
                                 point1,
                                 point2,
                                 [fullModification],
-                                0.05
                             );
 
                             calculatedPoints = pointsWithoutIds.map((coord) => ({
@@ -174,6 +233,8 @@ export const useUpdateEdgeModificationDebounced = (designId: string | undefined)
             updateModification(id, { position }), [updateModification]),
         updateDistance: useCallback((id: string, distance: number) => 
             updateModification(id, { distance }), [updateModification]),
+        updateFullRadiusDepth: useCallback((id: string, fullRadiusDepth: number) => 
+            updateModification(id, { fullRadiusDepth }), [updateModification]),
         isLoading: updateShapeEdge.isPending,
         error: updateShapeEdge.error,
     };

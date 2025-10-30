@@ -33,7 +33,6 @@ const CurvesAnglesInput: FC<CurvesAnglesInputProps> = ({
 		{ label: "45°", value: 45 },
 		{ label: "60°", value: 60 },
 		{ label: "75°", value: 75 },
-		{ label: "90°", value: 90 },
 	];
 	return (
 		<div className="flex flex-col gap-2">
