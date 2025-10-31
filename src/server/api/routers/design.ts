@@ -12,8 +12,91 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { textCreateSchema, textUpdateSchema } from "~/server/types/text-types";
 import { defaultSinkCutoutValues } from "~/types/defaultValues";
-import type { CanvasShape, CanvasText } from "~/types/drawing";
+import type {
+	CanvasShape,
+	CanvasText,
+	EdgeModification,
+} from "~/types/drawing";
 import { getShapeEdgePointIndices } from "~/utils/shape-utils";
+import type { PrismaClient } from "@prisma/client";
+import { generateEdgePoints } from "~/components/shape/edgeUtils";
+
+/**
+ * Regenerate and save all points for an edge with modifications
+ */
+async function regenerateEdgePoints(
+	db: PrismaClient,
+	edgeId: string,
+): Promise<void> {
+	// Get the edge with its modifications and points
+	const edge = await db.edge.findUnique({
+		where: { id: edgeId },
+		include: {
+			point1: true,
+			point2: true,
+			edgeModifications: {
+				include: {
+					points: true,
+				},
+			},
+			shape: { select: { id: true } },
+		},
+	});
+
+	if (!edge) return;
+
+	// If no modifications, clear all intermediate points
+	if (edge.edgeModifications.length === 0) {
+		await db.point.deleteMany({
+			where: {
+				edgeModificationsPoints: {
+					some: { id: { in: edge.edgeModifications.map((mod) => mod.id) } },
+				},
+			},
+		});
+		return;
+	}
+
+	// Generate new points using shared utility
+	const modifications: EdgeModification[] = edge.edgeModifications.map(
+		(mod) => ({
+			id: mod.id,
+			type: mod.edgeType,
+			position: mod.position ?? EdgeShapePosition.Center,
+			distance: mod.distance ?? 0,
+			depth: mod.depth ?? 0,
+			width: mod.width ?? 0,
+			sideAngleLeft: mod.sideAngleLeft ?? 0,
+			sideAngleRight: mod.sideAngleRight ?? 0,
+			fullRadiusDepth: mod.fullRadiusDepth ?? 0,
+			points: mod.points ?? [],
+		}),
+	);
+
+	const newPoints = generateEdgePoints(edge.point1, edge.point2, modifications);
+
+	// Delete old intermediate points
+	await db.point.deleteMany({
+		where: {
+			edgeModificationsPoints: {
+				some: { id: { in: edge.edgeModifications.map((mod) => mod.id) } },
+			},
+		},
+	});
+
+	// Create new points and link to edge
+	if (newPoints.length > 0) {
+		await db.point.createMany({
+			data: newPoints.map((point) => ({
+				xPos: point.xPos,
+				yPos: point.yPos,
+				edgeModificationsPoints: {
+					connect: { id: { in: edge.edgeModifications.map((mod) => mod.id) } },
+				},
+			})),
+		});
+	}
+}
 
 export const designRouter = createTRPCRouter({
 	// Get all designs
@@ -71,6 +154,7 @@ export const designRouter = createTRPCRouter({
 											sideAngleLeft: true,
 											sideAngleRight: true,
 											fullRadiusDepth: true,
+											points: true,
 										},
 									},
 								},
@@ -190,6 +274,7 @@ export const designRouter = createTRPCRouter({
 						sideAngleLeft: em.sideAngleLeft ?? 0,
 						sideAngleRight: em.sideAngleRight ?? 0,
 						fullRadiusDepth: em.fullRadiusDepth ?? 0,
+						points: em.points ?? [],
 					})),
 				})),
 				corners: s.corners.map((c) => ({
@@ -338,7 +423,37 @@ export const designRouter = createTRPCRouter({
 			};
 		}),
 
-	// Update shape position and points
+	// Update shape position only (preserves edges and modifications)
+	updateShapePosition: publicProcedure
+		.input(
+			z.object({
+				shapeId: z.string(),
+				xPos: z.number(),
+				yPos: z.number(),
+				rotation: z.number().optional(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const shape = await ctx.db.shape.update({
+				where: { id: input.shapeId },
+				data: {
+					xPos: input.xPos,
+					yPos: input.yPos,
+					...(input.rotation !== undefined && { rotation: input.rotation }),
+				},
+				select: {
+					id: true,
+					xPos: true,
+					yPos: true,
+					rotation: true,
+					points: { select: { id: true, xPos: true, yPos: true } },
+				},
+			});
+
+			return shape;
+		}),
+
+	// Update shape position and points (WARNING: This recreates points, breaking edges)
 	updateShape: publicProcedure
 		.input(
 			z.object({
@@ -507,6 +622,7 @@ export const designRouter = createTRPCRouter({
 					sideAngleLeft: z.number(),
 					sideAngleRight: z.number(),
 					fullRadiusDepth: z.number().default(0),
+					points: z.array(z.object({ xPos: z.number(), yPos: z.number() })),
 				}),
 			}),
 		)
@@ -520,8 +636,40 @@ export const designRouter = createTRPCRouter({
 			});
 			return await ctx.db.edgeModification.create({
 				data: {
-					...input.edgeModification,
+					edgeType: input.edgeModification.edgeType,
+					position: input.edgeModification.position,
+					distance: input.edgeModification.distance,
+					depth: input.edgeModification.depth,
+					width: input.edgeModification.width,
+					sideAngleLeft: input.edgeModification.sideAngleLeft,
+					sideAngleRight: input.edgeModification.sideAngleRight,
+					fullRadiusDepth: input.edgeModification.fullRadiusDepth,
 					edgeId: edge.id,
+					points: {
+						create: input.edgeModification.points.map((p) => ({
+							xPos: p.xPos,
+							yPos: p.yPos,
+						})),
+					},
+				},
+				select: {
+					id: true,
+					edgeType: true,
+					position: true,
+					distance: true,
+					depth: true,
+					width: true,
+					sideAngleLeft: true,
+					sideAngleRight: true,
+					fullRadiusDepth: true,
+					edgeId: true,
+					points: {
+						select: {
+							id: true,
+							xPos: true,
+							yPos: true,
+						},
+					},
 				},
 			});
 		}),
@@ -540,29 +688,114 @@ export const designRouter = createTRPCRouter({
 					sideAngleLeft: z.number(),
 					sideAngleRight: z.number(),
 					fullRadiusDepth: z.number().default(0),
+					points: z.array(z.object({ xPos: z.number(), yPos: z.number() })),
 				}),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
 			// If edge modification id is provided, update existing edge modification
 			if (input.edgeModificationId) {
-				return await ctx.db.edgeModification.update({
-					where: { id: input.edgeModificationId },
-					data: input.edgeModification,
+				// Delete old points first
+				await ctx.db.point.deleteMany({
+					where: {
+						edgeModificationsPoints: {
+							some: { id: input.edgeModificationId },
+						},
+					},
 				});
+
+				const result = await ctx.db.edgeModification.update({
+					where: { id: input.edgeModificationId },
+					data: {
+						edgeType: input.edgeModification.edgeType,
+						position: input.edgeModification.position,
+						distance: input.edgeModification.distance,
+						depth: input.edgeModification.depth,
+						width: input.edgeModification.width,
+						sideAngleLeft: input.edgeModification.sideAngleLeft,
+						sideAngleRight: input.edgeModification.sideAngleRight,
+						fullRadiusDepth: input.edgeModification.fullRadiusDepth,
+						points: {
+							create: input.edgeModification.points.map((p) => ({
+								xPos: p.xPos,
+								yPos: p.yPos,
+							})),
+						},
+					},
+					select: {
+						id: true,
+						edgeType: true,
+						position: true,
+						distance: true,
+						depth: true,
+						width: true,
+						sideAngleLeft: true,
+						sideAngleRight: true,
+						fullRadiusDepth: true,
+						edgeId: true,
+						points: {
+							select: {
+								id: true,
+								xPos: true,
+								yPos: true,
+							},
+						},
+					},
+				});
+				return result;
 			}
-			return await ctx.db.edgeModification.create({
+
+			const result = await ctx.db.edgeModification.create({
 				data: {
-					...input.edgeModification,
+					edgeType: input.edgeModification.edgeType,
+					position: input.edgeModification.position,
+					distance: input.edgeModification.distance,
+					depth: input.edgeModification.depth,
+					width: input.edgeModification.width,
+					sideAngleLeft: input.edgeModification.sideAngleLeft,
+					sideAngleRight: input.edgeModification.sideAngleRight,
+					fullRadiusDepth: input.edgeModification.fullRadiusDepth,
 					edgeId: input.edgeId,
+					points: {
+						create: input.edgeModification.points.map((p) => ({
+							xPos: p.xPos,
+							yPos: p.yPos,
+						})),
+					},
+				},
+				select: {
+					id: true,
+					edgeType: true,
+					position: true,
+					distance: true,
+					depth: true,
+					width: true,
+					sideAngleLeft: true,
+					sideAngleRight: true,
+					fullRadiusDepth: true,
+					edgeId: true,
+					points: {
+						select: {
+							id: true,
+							xPos: true,
+							yPos: true,
+						},
+					},
 				},
 			});
+			return result;
 		}),
 
 	removeShapeEdgeModification: publicProcedure
 		.input(z.object({ edgeModificationId: z.string() }))
 		.mutation(async ({ ctx, input }) => {
-			return await ctx.db.edgeModification.update({
+			// Get the edge ID before updating
+			const modification = await ctx.db.edgeModification.findUnique({
+				where: { id: input.edgeModificationId },
+				select: { edgeId: true },
+			});
+
+			const result = await ctx.db.edgeModification.update({
 				where: { id: input.edgeModificationId },
 				data: {
 					edgeType: EdgeModificationType.None,
@@ -575,6 +808,13 @@ export const designRouter = createTRPCRouter({
 					fullRadiusDepth: 0,
 				},
 			});
+
+			// Regenerate edge points
+			if (modification) {
+				await regenerateEdgePoints(ctx.db, modification.edgeId);
+			}
+
+			return result;
 		}),
 
 	edgeModificationUpdateSize: publicProcedure
@@ -586,10 +826,23 @@ export const designRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			return await ctx.db.edgeModification.update({
+			// Get the edge ID
+			const modification = await ctx.db.edgeModification.findUnique({
+				where: { id: input.edgeModificationId },
+				select: { edgeId: true },
+			});
+
+			const result = await ctx.db.edgeModification.update({
 				where: { id: input.edgeModificationId },
 				data: { depth: input.depth, width: input.width },
 			});
+
+			// Regenerate edge points
+			if (modification) {
+				await regenerateEdgePoints(ctx.db, modification.edgeId);
+			}
+
+			return result;
 		}),
 	edgeModificationUpdateAngles: publicProcedure
 		.input(
@@ -600,13 +853,26 @@ export const designRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			return await ctx.db.edgeModification.update({
+			// Get the edge ID
+			const modification = await ctx.db.edgeModification.findUnique({
+				where: { id: input.edgeModificationId },
+				select: { edgeId: true },
+			});
+
+			const result = await ctx.db.edgeModification.update({
 				where: { id: input.edgeModificationId },
 				data: {
 					sideAngleLeft: input.sideAngleLeft,
 					sideAngleRight: input.sideAngleRight,
 				},
 			});
+
+			// Regenerate edge points
+			if (modification) {
+				await regenerateEdgePoints(ctx.db, modification.edgeId);
+			}
+
+			return result;
 		}),
 	edgeModificationUpdatePosition: publicProcedure
 		.input(
@@ -616,18 +882,44 @@ export const designRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			return await ctx.db.edgeModification.update({
+			// Get the edge ID
+			const modification = await ctx.db.edgeModification.findUnique({
+				where: { id: input.edgeModificationId },
+				select: { edgeId: true },
+			});
+
+			const result = await ctx.db.edgeModification.update({
 				where: { id: input.edgeModificationId },
 				data: { position: input.position },
 			});
+
+			// Regenerate edge points
+			if (modification) {
+				await regenerateEdgePoints(ctx.db, modification.edgeId);
+			}
+
+			return result;
 		}),
 	edgeModificationUpdateDistance: publicProcedure
 		.input(z.object({ edgeModificationId: z.string(), distance: z.number() }))
 		.mutation(async ({ ctx, input }) => {
-			return await ctx.db.edgeModification.update({
+			// Get the edge ID
+			const modification = await ctx.db.edgeModification.findUnique({
+				where: { id: input.edgeModificationId },
+				select: { edgeId: true },
+			});
+
+			const result = await ctx.db.edgeModification.update({
 				where: { id: input.edgeModificationId },
 				data: { distance: input.distance },
 			});
+
+			// Regenerate edge points
+			if (modification) {
+				await regenerateEdgePoints(ctx.db, modification.edgeId);
+			}
+
+			return result;
 		}),
 	edgeModificationUpdateFullRadiusDepth: publicProcedure
 		.input(

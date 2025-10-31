@@ -1,7 +1,7 @@
 import { Circle, Line, Image as KonvaImage } from "react-konva";
 import useImage from "use-image";
 import { CardinalDirection, type Coordinate, type DrawingAxis } from "~/types/drawing";
-import ShapeEdgeMeasurements from "./ShapeEdgeMeasurements";
+import ShapeEdgeMeasurements from "../../shapeMeasurements/ShapeEdgeMeasurements";
 import { SHAPE_DRAWING_DRAGGED_EDGE_COLOR, SHAPE_DRAWING_FILL_COLOR, SHAPE_DRAWING_OUTLINE_COLOR } from "~/utils/canvas-constants";
 
 type DrawingPreviewProps = {

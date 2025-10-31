@@ -53,6 +53,7 @@
 		"use-debounce": "^10.0.6",
 		"use-image": "^1.1.4",
 		"usehooks-ts": "^3.1.1",
+		"vitest": "^3.2.4",
 		"zod": "^3.24.2"
 	},
 	"devDependencies": {

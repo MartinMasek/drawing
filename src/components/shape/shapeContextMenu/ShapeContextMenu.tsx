@@ -6,13 +6,16 @@ import {
 } from "@tabler/icons-react";
 import { useState } from "react";
 import type { CanvasShape } from "~/types/drawing";
-import { useCreateShape, isTempShapeId, registerPendingUpdate } from "../../hooks/mutations/useCreateShape";
-import { useDeleteShape } from "../../hooks/mutations/useDeleteShape";
-import { useUpdateShape } from "../../hooks/mutations/useUpdateShape";
-import { SelectStyled } from "../SelectStyled";
-import ButtonGroup from "../ui/ButtonGroup";
-import ToggleButton from "../ui/ToggleButton";
+import { useCreateShape, isTempShapeId, registerPendingUpdate } from "../../../hooks/mutations/useCreateShape";
+import { useDeleteShape } from "../../../hooks/mutations/useDeleteShape";
+import { useUpdateShapePosition } from "../../../hooks/mutations/useUpdateShapePosition";
+import { useCreateEdgeModification } from "../../../hooks/mutations/edges/useCreateEdgeModification";
+import useCreateCornerModification from "../../../hooks/mutations/corners/useCreateCornerModification";
+import { SelectStyled } from "../../SelectStyled";
+import ButtonGroup from "../../ui/ButtonGroup";
+import ToggleButton from "../../ui/ToggleButton";
 import { api } from "~/utils/api";
+import { generateEdgePoints } from "~/components/shape/edgeUtils";
 
 interface RotationOption {
 	label: string;
@@ -51,7 +54,9 @@ const ShapeContextMenu = ({
 
 	const utils = api.useUtils();
 	const createShapeMutation = useCreateShape(designId);
-	const updateShapeMutation = useUpdateShape(designId);
+	const createEdgeModificationMutation = useCreateEdgeModification(designId);
+	const createCornerModificationMutation = useCreateCornerModification(designId);
+	const updateShapePositionMutation = useUpdateShapePosition(designId);
 	const deleteShapeMutation = useDeleteShape(designId);
 
 	const handleRotate = (degrees: number) => {
@@ -64,11 +69,6 @@ const ShapeContextMenu = ({
 				xPos: shape.xPos,
 				yPos: shape.yPos,
 				rotation: newRotation,
-				points: shape.points.map((point) => ({
-					id: point.id,
-					xPos: point.xPos,
-					yPos: point.yPos,
-				})),
 			});
 
 			// Update cache optimistically
@@ -87,25 +87,101 @@ const ShapeContextMenu = ({
 			return;
 		}
 
-		updateShapeMutation.mutate({
+		// Use position-only mutation to preserve edges and modifications
+		updateShapePositionMutation.mutate({
 			shapeId: shape.id,
 			xPos: shape.xPos,
 			yPos: shape.yPos,
 			rotation: newRotation,
-			points: [...shape.points],
 		});
 	};
 
-	const handleDuplicate = () => {
-		// Create duplicate with slight offset (20px right and down)
-		createShapeMutation.mutate({
-			designId,
-			xPos: shape.xPos + 20,
-			yPos: shape.yPos + 20,
-			rotation: shape.rotation,
-			points: [...shape.points],
-		});
-		onClose();
+	const handleDuplicate = async () => {
+		if (!designId) return;
+
+		try {
+			// Step 1: Create duplicate shape with slight offset (20px right and down)
+			const newShape = await createShapeMutation.mutateAsync({
+				designId,
+				xPos: shape.xPos + 20,
+				yPos: shape.yPos + 20,
+				rotation: shape.rotation,
+				points: shape.points.map((p) => ({ xPos: p.xPos, yPos: p.yPos })),
+			});
+
+			// Step 2: Duplicate all edge modifications
+			const edgesWithModifications = shape.edges.filter(
+				(edge) => edge.edgeModifications.length > 0,
+			);
+
+			for (const edge of edgesWithModifications) {
+				// Find the corresponding points in the new shape
+				const point1Index = shape.points.findIndex((p) => p.id === edge.point1Id);
+				const point2Index = shape.points.findIndex((p) => p.id === edge.point2Id);
+
+				if (point1Index === -1 || point2Index === -1) continue;
+
+				const newPoint1Id = newShape.points[point1Index]?.id;
+				const newPoint2Id = newShape.points[point2Index]?.id;
+				const newPoint1 = newShape.points[point1Index];
+				const newPoint2 = newShape.points[point2Index];
+
+				if (!newPoint1Id || !newPoint2Id || !newPoint1 || !newPoint2) continue;
+
+				// Create each modification on this edge
+				for (const modification of edge.edgeModifications) {
+					const calculatedPoints = generateEdgePoints(
+						newPoint1,
+						newPoint2,
+						[modification],
+					);
+
+					// The mutation hook handles optimistic updates automatically
+					createEdgeModificationMutation.mutate({
+						shapeId: newShape.id,
+						edgePoint1Id: newPoint1Id,
+						edgePoint2Id: newPoint2Id,
+						edgeModification: {
+							edgeType: modification.type,
+							position: modification.position,
+							distance: modification.distance,
+							depth: modification.depth,
+							width: modification.width,
+							sideAngleLeft: modification.sideAngleLeft,
+							sideAngleRight: modification.sideAngleRight,
+							fullRadiusDepth: modification.fullRadiusDepth,
+							points: calculatedPoints,
+						},
+					});
+				}
+			}
+
+			// Step 3: Duplicate all corner modifications
+			if (shape.corners && shape.corners.length > 0) {
+				for (const corner of shape.corners) {
+					const pointIndex = shape.points.findIndex((p) => p.id === corner.pointId);
+					if (pointIndex === -1) continue;
+
+					const newPointId = newShape.points[pointIndex]?.id;
+					if (!newPointId) continue;
+
+					// The mutation hook handles optimistic updates automatically
+					createCornerModificationMutation.mutate({
+						shapeId: newShape.id,
+						pointId: newPointId,
+						type: corner.type,
+						clip: corner.clip,
+						radius: corner.radius,
+						modificationLength: corner.modificationLength ?? 0,
+						modificationDepth: corner.modificationDepth ?? 0,
+					});
+				}
+			}
+
+			onClose();
+		} catch (error) {
+			console.error("Failed to duplicate shape:", error);
+		}
 	};
 
 	const handleDelete = () => {

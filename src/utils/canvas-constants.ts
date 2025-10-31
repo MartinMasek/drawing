@@ -35,3 +35,29 @@ export const SHAPE_DRAWING_FILL_COLOR = "#93C5FD";
 
 // Debounce timing
 export const DEBOUNCE_DELAY = 500; // Debounce delay in milliseconds
+
+/**
+ * Get stroke color based on shape/edge selection and hover state
+ * Priority: selected > hovered > default
+ */
+export const getStrokeColor = (
+	isSelected: boolean,
+	isHovered: boolean,
+): string => {
+	if (isSelected) return SHAPE_SELECTED_STROKE_COLOR;
+	if (isHovered) return SHAPE_HOVERED_STROKE_COLOR;
+	return SHAPE_DEFAULT_STROKE_COLOR;
+};
+
+/**
+ * Get fill color based on shape selection and hover state
+ * Priority: selected > hovered > default
+ */
+export const getFillColor = (
+	isSelected: boolean,
+	isHovered: boolean,
+): string => {
+	if (isSelected) return SHAPE_SELECTED_FILL_COLOR;
+	if (isHovered) return SHAPE_HOVERED_FILL_COLOR;
+	return SHAPE_DEFAULT_FILL_COLOR;
+};

@@ -233,6 +233,14 @@ CREATE TABLE "public"."WaterfallConfig" (
     CONSTRAINT "WaterfallConfig_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "public"."_EdgeModificationPoints" (
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL,
+
+    CONSTRAINT "_EdgeModificationPoints_AB_pkey" PRIMARY KEY ("A","B")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Account_provider_providerAccountId_key" ON "public"."Account"("provider", "providerAccountId");
 
@@ -262,6 +270,9 @@ CREATE UNIQUE INDEX "BacksplashConfig_edgeId_key" ON "public"."BacksplashConfig"
 
 -- CreateIndex
 CREATE UNIQUE INDEX "WaterfallConfig_edgeId_key" ON "public"."WaterfallConfig"("edgeId");
+
+-- CreateIndex
+CREATE INDEX "_EdgeModificationPoints_B_index" ON "public"."_EdgeModificationPoints"("B");
 
 -- AddForeignKey
 ALTER TABLE "public"."Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -346,3 +357,9 @@ ALTER TABLE "public"."WaterfallConfig" ADD CONSTRAINT "WaterfallConfig_materialI
 
 -- AddForeignKey
 ALTER TABLE "public"."WaterfallConfig" ADD CONSTRAINT "WaterfallConfig_edgeId_fkey" FOREIGN KEY ("edgeId") REFERENCES "public"."Edge"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."_EdgeModificationPoints" ADD CONSTRAINT "_EdgeModificationPoints_A_fkey" FOREIGN KEY ("A") REFERENCES "public"."EdgeModification"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."_EdgeModificationPoints" ADD CONSTRAINT "_EdgeModificationPoints_B_fkey" FOREIGN KEY ("B") REFERENCES "public"."Point"("id") ON DELETE CASCADE ON UPDATE CASCADE;

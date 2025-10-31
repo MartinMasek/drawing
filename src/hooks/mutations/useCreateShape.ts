@@ -9,7 +9,7 @@ const pendingUpdates = new Map<
 		xPos: number;
 		yPos: number;
 		rotation?: number;
-		points: { id: string; xPos: number; yPos: number }[];
+		points?: { id: string; xPos: number; yPos: number }[];
 	}
 >();
 
@@ -101,19 +101,14 @@ export function useCreateShape(designId: string | undefined) {
 										clientId: context.clientId,
 										// Use edge indices from server response (already calculated)
 										edgeIndices: data.edgeIndices,
-										// Apply pending updates if any, otherwise use server data
-										...(pending && {
-											xPos: pending.xPos,
-											yPos: pending.yPos,
-											...(pending.rotation !== undefined && {
-												rotation: pending.rotation,
-											}),
-											points: pending.points,
+										// Apply pending position updates if any
+										xPos: pending ? pending.xPos : data.xPos,
+										yPos: pending ? pending.yPos : data.yPos,
+										...(pending?.rotation !== undefined && {
+											rotation: pending.rotation,
 										}),
-										// If no pending updates, use the real points from server
-										...(!pending && {
-											points: data.points,
-										}),
+										// Apply pending points if provided, otherwise use server points
+										points: pending?.points ?? data.points,
 									}
 								: shape,
 						),
@@ -137,7 +132,11 @@ export function isTempShapeId(shapeId: string): boolean {
 }
 
 /**
- * Register a pending update for a shape that's being created
+ * Register a pending update for a shape with a temp ID.
+ * This update will be applied when the shape creation completes.
+ * 
+ * @param tempId - The temporary ID of the shape
+ * @param update - The updates to apply (position required, points optional)
  */
 export function registerPendingUpdate(
 	tempId: string,
@@ -145,7 +144,7 @@ export function registerPendingUpdate(
 		xPos: number;
 		yPos: number;
 		rotation?: number;
-		points: { id: string; xPos: number; yPos: number }[];
+		points?: { id: string; xPos: number; yPos: number }[];
 	},
 ): void {
 	pendingUpdates.set(tempId, update);

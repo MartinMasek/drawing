@@ -15,6 +15,7 @@ import BumpInCurveIcon from "~/components/icons/BumpInCurveIcon";
 import FullCurveIcon from "~/components/icons/FullCurveIcon";
 import CurvesNoneIcon from "~/components/icons/CurvesNoneIcon";
 import { getDefaultValueForEdgeModification } from "~/types/defaultValues";
+import { generateEdgePoints } from "~/components/shape/edgeUtils";
 import { EdgeModificationList } from "~/types/drawing";
 
 interface CurvesAndBumpsSidePanelGeneralProps {
@@ -52,6 +53,19 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 
 		const defaultValues = getDefaultValueForEdgeModification(type);
 
+		const point1 = selectedShape.points.find((p) => p.id === selectedEdge.edgePoint1Id);
+		const point2 = selectedShape.points.find((p) => p.id === selectedEdge.edgePoint2Id);
+		if (!point1 || !point2) return;
+		const points = generateEdgePoints(
+			point1,
+			point2,
+			[{
+				type: type,
+				...defaultValues,
+			}],
+		);
+		console.log(points);
+
 		if (!selectedEdge.edgeId) { // If no edge id, create a new edge
 			createEdge.mutate({
 				shapeId: selectedShape.id,
@@ -60,6 +74,7 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 				edgeModification: {
 					edgeType: type,
 					...defaultValues,
+					points,
 				},
 			});
 
@@ -73,6 +88,7 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 				edgeModification: {
 					edgeType: type,
 					...defaultValues,
+					points,
 				}
 			});
 
