@@ -3,7 +3,11 @@
 // #########################################################
 
 import {
+	type CentrelinesX,
+	type CentrelinesY,
 	CornerType,
+	CutoutShape,
+	CutoutSinkType,
 	EdgeModificationType,
 	type EdgeShapePosition,
 } from "@prisma/client";
@@ -106,20 +110,17 @@ export interface CutoutTemplate {
 	config: CutoutConfig;
 }
 
-export type SinkType = "Undermount" | "Drop-in" | "Oval" | "Double";
-export type CutoutShape = "Rectangle" | "Oval" | "Double";
-
 export interface CutoutConfig {
 	id: string;
-	sinkType: SinkType;
+	sinkType: CutoutSinkType;
 	shape: CutoutShape;
 	length: number;
 	width: number;
 	holeCount: number;
-	centerRules: string; // TODO: Define CenterRules type
-	faucetRules: string; // TODO: Define FaucetRules type
-	product: Product;
-	linkedService: Service;
+	centrelinesX: CentrelinesX;
+	centrelinesY: CentrelinesY;
+	product?: Product;
+	linkedService?: Service;
 }
 
 export interface BacksplashConfig {
@@ -201,6 +202,7 @@ export type CanvasShape = {
 		modificationLength?: number;
 		modificationDepth?: number;
 	}[];
+	cutouts: Cutout[];
 };
 
 export type CanvasText = {
@@ -289,4 +291,23 @@ export const CornerModificationList: {
 	{ id: CornerType.BumpOut, label: "Bump-Out" },
 	{ id: CornerType.Notch, label: "Notch" },
 	{ id: CornerType.None, label: "None" },
+];
+
+export const CutoutShapeList: {
+	id: CutoutShape;
+	label: string;
+}[] = [
+	{ id: CutoutShape.Rectangle, label: "Rectangle" },
+	{ id: CutoutShape.Oval, label: "Oval" },
+	{ id: CutoutShape.Double, label: "Double" },
+];
+
+export const CutoutSinkTypeList: {
+	id: CutoutSinkType;
+	label: string;
+}[] = [
+	{ id: CutoutSinkType.Undermount, label: "Undermount" },
+	{ id: CutoutSinkType.DropIn, label: "Drop-In" },
+	{ id: CutoutSinkType.Oval, label: "Oval" },
+	{ id: CutoutSinkType.Double, label: "Double" },
 ];

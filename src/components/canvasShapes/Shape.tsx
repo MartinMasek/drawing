@@ -1,7 +1,7 @@
 import type { KonvaEventObject } from "konva/lib/Node";
 import type { Context } from "konva/lib/Context";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Line, Group, Circle } from "react-konva";
+import { Line, Group, Circle, Rect } from "react-konva";
 import type { CanvasShape, Coordinate } from "~/types/drawing";
 import {
 	SHAPE_DEFAULT_STROKE_COLOR,
@@ -10,6 +10,7 @@ import {
 	SHAPE_HOVERED_FILL_COLOR,
 	SHAPE_SELECTED_STROKE_COLOR,
 	SHAPE_SELECTED_FILL_COLOR,
+	DPI,
 } from "~/utils/canvas-constants";
 import ShapeEdgeMeasurements from "./ShapeEdgeMeasurements";
 import {
@@ -196,7 +197,7 @@ const Shape = ({
 	const [isDragging, setIsDragging] = useState(false);
 	const prevShapePos = useRef({ x: shape.xPos, y: shape.yPos });
 	const { setCursorType } = useDrawing();
-	const { selectedEdge, selectedCorner, setSelectedEdge, setSelectedCorner } =
+	const { selectedEdge, selectedCorner, selectedCutout, setSelectedShape, setSelectedEdge, setSelectedCorner, setSelectedCutout } =
 		useShape();
 
 	// Reset drag offset when shape position changes (after optimistic update)
@@ -252,6 +253,8 @@ const Shape = ({
 	const isEdgesMode =
 		activeTab === DrawingTab.Edges || activeTab === DrawingTab.Shape;
 	const isShapeMode = activeTab === DrawingTab.Shape;
+
+	const isCutoutsMode = activeTab === DrawingTab.Cutouts;
 
 	const handleDragStart = () => {
 		setIsDragging(true);
@@ -514,6 +517,31 @@ const Shape = ({
 				onDragEnd={handleDragEnd}
 				onDragStart={handleDragStart}
 			/>
+
+			{isCutoutsMode && (
+				shape.cutouts.map((cutout, index) => {
+					const isCutoutSelected = selectedCutout?.id === cutout.id;
+					const hasProduct = cutout.config.product !== null;
+					return (
+						<Rect
+							key={`${shape.id}-cutout-${index}`}
+							x={cutout.posX}
+							y={cutout.posY}
+							fill={isCutoutSelected ? "#FFEDD5" : "#FBFCFE"}
+							stroke={isCutoutSelected ? "#C2410C" : "#6B7280"}
+							strokeWidth={1}
+							cornerRadius={4}
+							dash={hasProduct ? [2, 2] : undefined}
+							width={cutout.config.length * DPI} // Convert inches to pixels
+							height={cutout.config.width * DPI} // Convert inches to pixels
+							onClick={() => {
+								setSelectedCutout(cutout);
+								setSelectedShape(shape);
+							}}
+						/>
+					);
+				})
+			)}
 
 			<ShapeEdgeMeasurements points={absolutePoints} scale={scale} />
 		</>

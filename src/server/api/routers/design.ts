@@ -1,5 +1,9 @@
 import {
+	CentrelinesX,
+	CentrelinesY,
 	CornerType,
+	CutoutShape,
+	CutoutSinkType,
 	EdgeModificationType,
 	EdgeShapePosition,
 } from "@prisma/client";
@@ -7,6 +11,7 @@ import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { textCreateSchema, textUpdateSchema } from "~/server/types/text-types";
+import { defaultSinkCutoutValues } from "~/types/defaultValues";
 import type { CanvasShape, CanvasText } from "~/types/drawing";
 import { getShapeEdgePointIndices } from "~/utils/shape-utils";
 
@@ -81,6 +86,67 @@ export const designRouter = createTRPCRouter({
 									modificationDepth: true,
 								},
 							},
+							cutouts: {
+								select: {
+									id: true,
+									posX: true,
+									posY: true,
+									config: {
+										select: {
+											id: true,
+											sinkType: true,
+											shape: true,
+											length: true,
+											width: true,
+											holeCount: true,
+											centrelinesX: true,
+											centrelinesY: true,
+											product: {
+												select: {
+													id: true,
+													name: true,
+												},
+											},
+											service: {
+												select: {
+													id: true,
+													name: true,
+												},
+											},
+										},
+									},
+									template: {
+										select: {
+											id: true,
+											name: true,
+											config: {
+												select: {
+													id: true,
+													sinkType: true,
+													shape: true,
+													length: true,
+													width: true,
+													holeCount: true,
+													centrelinesX: true,
+													centrelinesY: true,
+													product: {
+														select: {
+															id: true,
+															name: true,
+														},
+													},
+													service: {
+														select: {
+															id: true,
+															name: true,
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
 						},
 					},
 					texts: {
@@ -134,6 +200,41 @@ export const designRouter = createTRPCRouter({
 					radius: c.radius ?? 0,
 					modificationLength: c.modificationLength ?? 0,
 					modificationDepth: c.modificationDepth ?? 0,
+				})),
+				cutouts: s.cutouts.map((c) => ({
+					id: c.id,
+					posX: c.posX,
+					posY: c.posY,
+					config: {
+						id: c.config.id,
+						sinkType: c.config.sinkType,
+						shape: c.config.shape,
+						length: c.config.length,
+						width: c.config.width,
+						holeCount: c.config.holeCount,
+						centrelinesX: c.config.centrelinesX,
+						centrelinesY: c.config.centrelinesY,
+						product: c.config.product ?? undefined,
+						linkedService: c.config.service ?? undefined,
+					},
+					template: c.template
+						? {
+								id: c.template.id,
+								name: c.template.name,
+								config: {
+									id: c.template.config.id,
+									sinkType: c.template.config.sinkType,
+									shape: c.template.config.shape,
+									length: c.template.config.length,
+									width: c.template.config.width,
+									holeCount: c.template.config.holeCount,
+									centrelinesX: c.template.config.centrelinesX,
+									centrelinesY: c.template.config.centrelinesY,
+									product: c.template.config.product ?? undefined,
+									linkedService: c.template.config.service ?? undefined,
+								},
+							}
+						: undefined,
 				})),
 			}));
 
@@ -632,6 +733,123 @@ export const designRouter = createTRPCRouter({
 			return await ctx.db.corner.update({
 				where: { id: input.cornerId },
 				data: { clip: input.clip },
+			});
+		}),
+
+	createCutout: publicProcedure
+		.input(
+			z.object({
+				shapeId: z.string(),
+				sinkType: z.nativeEnum(CutoutSinkType),
+				shape: z.nativeEnum(CutoutShape),
+				posX: z.number(),
+				posY: z.number(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const config = await ctx.db.cutoutConfig.create({
+				data: {
+					sinkType: input.sinkType,
+					shape: input.shape,
+					length: defaultSinkCutoutValues.length,
+					width: defaultSinkCutoutValues.width,
+					holeCount: defaultSinkCutoutValues.holeCount,
+				},
+			});
+
+			const cutout = await ctx.db.cutout.create({
+				data: {
+					shapeId: input.shapeId,
+					posX: input.posX,
+					posY: input.posY,
+					configId: config.id,
+				},
+				select: {
+					id: true,
+					posX: true,
+					posY: true,
+					config: {
+						select: {
+							id: true,
+						},
+					},
+				},
+			});
+
+			return cutout;
+		}),
+	updateSinkType: publicProcedure
+		.input(
+			z.object({
+				cutoutConfigId: z.string(),
+				sinkType: z.nativeEnum(CutoutSinkType),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.cutoutConfig.update({
+				where: { id: input.cutoutConfigId },
+				data: { sinkType: input.sinkType },
+			});
+		}),
+	updateSinkShape: publicProcedure
+		.input(
+			z.object({
+				cutoutConfigId: z.string(),
+				cutoutShape: z.nativeEnum(CutoutShape),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.cutoutConfig.update({
+				where: { id: input.cutoutConfigId },
+				data: { shape: input.cutoutShape },
+			});
+		}),
+	updateSinkSize: publicProcedure
+		.input(
+			z.object({
+				cutoutConfigId: z.string(),
+				length: z.number(),
+				width: z.number(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.cutoutConfig.update({
+				where: { id: input.cutoutConfigId },
+				data: { length: input.length, width: input.width },
+			});
+		}),
+	updateSinkFaucetHoles: publicProcedure
+		.input(z.object({ cutoutConfigId: z.string(), holeCount: z.number() }))
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.cutoutConfig.update({
+				where: { id: input.cutoutConfigId },
+				data: { holeCount: input.holeCount },
+			});
+		}),
+
+	updateSinkCentrelines: publicProcedure
+		.input(
+			z.object({
+				cutoutConfigId: z.string(),
+				centrelinesX: z.nativeEnum(CentrelinesX),
+				centrelinesY: z.nativeEnum(CentrelinesY),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.cutoutConfig.update({
+				where: { id: input.cutoutConfigId },
+				data: {
+					centrelinesX: input.centrelinesX,
+					centrelinesY: input.centrelinesY,
+				},
+			});
+		}),
+
+	removeCutout: publicProcedure
+		.input(z.object({ cutoutId: z.string() }))
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.cutout.delete({
+				where: { id: input.cutoutId },
 			});
 		}),
 });

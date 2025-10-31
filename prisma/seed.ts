@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { CutoutShape, CutoutSinkType, PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -109,8 +109,8 @@ async function main() {
 	// Create cutout with config
 	const cutoutConfig1 = await prisma.cutoutConfig.create({
 		data: {
-			sinkType: "Undermount",
-			shape: "Rectangle",
+			sinkType: CutoutSinkType.Undermount,
+			shape: CutoutShape.Rectangle,
 			length: 30,
 			width: 18,
 			holeCount: 1,
@@ -186,8 +186,8 @@ async function main() {
 	// Add a faucet cutout on the notched shape
 	const s1b_cutoutCfg = await prisma.cutoutConfig.create({
 		data: {
-			sinkType: "Undermount",
-			shape: "Rectangle",
+			sinkType: CutoutSinkType.Undermount,
+			shape: CutoutShape.Rectangle,
 			length: 1.5,
 			width: 1.5,
 			holeCount: 1,

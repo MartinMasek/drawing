@@ -26,7 +26,12 @@ export function useCanvasNavigation() {
 		panStart,
 		setPanStart,
 	} = useDrawing();
-	const { setSelectedShape, setSelectedEdge, setSelectedCorner } = useShape();
+	const {
+		setSelectedShape,
+		setSelectedEdge,
+		setSelectedCorner,
+		setSelectedCutout,
+	} = useShape();
 	const { setIsOpenSideDialog } = useDrawing();
 
 	/** Zoom towards cursor on mouse wheel */
@@ -88,10 +93,12 @@ export function useCanvasNavigation() {
 			});
 		}
 
+		// Reset selected shape, edge, and corner when empty space is clicked
 		if (e.target === e.target.getStage()) {
 			setSelectedShape(null);
 			setSelectedEdge(null);
 			setSelectedCorner(null);
+			setSelectedCutout(null);
 			setIsOpenSideDialog(false);
 		}
 	};

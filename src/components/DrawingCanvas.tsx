@@ -518,6 +518,8 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 						<CutoutContextMenu
 							x={cutoutContextMenu.x}
 							y={cutoutContextMenu.y}
+							shape={shape}
+							designId={designId}
 							onClose={handleCloseCutoutContextMenu}
 						/>
 					);

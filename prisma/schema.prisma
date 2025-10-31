@@ -238,20 +238,43 @@ model CutoutTemplate {
 }
 
 model CutoutConfig {
-    id          String          @id @default(cuid())
-    sinkType    String // "Undermount" | "Drop-in" | "Oval" | "Double"
-    shape       String // "Rectangle" | "Oval" | "Double"
-    length      Float
-    width       Float
-    holeCount   Int
-    centerRules String? // TODO: JSON or separate model
-    faucetRules String? // TODO: JSON or separate model
-    productId   String
-    product     Product         @relation(fields: [productId], references: [id])
-    serviceId   String
-    service     Service         @relation(fields: [serviceId], references: [id])
-    cutout      Cutout?
-    template    CutoutTemplate?
+    id           String          @id @default(cuid())
+    sinkType     CutoutSinkType
+    shape        CutoutShape
+    length       Float
+    width        Float
+    holeCount    Int
+    centrelinesX CentrelinesX    @default(Left)
+    centrelinesY CentrelinesY    @default(Top)
+    productId    String?
+    product      Product?        @relation(fields: [productId], references: [id])
+    serviceId    String?
+    service      Service?        @relation(fields: [serviceId], references: [id])
+    cutout       Cutout?
+    template     CutoutTemplate?
+}
+
+enum CentrelinesX {
+    Left
+    Right
+}
+
+enum CentrelinesY {
+    Top
+    Bottom
+}
+
+enum CutoutSinkType {
+    Undermount
+    DropIn
+    Oval
+    Double
+}
+
+enum CutoutShape {
+    Rectangle
+    Oval
+    Double
 }
 
 model Service {

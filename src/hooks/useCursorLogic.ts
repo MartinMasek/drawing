@@ -60,7 +60,7 @@ export const useCursorLogic = ({
 
 		// Cutout cursor
 		if (cursorFlags.isCursorCutouts && hoveredId) {
-			return 'url("/cursors/cutout.svg") 0 0, crosshair';
+			return 'url("/cursors/cutout.svg") 12 12, crosshair';
 		}
 
 		// Pointer cursor

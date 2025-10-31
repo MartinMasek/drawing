@@ -1,0 +1,93 @@
+import { useCallback } from "react";
+import { api } from "~/utils/api";
+import { useShape } from "~/components/header/context/ShapeContext";
+import { DEBOUNCE_DELAY } from "~/utils/canvas-constants";
+import { useDebouncedCallback } from "use-debounce";
+
+const useUpdateSinkSizeDebounced = (designId: string | undefined) => {
+	const utils = api.useUtils();
+	const { selectedShape, setSelectedShape, selectedCutout, setSelectedCutout } =
+		useShape();
+
+	// Function to perform optimistic update immediately
+	const performOptimisticUpdate = useCallback(
+		(cutoutConfigId: string, length: number, width: number) => {
+			if (!designId) return;
+
+			// Update cache immediately
+			const previousData = utils.design.getById.getData({ id: designId });
+			if (previousData) {
+				utils.design.getById.setData(
+					{ id: designId },
+					{
+						...previousData,
+						shapes: previousData.shapes.map((shape) => ({
+							...shape,
+							cutouts: shape.cutouts.map((cutout) =>
+								cutout.config.id === cutoutConfigId
+									? { ...cutout, config: { ...cutout.config, length, width } }
+									: cutout,
+							),
+						})),
+					},
+				);
+			}
+
+			// Update selected edge immediately
+			if (selectedCutout && selectedCutout.config.id === cutoutConfigId) {
+				setSelectedCutout({
+					...selectedCutout,
+					config: { ...selectedCutout.config, length, width },
+				});
+			}
+
+			// Update selected shape immediately
+			if (selectedShape) {
+				setSelectedShape({
+					...selectedShape,
+					cutouts: selectedShape.cutouts.map((cutout) =>
+						cutout.config.id === cutoutConfigId
+							? { ...cutout, config: { ...cutout.config, length, width } }
+							: cutout,
+					),
+				});
+			}
+		},
+		[
+			designId,
+			utils,
+			selectedCutout,
+			setSelectedCutout,
+			selectedShape,
+			setSelectedShape,
+		],
+	);
+
+	const mutation = api.design.updateSinkSize.useMutation({
+		onSuccess: () => {
+			// The optimistic update already shows the correct data, and the server confirms it
+			// No additional action needed - the cache already has the correct data
+		},
+	});
+	const debouncedMutation = useDebouncedCallback(
+		(cutoutConfigId: string, length: number, width: number) => {
+			mutation.mutate({ cutoutConfigId, length, width });
+		},
+		DEBOUNCE_DELAY,
+	);
+
+	const updateSinkSize = useCallback(
+		(cutoutConfigId: string, length: number, width: number) => {
+			performOptimisticUpdate(cutoutConfigId, length, width);
+			debouncedMutation(cutoutConfigId, length, width);
+		},
+		[performOptimisticUpdate, debouncedMutation],
+	);
+
+	return {
+		updateSinkSize,
+		isLoading: mutation.isPending,
+		error: mutation.error,
+	};
+};
+export default useUpdateSinkSizeDebounced;
