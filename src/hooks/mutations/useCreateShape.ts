@@ -56,6 +56,7 @@ export function useCreateShape(designId: string | undefined) {
 					})),
 					edges: [],
 					corners: [],
+					sinkCutouts: [],
 					// Pre-calculate edge indices for immediate visualization
 					edgeIndices: getShapeEdgePointIndices(newShape.points),
 				};

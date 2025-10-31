@@ -86,7 +86,7 @@ export const designRouter = createTRPCRouter({
 									modificationDepth: true,
 								},
 							},
-							cutouts: {
+							sinkCutouts: {
 								select: {
 									id: true,
 									posX: true,
@@ -201,11 +201,11 @@ export const designRouter = createTRPCRouter({
 					modificationLength: c.modificationLength ?? 0,
 					modificationDepth: c.modificationDepth ?? 0,
 				})),
-				cutouts: s.cutouts.map((c) => ({
+				sinkCutouts: s.sinkCutouts.map((c) => ({
 					id: c.id,
 					posX: c.posX,
 					posY: c.posY,
-					config: {
+					sinkCutoutConfig: {
 						id: c.config.id,
 						sinkType: c.config.sinkType,
 						shape: c.config.shape,
@@ -217,11 +217,11 @@ export const designRouter = createTRPCRouter({
 						product: c.config.product ?? undefined,
 						linkedService: c.config.service ?? undefined,
 					},
-					template: c.template
+					sinkCutoutTemplate: c.template
 						? {
 								id: c.template.id,
 								name: c.template.name,
-								config: {
+								sinkCutoutConfig: {
 									id: c.template.config.id,
 									sinkType: c.template.config.sinkType,
 									shape: c.template.config.shape,
@@ -747,7 +747,7 @@ export const designRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			const config = await ctx.db.cutoutConfig.create({
+			const config = await ctx.db.sinkCutoutConfig.create({
 				data: {
 					sinkType: input.sinkType,
 					shape: input.shape,
@@ -757,7 +757,7 @@ export const designRouter = createTRPCRouter({
 				},
 			});
 
-			const cutout = await ctx.db.cutout.create({
+			const cutout = await ctx.db.sinkCutout.create({
 				data: {
 					shapeId: input.shapeId,
 					posX: input.posX,
@@ -786,7 +786,7 @@ export const designRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			return await ctx.db.cutoutConfig.update({
+			return await ctx.db.sinkCutoutConfig.update({
 				where: { id: input.cutoutConfigId },
 				data: { sinkType: input.sinkType },
 			});
@@ -799,7 +799,7 @@ export const designRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			return await ctx.db.cutoutConfig.update({
+			return await ctx.db.sinkCutoutConfig.update({
 				where: { id: input.cutoutConfigId },
 				data: { shape: input.cutoutShape },
 			});
@@ -813,7 +813,7 @@ export const designRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			return await ctx.db.cutoutConfig.update({
+			return await ctx.db.sinkCutoutConfig.update({
 				where: { id: input.cutoutConfigId },
 				data: { length: input.length, width: input.width },
 			});
@@ -821,7 +821,7 @@ export const designRouter = createTRPCRouter({
 	updateSinkFaucetHoles: publicProcedure
 		.input(z.object({ cutoutConfigId: z.string(), holeCount: z.number() }))
 		.mutation(async ({ ctx, input }) => {
-			return await ctx.db.cutoutConfig.update({
+			return await ctx.db.sinkCutoutConfig.update({
 				where: { id: input.cutoutConfigId },
 				data: { holeCount: input.holeCount },
 			});
@@ -836,7 +836,7 @@ export const designRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			return await ctx.db.cutoutConfig.update({
+			return await ctx.db.sinkCutoutConfig.update({
 				where: { id: input.cutoutConfigId },
 				data: {
 					centrelinesX: input.centrelinesX,
@@ -848,7 +848,7 @@ export const designRouter = createTRPCRouter({
 	removeCutout: publicProcedure
 		.input(z.object({ cutoutId: z.string() }))
 		.mutation(async ({ ctx, input }) => {
-			return await ctx.db.cutout.delete({
+			return await ctx.db.sinkCutout.delete({
 				where: { id: input.cutoutId },
 			});
 		}),

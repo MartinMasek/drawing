@@ -24,11 +24,14 @@ const useUpdateSinkShapeDebounced = (designId: string | undefined) => {
 						...previousData,
 						shapes: previousData.shapes.map((shape) => ({
 							...shape,
-							cutouts: shape.cutouts.map((cutout) =>
-								cutout.config.id === cutoutConfigId
+							sinkCutouts: shape.sinkCutouts.map((cutout) =>
+								cutout.sinkCutoutConfig.id === cutoutConfigId
 									? {
 											...cutout,
-											config: { ...cutout.config, shape: cutoutShape },
+											sinkCutoutConfig: {
+												...cutout.sinkCutoutConfig,
+												shape: cutoutShape,
+											},
 										}
 									: cutout,
 							),
@@ -38,10 +41,16 @@ const useUpdateSinkShapeDebounced = (designId: string | undefined) => {
 			}
 
 			// Update selected edge immediately
-			if (selectedCutout && selectedCutout.config.id === cutoutConfigId) {
+			if (
+				selectedCutout &&
+				selectedCutout.sinkCutoutConfig.id === cutoutConfigId
+			) {
 				setSelectedCutout({
 					...selectedCutout,
-					config: { ...selectedCutout.config, shape: cutoutShape },
+					sinkCutoutConfig: {
+						...selectedCutout.sinkCutoutConfig,
+						shape: cutoutShape,
+					},
 				});
 			}
 
@@ -49,9 +58,15 @@ const useUpdateSinkShapeDebounced = (designId: string | undefined) => {
 			if (selectedShape) {
 				setSelectedShape({
 					...selectedShape,
-					cutouts: selectedShape.cutouts.map((cutout) =>
-						cutout.config.id === cutoutConfigId
-							? { ...cutout, config: { ...cutout.config, shape: cutoutShape } }
+					sinkCutouts: selectedShape.sinkCutouts.map((cutout) =>
+						cutout.sinkCutoutConfig.id === cutoutConfigId
+							? {
+									...cutout,
+									sinkCutoutConfig: {
+										...cutout.sinkCutoutConfig,
+										shape: cutoutShape,
+									},
+								}
 							: cutout,
 					),
 				});

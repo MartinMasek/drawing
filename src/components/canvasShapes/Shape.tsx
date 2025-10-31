@@ -519,9 +519,9 @@ const Shape = ({
 			/>
 
 			{isCutoutsMode && (
-				shape.cutouts.map((cutout, index) => {
+				shape.sinkCutouts.map((cutout, index) => {
 					const isCutoutSelected = selectedCutout?.id === cutout.id;
-					const hasProduct = cutout.config.product !== null;
+					const hasProduct = cutout.sinkCutoutConfig.product !== null;
 					return (
 						<Rect
 							key={`${shape.id}-cutout-${index}`}
@@ -532,8 +532,8 @@ const Shape = ({
 							strokeWidth={1}
 							cornerRadius={4}
 							dash={hasProduct ? [2, 2] : undefined}
-							width={cutout.config.length * DPI} // Convert inches to pixels
-							height={cutout.config.width * DPI} // Convert inches to pixels
+							width={cutout.sinkCutoutConfig.length * DPI} // Convert inches to pixels
+							height={cutout.sinkCutoutConfig.width * DPI} // Convert inches to pixels
 							onClick={() => {
 								setSelectedCutout(cutout);
 								setSelectedShape(shape);

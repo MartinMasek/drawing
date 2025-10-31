@@ -28,7 +28,7 @@ export interface Shape {
 	endEdge: Edge;
 	edges: Edge[];
 	corners: Corner[];
-	cutouts: Cutout[];
+	sinkCutouts: SinkCutout[];
 }
 
 // Lightweight coordinate type without ID (for calculations and intermediate data)
@@ -96,21 +96,21 @@ export interface Corner {
 	linkedService: string; // TODO: Define Service type
 }
 
-export interface Cutout {
+export interface SinkCutout {
 	id: string;
 	posX: number;
 	posY: number;
-	config: CutoutConfig;
-	template?: CutoutTemplate;
+	sinkCutoutConfig: SinkCutoutConfig;
+	sinkCutoutTemplate?: SinkCutoutTemplate;
 }
 
-export interface CutoutTemplate {
+export interface SinkCutoutTemplate {
 	id: string;
 	name: string;
-	config: CutoutConfig;
+	sinkCutoutConfig: SinkCutoutConfig;
 }
 
-export interface CutoutConfig {
+export interface SinkCutoutConfig {
 	id: string;
 	sinkType: CutoutSinkType;
 	shape: CutoutShape;
@@ -202,7 +202,7 @@ export type CanvasShape = {
 		modificationLength?: number;
 		modificationDepth?: number;
 	}[];
-	cutouts: Cutout[];
+	sinkCutouts: SinkCutout[];
 };
 
 export type CanvasText = {

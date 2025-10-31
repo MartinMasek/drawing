@@ -21,11 +21,13 @@ const useRemoveCutout = (designId: string | undefined) => {
 						...previousData,
 						shapes: previousData.shapes.map((shape) => {
 							if (
-								shape.cutouts.some((cutout) => cutout.id === variables.cutoutId)
+								shape.sinkCutouts.some(
+									(cutout) => cutout.id === variables.cutoutId,
+								)
 							) {
 								return {
 									...shape,
-									cutouts: shape.cutouts.filter(
+									sinkCutouts: shape.sinkCutouts.filter(
 										(cutout) => cutout.id !== variables.cutoutId,
 									),
 								};
@@ -38,13 +40,13 @@ const useRemoveCutout = (designId: string | undefined) => {
 
 			// Update selected shape and cutout in context for optimistic UX
 			if (
-				selectedShape?.cutouts.some(
+				selectedShape?.sinkCutouts.some(
 					(cutout) => cutout.id === variables.cutoutId,
 				)
 			) {
 				const optimisticShape = {
 					...selectedShape,
-					cutouts: selectedShape.cutouts.filter(
+					sinkCutouts: selectedShape.sinkCutouts.filter(
 						(cutout) => cutout.id !== variables.cutoutId,
 					),
 				};

@@ -107,7 +107,7 @@ async function main() {
 	});
 
 	// Create cutout with config
-	const cutoutConfig1 = await prisma.cutoutConfig.create({
+	const cutoutConfig1 = await prisma.sinkCutoutConfig.create({
 		data: {
 			sinkType: CutoutSinkType.Undermount,
 			shape: CutoutShape.Rectangle,
@@ -119,7 +119,7 @@ async function main() {
 		},
 	});
 
-	await prisma.cutout.create({
+	await prisma.sinkCutout.create({
 		data: {
 			shapeId: shape1.id,
 			posX: 48,
@@ -184,7 +184,7 @@ async function main() {
 	});
 
 	// Add a faucet cutout on the notched shape
-	const s1b_cutoutCfg = await prisma.cutoutConfig.create({
+	const s1b_cutoutCfg = await prisma.sinkCutoutConfig.create({
 		data: {
 			sinkType: CutoutSinkType.Undermount,
 			shape: CutoutShape.Rectangle,
@@ -195,7 +195,7 @@ async function main() {
 			serviceId: service.id,
 		},
 	});
-	await prisma.cutout.create({
+	await prisma.sinkCutout.create({
 		data: {
 			shapeId: shape1b.id,
 			posX: 10,

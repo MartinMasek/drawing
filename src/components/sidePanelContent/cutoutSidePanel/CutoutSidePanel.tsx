@@ -32,24 +32,24 @@ const CutoutSidePanel: FC = () => {
 	const removeCutout = useRemoveCutout(designId);
 
 	const handleUpdateSinkType = (value: CutoutSinkType) => {
-		if (!selectedCutout?.config.id) return;
-		updateSinkType.updateSinkType(selectedCutout.config.id, value);
+		if (!selectedCutout?.sinkCutoutConfig.id) return;
+		updateSinkType.updateSinkType(selectedCutout.sinkCutoutConfig.id, value);
 	}
 	const handleUpdateSinkShape = (value: CutoutShape) => {
-		if (!selectedCutout?.config.id) return;
-		updateSinkShape.updateSinkShape(selectedCutout.config.id, value);
+		if (!selectedCutout?.sinkCutoutConfig.id) return;
+		updateSinkShape.updateSinkShape(selectedCutout.sinkCutoutConfig.id, value);
 	}
 	const handleUpdateSinkSize = (value: { length: number; width: number }) => {
-		if (!selectedCutout?.config.id) return;
-		updateSinkSize.updateSinkSize(selectedCutout.config.id, value.length, value.width);
+		if (!selectedCutout?.sinkCutoutConfig.id) return;
+		updateSinkSize.updateSinkSize(selectedCutout.sinkCutoutConfig.id, value.length, value.width);
 	}
 	const handleUpdateSinkFaucetHoles = (value: number) => {
-		if (!selectedCutout?.config.id) return;
-		updateSinkFaucetHoles.updateSinkFaucetHoles(selectedCutout.config.id, value);
+		if (!selectedCutout?.sinkCutoutConfig.id) return;
+		updateSinkFaucetHoles.updateSinkFaucetHoles(selectedCutout.sinkCutoutConfig.id, value);
 	}
 	const handleUpdateSinkCentrelines = (value: { centerLinesX: CentrelinesX; centerLinesY: CentrelinesY }) => {
-		if (!selectedCutout?.config.id) return;
-		updateSinkCentrelines.updateSinkCentrelines(selectedCutout.config.id, value.centerLinesX, value.centerLinesY);
+		if (!selectedCutout?.sinkCutoutConfig.id) return;
+		updateSinkCentrelines.updateSinkCentrelines(selectedCutout.sinkCutoutConfig.id, value.centerLinesX, value.centerLinesY);
 	}
 
 	const handleRemoveCutout = () => {
@@ -75,62 +75,64 @@ const CutoutSidePanel: FC = () => {
 				<div className="flex flex-col gap-4 p-4">
 					<p>Cutout Type: <span className="text-text-colors-secondary">Sink</span></p>
 					<div className="flex gap-2">
-						<SinkTypeInput value={selectedCutout?.config.sinkType} onChange={handleUpdateSinkType} />
-						<SinkShapeInput value={selectedCutout?.config.shape} onChange={handleUpdateSinkShape} />
+						<SinkTypeInput value={selectedCutout?.sinkCutoutConfig.sinkType} onChange={handleUpdateSinkType} />
+						<SinkShapeInput value={selectedCutout?.sinkCutoutConfig.shape} onChange={handleUpdateSinkShape} />
 					</div>
 					<SinkSizeInput
-						length={selectedCutout?.config.length ?? 0}
-						width={selectedCutout?.config.width ?? 0}
+						length={selectedCutout?.sinkCutoutConfig.length ?? 0}
+						width={selectedCutout?.sinkCutoutConfig.width ?? 0}
 						onChange={handleUpdateSinkSize}
 					/>
-					<FaucetHolesInput holes={selectedCutout?.config.holeCount ?? 0} onChange={handleUpdateSinkFaucetHoles} />
-					<CenterLinesInput centerLinesY={selectedCutout?.config.centrelinesY} centerLinesX={selectedCutout?.config.centrelinesX} onChange={handleUpdateSinkCentrelines} />
+					<FaucetHolesInput holes={selectedCutout?.sinkCutoutConfig.holeCount ?? 0} onChange={handleUpdateSinkFaucetHoles} />
+					<CenterLinesInput centerLinesY={selectedCutout?.sinkCutoutConfig.centrelinesY} centerLinesX={selectedCutout?.sinkCutoutConfig.centrelinesX} onChange={handleUpdateSinkCentrelines} />
 				</div>
 			)}
-			<SheetFooter>
-				<Button
-					variant="outlined"
-					iconLeft={
-						<Icon size="md">
-							<IconDeviceFloppy />
-						</Icon>
-					}
-					color="neutral"
-					disabled
-					className="flex-1 justify-center"
-				>
-					Save as Template
-				</Button>
-				<div className="flex w-full items-center gap-2">
+			{selectedCutout && (
+				<SheetFooter>
 					<Button
 						variant="outlined"
 						iconLeft={
 							<Icon size="md">
-								<IconCopy />
+								<IconDeviceFloppy />
 							</Icon>
 						}
 						color="neutral"
 						disabled
 						className="flex-1 justify-center"
 					>
-						Duplicate
+						Save as Template
 					</Button>
-					<Button
-						variant="outlined"
-						iconLeft={
-							<Icon size="md">
-								<IconTrash />
-							</Icon>
-						}
-						color="danger"
-						className="flex-1 justify-center"
-						onClick={handleRemoveCutout}
-					>
-						Remove
-					</Button>
-				</div>
+					<div className="flex w-full items-center gap-2">
+						<Button
+							variant="outlined"
+							iconLeft={
+								<Icon size="md">
+									<IconCopy />
+								</Icon>
+							}
+							color="neutral"
+							disabled
+							className="flex-1 justify-center"
+						>
+							Duplicate
+						</Button>
+						<Button
+							variant="outlined"
+							iconLeft={
+								<Icon size="md">
+									<IconTrash />
+								</Icon>
+							}
+							color="danger"
+							className="flex-1 justify-center"
+							onClick={handleRemoveCutout}
+						>
+							Remove
+						</Button>
+					</div>
 
-			</SheetFooter>
+				</SheetFooter>
+			)}
 		</SheetContent>
 	);
 };

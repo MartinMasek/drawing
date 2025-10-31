@@ -28,13 +28,13 @@ const useCreateCutout = (designId: string | undefined) => {
 
 							return {
 								...shape,
-								cutouts: [
-									...shape.cutouts,
+								sinkCutouts: [
+									...shape.sinkCutouts,
 									{
 										id: tmpCutoutId,
 										posX: variables.posX,
 										posY: variables.posY,
-										config: {
+										sinkCutoutConfig: {
 											id: tmpCutoutConfigId,
 											sinkType: variables.sinkType,
 											shape: variables.shape,
@@ -56,13 +56,13 @@ const useCreateCutout = (designId: string | undefined) => {
 			if (selectedShape && selectedShape.id === variables.shapeId) {
 				const optimisticShape = {
 					...selectedShape,
-					cutouts: [
-						...selectedShape.cutouts,
+					sinkCutouts: [
+						...selectedShape.sinkCutouts,
 						{
 							id: tmpCutoutId,
 							posX: variables.posX,
 							posY: variables.posY,
-							config: {
+							sinkCutoutConfig: {
 								id: tmpCutoutConfigId,
 								sinkType: variables.sinkType,
 								shape: variables.shape,
@@ -82,7 +82,7 @@ const useCreateCutout = (designId: string | undefined) => {
 					id: tmpCutoutId,
 					posX: variables.posX,
 					posY: variables.posY,
-					config: {
+					sinkCutoutConfig: {
 						id: tmpCutoutConfigId,
 						sinkType: variables.sinkType,
 						shape: variables.shape,
@@ -116,13 +116,13 @@ const useCreateCutout = (designId: string | undefined) => {
 							if (shape.id !== variables.shapeId) return shape;
 							return {
 								...shape,
-								cutouts: shape.cutouts.map((cutout) => {
+								sinkCutouts: shape.sinkCutouts.map((cutout) => {
 									if (cutout.id !== context.tmpCutoutId) return cutout;
 									return {
 										...cutout,
 										id: data.id, // Use the real cutout ID
-										config: {
-											...cutout.config,
+										sinkCutoutConfig: {
+											...cutout.sinkCutoutConfig,
 											id: data.config.id, // Use the real cutout config ID
 										},
 									};
@@ -135,12 +135,15 @@ const useCreateCutout = (designId: string | undefined) => {
 				if (selectedShape && selectedShape.id === variables.shapeId) {
 					setSelectedShape({
 						...selectedShape,
-						cutouts: selectedShape.cutouts.map((cutout) => {
+						sinkCutouts: selectedShape.sinkCutouts.map((cutout) => {
 							if (cutout.id !== context.tmpCutoutId) return cutout;
 							return {
 								...cutout,
 								id: data.id,
-								config: { ...cutout.config, id: data.config.id },
+								sinkCutoutConfig: {
+									...cutout.sinkCutoutConfig,
+									id: data.config.id,
+								},
 							};
 						}),
 					});
@@ -150,7 +153,10 @@ const useCreateCutout = (designId: string | undefined) => {
 					setSelectedCutout({
 						...selectedCutout,
 						id: data.id,
-						config: { ...selectedCutout.config, id: data.config.id },
+						sinkCutoutConfig: {
+							...selectedCutout.sinkCutoutConfig,
+							id: data.config.id,
+						},
 					});
 				}
 			}

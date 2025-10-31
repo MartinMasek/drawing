@@ -2,7 +2,7 @@ import type { CornerType, EdgeModificationType } from "@prisma/client";
 import { createContext, useContext, useState } from "react";
 import type {
 	CanvasShape,
-	Cutout,
+	SinkCutout,
 	MaterialExtended,
 	SelectedCorner,
 	SelectedEdge,
@@ -25,8 +25,8 @@ type ShapeContextType = {
 	addToMostRecentlyUsedEdgeModification: (modification: EdgeModificationType) => void;
 	mostRecentlyUsedCornerModification: CornerType[];
 	addToMostRecentlyUsedCornerModification: (modification: CornerType) => void;
-	selectedCutout: Cutout | null;
-	setSelectedCutout: (cutout: Cutout | null) => void;
+	selectedCutout: SinkCutout | null;
+	setSelectedCutout: (cutout: SinkCutout | null) => void;
 };
 const MAX_STACK_ITEMS = 4;
 
@@ -41,7 +41,7 @@ export const ShapeProvider = ({
 	const [selectedShape, setSelectedShape] = useState<CanvasShape | null>(null);
 	const [selectedEdge, setSelectedEdge] = useState<SelectedEdge | null>(null);
 	const [selectedCorner, setSelectedCorner] = useState<SelectedCorner | null>(null);
-	const [selectedCutout, setSelectedCutout] = useState<Cutout | null>(null);
+	const [selectedCutout, setSelectedCutout] = useState<SinkCutout | null>(null);
 
 	const [mostRecentlyUsedEdgeModification, setMostRecentlyUsedEdgeModification] = useState<EdgeModificationType[]>([]);
 	const [mostRecentlyUsedCornerModification, setMostRecentlyUsedCornerModification] = useState<CornerType[]>([]);
