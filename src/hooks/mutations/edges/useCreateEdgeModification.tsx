@@ -6,6 +6,7 @@ import type { Point } from "~/types/drawing";
 export const useCreateEdgeModification = (designId: string | undefined) => {
     const utils = api.useUtils();
     const { selectedShape, setSelectedShape, selectedEdge, setSelectedEdge } = useShape();
+    const updateMutation = api.design.updateShapeEdge.useMutation();
 
     return api.design.createShapeEdge.useMutation({
         onMutate: async (variables) => {
@@ -178,28 +179,20 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
                                 ...shape,
                                 edges: shape.edges.map((edge) => {
                                     if (edge.id !== context.tempEdgeId) return edge;
-                                    return {
-                                        ...edge,
-                                        id: data.edgeId, // Use the edgeId from the returned data
-                                        edgeModifications: edge.edgeModifications.map((mod) => {
-                                            if (mod.id === context.tempModificationId) {
-                                                return {
-                                                    ...mod,
-                                                    id: data.id, // Use the real modification ID
-                                                    type: data.edgeType,
-                                                    position: data.position ?? "Center",
-                                                    distance: data.distance ?? 0,
-                                                    depth: data.depth ?? 0,
-                                                    width: data.width ?? 0,
-                                                    sideAngleLeft: data.sideAngleLeft ?? 0,
-                                                    sideAngleRight: data.sideAngleRight ?? 0,
-                                                    fullRadiusDepth: data.fullRadiusDepth ?? 0,
-                                                    points: mod.points ?? [],
-                                                };
-                                            }
-                                            return mod;
-                                        }),
-                                    };
+                                return {
+                                    ...edge,
+                                    id: data.edgeId, // Use the edgeId from the returned data
+                                    edgeModifications: edge.edgeModifications.map((mod) => {
+                                        if (mod.id === context.tempModificationId) {
+                                            return {
+                                                ...mod,
+                                                id: data.id, // Use the real modification ID
+                                                points: data.points ?? mod.points, // Use server points with real IDs
+                                            };
+                                        }
+                                        return mod;
+                                    }),
+                                };
                                 }),
                             };
                         }),
@@ -208,43 +201,95 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
 
                 // Update selected shape and edge with real IDs
                 if (selectedShape && selectedShape.id === variables.shapeId) {
-                    const realEdge = {
-                        id: data.edgeId,
-                        point1Id: variables.edgePoint1Id,
-                        point2Id: variables.edgePoint2Id,
-                            edgeModifications: [
-                            {
-                                id: data.id,
-                                type: data.edgeType,
-                                position: data.position ?? "Center",
-                                distance: data.distance ?? 0,
-                                depth: data.depth ?? 0,
-                                width: data.width ?? 0,
-                                sideAngleLeft: data.sideAngleLeft ?? 0,
-                                sideAngleRight: data.sideAngleRight ?? 0,
-                                fullRadiusDepth: data.fullRadiusDepth ?? 0,
-                                points: [],
-                            },
-                        ],
-                    };
                     const updatedShape = {
                         ...selectedShape,
-                        edges: selectedShape.edges.map((e) => (e.id === context.tempEdgeId ? realEdge : e)),
+                        edges: selectedShape.edges.map((edge) => {
+                            if (edge.id !== context.tempEdgeId) return edge;
+                            
+                            // Replace temp IDs with real IDs, keep all data
+                            return {
+                                ...edge,
+                                id: data.edgeId,
+                                edgeModifications: edge.edgeModifications.map((mod) => {
+                                    if (mod.id === context.tempModificationId) {
+                                        return {
+                                            ...mod,
+                                            id: data.id,
+                                        };
+                                    }
+                                    return mod;
+                                }),
+                            };
+                        }),
                     };
                     setSelectedShape(updatedShape);
 
-                    if (selectedEdge && selectedEdge.edgeIndex === context.edgeIndex) {
-                        const realMod = realEdge.edgeModifications[0];
+                    // Update selectedEdge with real IDs
+                    // Check if selectedEdge is for this edge (by index or by point IDs)
+                    const isMatchingEdge = selectedEdge && (
+                        selectedEdge.edgeIndex === context.edgeIndex ||
+                        (selectedEdge.edgePoint1Id === variables.edgePoint1Id && 
+                         selectedEdge.edgePoint2Id === variables.edgePoint2Id)
+                    );
+                    
+                    if (isMatchingEdge) {
+                        const updatedEdge = updatedShape.edges.find(e => e.id === data.edgeId);
+                        const realMod = updatedEdge?.edgeModifications.find(m => m.id === data.id);
 
                         if (realMod) {
+                            // Check if user made changes while creation was in progress
+                            const hasUserChanges = selectedEdge.edgeModification && (
+                                selectedEdge.edgeModification.depth !== realMod.depth ||
+                                selectedEdge.edgeModification.width !== realMod.width ||
+                                selectedEdge.edgeModification.distance !== realMod.distance ||
+                                selectedEdge.edgeModification.position !== realMod.position ||
+                                selectedEdge.edgeModification.sideAngleLeft !== realMod.sideAngleLeft ||
+                                selectedEdge.edgeModification.sideAngleRight !== realMod.sideAngleRight ||
+                                selectedEdge.edgeModification.fullRadiusDepth !== realMod.fullRadiusDepth
+                            );
+
                             setSelectedEdge({
                                 edgeId: data.edgeId,
                                 shapeId: variables.shapeId,
-                                edgeIndex: selectedEdge.edgeIndex,
+                                edgeIndex: context.edgeIndex,
                                 edgePoint1Id: variables.edgePoint1Id,
                                 edgePoint2Id: variables.edgePoint2Id,
                                 edgeModification: realMod,
                             });
+
+                            // If user made changes while creation was in progress, sync them to server
+                            if (hasUserChanges && selectedEdge.edgeModification && selectedShape) {
+                                const point1 = selectedShape.points.find((p) => p.id === variables.edgePoint1Id);
+                                const point2 = selectedShape.points.find((p) => p.id === variables.edgePoint2Id);
+                                
+                                if (point1 && point2) {
+                                    const pointsCoords = generateEdgePoints(
+                                        point1,
+                                        point2,
+                                        [selectedEdge.edgeModification],
+                                    );
+
+                                    updateMutation.mutate({
+                                        edgeId: data.edgeId,
+                                        shapeId: variables.shapeId,
+                                        edgeModificationId: data.id,
+                                        edgeModification: {
+                                            edgeType: selectedEdge.edgeModification.type,
+                                            position: selectedEdge.edgeModification.position,
+                                            distance: selectedEdge.edgeModification.distance,
+                                            depth: selectedEdge.edgeModification.depth,
+                                            width: selectedEdge.edgeModification.width,
+                                            sideAngleLeft: selectedEdge.edgeModification.sideAngleLeft,
+                                            sideAngleRight: selectedEdge.edgeModification.sideAngleRight,
+                                            fullRadiusDepth: selectedEdge.edgeModification.fullRadiusDepth,
+                                            points: pointsCoords.map((coord) => ({
+                                                xPos: coord.xPos,
+                                                yPos: coord.yPos,
+                                            })),
+                                        },
+                                    });
+                                }
+                            }
                         }
                     }
                 }

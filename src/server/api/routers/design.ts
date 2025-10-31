@@ -531,25 +531,44 @@ export const designRouter = createTRPCRouter({
 					point2Id: input.edgePoint2Id,
 				},
 			});
-			return await ctx.db.edgeModification.create({
-				data: {
-					edgeType: input.edgeModification.edgeType,
-					position: input.edgeModification.position,
-					distance: input.edgeModification.distance,
-					depth: input.edgeModification.depth,
-					width: input.edgeModification.width,
-					sideAngleLeft: input.edgeModification.sideAngleLeft,
-					sideAngleRight: input.edgeModification.sideAngleRight,
-					fullRadiusDepth: input.edgeModification.fullRadiusDepth,
-					edgeId: edge.id,
-					points: {
-						create: input.edgeModification.points.map((p) => ({
-							xPos: p.xPos,
-							yPos: p.yPos,
-						})),
+		return await ctx.db.edgeModification.create({
+			data: {
+				edgeType: input.edgeModification.edgeType,
+				position: input.edgeModification.position,
+				distance: input.edgeModification.distance,
+				depth: input.edgeModification.depth,
+				width: input.edgeModification.width,
+				sideAngleLeft: input.edgeModification.sideAngleLeft,
+				sideAngleRight: input.edgeModification.sideAngleRight,
+				fullRadiusDepth: input.edgeModification.fullRadiusDepth,
+				edgeId: edge.id,
+				points: {
+					create: input.edgeModification.points.map((p) => ({
+						xPos: p.xPos,
+						yPos: p.yPos,
+					})),
+				},
+			},
+			select: {
+				id: true,
+				edgeType: true,
+				position: true,
+				distance: true,
+				depth: true,
+				width: true,
+				sideAngleLeft: true,
+				sideAngleRight: true,
+				fullRadiusDepth: true,
+				edgeId: true,
+				points: {
+					select: {
+						id: true,
+						xPos: true,
+						yPos: true,
 					},
 				},
-			});
+			},
+		});
 		}),
 	updateShapeEdge: publicProcedure
 		.input(
@@ -582,30 +601,9 @@ export const designRouter = createTRPCRouter({
 					},
 				});
 
-				const result = await ctx.db.edgeModification.update({
-						where: { id: input.edgeModificationId },
-						data: {
-						edgeType: input.edgeModification.edgeType,
-						position: input.edgeModification.position,
-						distance: input.edgeModification.distance,
-						depth: input.edgeModification.depth,
-						width: input.edgeModification.width,
-						sideAngleLeft: input.edgeModification.sideAngleLeft,
-						sideAngleRight: input.edgeModification.sideAngleRight,
-						fullRadiusDepth: input.edgeModification.fullRadiusDepth,
-							points: {
-								create: input.edgeModification.points.map((p) => ({
-									xPos: p.xPos,
-									yPos: p.yPos,
-								})),
-							},
-						},
-				});
-				return result;
-			}
-			
-			const result = await ctx.db.edgeModification.create({
-						data: {
+			const result = await ctx.db.edgeModification.update({
+					where: { id: input.edgeModificationId },
+					data: {
 					edgeType: input.edgeModification.edgeType,
 					position: input.edgeModification.position,
 					distance: input.edgeModification.distance,
@@ -614,16 +612,75 @@ export const designRouter = createTRPCRouter({
 					sideAngleLeft: input.edgeModification.sideAngleLeft,
 					sideAngleRight: input.edgeModification.sideAngleRight,
 					fullRadiusDepth: input.edgeModification.fullRadiusDepth,
-							edgeId: input.edgeId,
-							points: {
-								create: input.edgeModification.points.map((p) => ({
-									xPos: p.xPos,
-									yPos: p.yPos,
-								})),
+						points: {
+							create: input.edgeModification.points.map((p) => ({
+								xPos: p.xPos,
+								yPos: p.yPos,
+							})),
+						},
+					},
+					select: {
+						id: true,
+						edgeType: true,
+						position: true,
+						distance: true,
+						depth: true,
+						width: true,
+						sideAngleLeft: true,
+						sideAngleRight: true,
+						fullRadiusDepth: true,
+						edgeId: true,
+						points: {
+							select: {
+								id: true,
+								xPos: true,
+								yPos: true,
 							},
 						},
-				  });
+					},
+			});
 			return result;
+			}
+			
+		const result = await ctx.db.edgeModification.create({
+					data: {
+				edgeType: input.edgeModification.edgeType,
+				position: input.edgeModification.position,
+				distance: input.edgeModification.distance,
+				depth: input.edgeModification.depth,
+				width: input.edgeModification.width,
+				sideAngleLeft: input.edgeModification.sideAngleLeft,
+				sideAngleRight: input.edgeModification.sideAngleRight,
+				fullRadiusDepth: input.edgeModification.fullRadiusDepth,
+						edgeId: input.edgeId,
+						points: {
+							create: input.edgeModification.points.map((p) => ({
+								xPos: p.xPos,
+								yPos: p.yPos,
+							})),
+						},
+					},
+					select: {
+						id: true,
+						edgeType: true,
+						position: true,
+						distance: true,
+						depth: true,
+						width: true,
+						sideAngleLeft: true,
+						sideAngleRight: true,
+						fullRadiusDepth: true,
+						edgeId: true,
+						points: {
+							select: {
+								id: true,
+								xPos: true,
+								yPos: true,
+							},
+						},
+					},
+			  });
+		return result;
 		}),
 
 	removeShapeEdgeModification: publicProcedure

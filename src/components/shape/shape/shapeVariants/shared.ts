@@ -53,17 +53,39 @@ export interface EdgeInteractionProps {
 	hoveredEdgeIndex: number | null;
 	/** Index of currently selected edge */
 	selectedEdgeIndex: number | null;
-	/** Handler for edge click events */
+	/** ID of currently hovered modification */
+	hoveredModificationId: string | null;
+	/** ID of currently selected modification */
+	selectedModificationId: string | null;
+	/** Handler for edge click events (deprecated - use handleEmptyEdgeClick) */
 	handleEdgeClick: (
 		index: number,
 		point1Id: string,
 		point2Id: string,
 		e: KonvaEventObject<MouseEvent>,
 	) => void;
+	/** Handler for modification click events */
+	handleModificationClick: (
+		edgeIndex: number,
+		modificationId: string,
+		e: KonvaEventObject<MouseEvent>,
+	) => void;
+	/** Handler for empty edge segment click events (for adding new modification) */
+	handleEmptyEdgeClick: (
+		edgeIndex: number,
+		point1Id: string,
+		point2Id: string,
+		clickPosition: import("@prisma/client").EdgeShapePosition,
+		e: KonvaEventObject<MouseEvent>,
+	) => void;
 	/** Handler for edge mouse enter events */
 	handleEdgeMouseEnter: (index: number) => void;
 	/** Handler for edge mouse leave events */
 	handleEdgeMouseLeave: () => void;
+	/** Handler for modification mouse enter events */
+	handleModificationMouseEnter: (modificationId: string) => void;
+	/** Handler for modification mouse leave events */
+	handleModificationMouseLeave: () => void;
 }
 
 /**

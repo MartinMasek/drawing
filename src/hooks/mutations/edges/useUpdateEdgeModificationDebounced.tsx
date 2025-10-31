@@ -36,26 +36,45 @@ export const useUpdateEdgeModificationDebounced = (designId: string | undefined)
                 { id: designId },
                 {
                     ...previousData,
-                    shapes: previousData.shapes.map((shape) => ({
-                        ...shape,
-                        edges: shape.edges.map((edge) => ({
-                            ...edge,
-                            edgeModifications: edge.edgeModifications.map((mod) => {
-                                if (mod.id === edgeModificationId) {
-                                    const updatedMod = { ...mod, ...updates };
-                                    
-                                    // Recalculate points with the new values
-                                    const point1 = shape.points.find((p) => p.id === edge.point1Id);
-                                    const point2 = shape.points.find((p) => p.id === edge.point2Id);
-                                    
-                                    if (point1 && point2) {
+                    shapes: previousData.shapes.map((shape) => {
+                        // Find if this shape has the modification being updated
+                        const hasModification = shape.edges.some((edge) =>
+                            edge.edgeModifications.some((mod) => mod.id === edgeModificationId)
+                        );
+                        
+                        if (!hasModification) return shape;
+
+                        return {
+                            ...shape,
+                            edges: shape.edges.map((edge) => {
+                                // Find if this edge has the modification
+                                const hasEdgeModification = edge.edgeModifications.some(
+                                    (mod) => mod.id === edgeModificationId
+                                );
+                                
+                                if (!hasEdgeModification) return edge;
+
+                                // Update the modification and recalculate its points
+                                const point1 = shape.points.find((p) => p.id === edge.point1Id);
+                                const point2 = shape.points.find((p) => p.id === edge.point2Id);
+                                
+                                if (!point1 || !point2) {
+                                    return edge;
+                                }
+
+                                // Update modifications with new values
+                                const updatedModifications = edge.edgeModifications.map((mod) => {
+                                    if (mod.id === edgeModificationId) {
+                                        const updatedMod = { ...mod, ...updates };
+                                        
+                                        // Recalculate points for THIS modification only
                                         const calculatedCoords = generateEdgePoints(
                                             point1,
                                             point2,
                                             [updatedMod],
                                         );
                                         
-                                        // Map coordinates to points, preserving existing IDs where possible
+                                        // Map coordinates to points with temp IDs
                                         const calculatedPoints = calculatedCoords.map((coord, index) => {
                                             const existingPoint = mod.points[index];
                                             return {
@@ -70,13 +89,16 @@ export const useUpdateEdgeModificationDebounced = (designId: string | undefined)
                                             points: calculatedPoints,
                                         };
                                     }
-                                    
-                                    return updatedMod;
-                                }
-                                return mod;
+                                    return mod;
+                                });
+                                
+                                return {
+                                    ...edge,
+                                    edgeModifications: updatedModifications,
+                                };
                             }),
-                        })),
-                    })),
+                        };
+                    }),
                 }
             );
         }
@@ -96,44 +118,57 @@ export const useUpdateEdgeModificationDebounced = (designId: string | undefined)
         if (selectedShape) {
             const updatedShape = {
                 ...selectedShape,
-                edges: selectedShape.edges.map((edge) => ({
-                    ...edge,
-                    edgeModifications: edge.edgeModifications.map((mod) => {
+                edges: selectedShape.edges.map((edge) => {
+                    // Check if this edge has the modification
+                    const hasEdgeModification = edge.edgeModifications.some(
+                        (mod) => mod.id === edgeModificationId
+                    );
+                    
+                    if (!hasEdgeModification) return edge;
+
+                    // Update the modification and recalculate its points
+                    const point1 = selectedShape.points.find((p) => p.id === edge.point1Id);
+                    const point2 = selectedShape.points.find((p) => p.id === edge.point2Id);
+                    
+                    if (!point1 || !point2) {
+                        return edge;
+                    }
+
+                    // Update modifications with new values
+                    const updatedModifications = edge.edgeModifications.map((mod) => {
                         if (mod.id === edgeModificationId) {
                             const updatedMod = { ...mod, ...updates };
                             
-                            // Recalculate points with the new values
-                            const point1 = selectedShape.points.find((p) => p.id === edge.point1Id);
-                            const point2 = selectedShape.points.find((p) => p.id === edge.point2Id);
+                            // Recalculate points for THIS modification only
+                            const calculatedCoords = generateEdgePoints(
+                                point1,
+                                point2,
+                                [updatedMod],
+                            );
                             
-                            if (point1 && point2) {
-                                const calculatedCoords = generateEdgePoints(
-                                    point1,
-                                    point2,
-                                    [updatedMod],
-                                );
-                                
-                                // Map coordinates to points, preserving existing IDs where possible
-                                const calculatedPoints = calculatedCoords.map((coord, index) => {
-                                    const existingPoint = mod.points[index];
-                                    return {
-                                        id: existingPoint?.id || `temp-${Date.now()}-${index}`,
-                                        xPos: coord.xPos,
-                                        yPos: coord.yPos,
-                                    };
-                                });
-                                
+                            // Map coordinates to points with temp IDs
+                            const calculatedPoints = calculatedCoords.map((coord, index) => {
+                                const existingPoint = mod.points[index];
                                 return {
-                                    ...updatedMod,
-                                    points: calculatedPoints,
+                                    id: existingPoint?.id || `temp-${Date.now()}-${index}`,
+                                    xPos: coord.xPos,
+                                    yPos: coord.yPos,
                                 };
-                            }
+                            });
                             
-                            return updatedMod;
+                            return {
+                                ...updatedMod,
+                                points: calculatedPoints,
+                            };
                         }
                         return mod;
-                    })
-                })),
+                    });
+
+                    return {
+                        ...edge,
+                        edgeModifications: updatedModifications,
+                    };
+                }),
             };
             setSelectedShape(updatedShape);
         }
@@ -149,6 +184,12 @@ export const useUpdateEdgeModificationDebounced = (designId: string | undefined)
             shapeId: string,
             fullModification: EdgeModification
         ) => {
+            // Skip mutation for temp IDs - they haven't been created on server yet
+            // The optimistic update is already applied, and the real data will be sent when creation completes
+            if (edgeModificationId.startsWith('temp-')) {
+                return;
+            }
+            
             // Calculate points before sending to backend
             if (!designId) return;
             const previousData = utils.design.getById.getData({ id: designId });

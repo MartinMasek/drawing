@@ -9,6 +9,7 @@ export const useShapeState = (shape: CanvasShape) => {
 	const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 	const [hoveredEdgeIndex, setHoveredEdgeIndex] = useState<number | null>(null);
 	const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
+	const [hoveredModificationId, setHoveredModificationId] = useState<string | null>(null);
 	const [isDragging, setIsDragging] = useState(false);
 	const prevShapePos = useRef({ x: shape.xPos, y: shape.yPos });
 
@@ -36,8 +37,9 @@ export const useShapeState = (shape: CanvasShape) => {
 		setHoveredEdgeIndex,
 		hoveredPointIndex,
 		setHoveredPointIndex,
+		hoveredModificationId,
+		setHoveredModificationId,
 		isDragging,
 		setIsDragging,
 	};
 };
-

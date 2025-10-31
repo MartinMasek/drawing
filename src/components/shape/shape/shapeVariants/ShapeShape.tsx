@@ -51,14 +51,20 @@ const ShapeShape = ({
 	isDraggable,
 	hoveredEdgeIndex,
 	selectedEdgeIndex,
+	hoveredModificationId,
+	selectedModificationId,
 	hoveredPointIndex,
 	selectedPointIndex,
 	onMouseEnter,
 	onMouseLeave,
 	onContextMenu,
 	handleEdgeClick,
+	handleModificationClick,
+	handleEmptyEdgeClick,
 	handleEdgeMouseEnter,
 	handleEdgeMouseLeave,
+	handleModificationMouseEnter,
+	handleModificationMouseLeave,
 	handlePointClick,
 	handlePointMouseEnter,
 	handlePointMouseLeave,
@@ -93,16 +99,22 @@ const ShapeShape = ({
 					onMouseLeave={onMouseLeave}
 				/>
 
-				{/* Individual edges */}
-				<ShapeEdges
-					shape={shape}
-					hoveredEdgeIndex={hoveredEdgeIndex}
-					selectedEdgeIndex={selectedEdgeIndex}
-					isDrawing={isDrawing}
-					handleEdgeClick={handleEdgeClick}
-					handleEdgeMouseEnter={handleEdgeMouseEnter}
-					handleEdgeMouseLeave={handleEdgeMouseLeave}
-				/>
+			{/* Individual edges */}
+			<ShapeEdges
+				shape={shape}
+				hoveredEdgeIndex={hoveredEdgeIndex}
+				selectedEdgeIndex={selectedEdgeIndex}
+				hoveredModificationId={hoveredModificationId}
+				selectedModificationId={selectedModificationId}
+				isDrawing={isDrawing}
+				handleEdgeClick={handleEdgeClick}
+				handleModificationClick={handleModificationClick}
+				handleEmptyEdgeClick={handleEmptyEdgeClick}
+				handleEdgeMouseEnter={handleEdgeMouseEnter}
+				handleEdgeMouseLeave={handleEdgeMouseLeave}
+				handleModificationMouseEnter={handleModificationMouseEnter}
+				handleModificationMouseLeave={handleModificationMouseLeave}
+			/>
 
 				{/* Individual points */}
 				<ShapePoints

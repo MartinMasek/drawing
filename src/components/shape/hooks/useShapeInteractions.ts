@@ -30,6 +30,7 @@ export const useShapeInteractions = (
 	handlers: ShapeInteractionHandlers,
 	setHoveredEdgeIndex: (index: number | null) => void,
 	setHoveredPointIndex: (index: number | null) => void,
+	setHoveredModificationId: (id: string | null) => void,
 	setIsDragging: (isDragging: boolean) => void,
 	setDragOffset: (offset: { x: number; y: number }) => void,
 ) => {
@@ -159,6 +160,115 @@ export const useShapeInteractions = (
 		setHoveredPointIndex(null);
 	}, [setHoveredPointIndex]);
 
+	/**
+	 * Handle click on a specific modification
+	 * Selects that modification for editing
+	 */
+	const handleModificationClick = useCallback((
+		edgeIndex: number,
+		modificationId: string,
+		e: KonvaEventObject<MouseEvent>,
+	) => {
+		if (isDrawing || e.evt.button !== 0) return;
+
+		const point1Id = shape.points[edgeIndex]?.id;
+		const point2Id = shape.points[(edgeIndex + 1) % shape.points.length]?.id;
+		
+		if (!point1Id || !point2Id) return;
+
+		const edge = shape.edges.find((edge) => edge.point1Id === point1Id && edge.point2Id === point2Id);
+		const modification = edge?.edgeModifications.find((m) => m.id === modificationId);
+
+		if (!modification) return;
+
+		setCursorType(CursorTypes.Curves);
+
+		setSelectedEdge({
+			shapeId: shape.id,
+			edgeIndex,
+			edgeId: edge?.id ?? null,
+			edgePoint1Id: point1Id,
+			edgePoint2Id: point2Id,
+			edgeModification: {
+				id: modification.id,
+				type: modification.type,
+				position: modification.position,
+				distance: modification.distance,
+				depth: modification.depth,
+				width: modification.width,
+				sideAngleLeft: modification.sideAngleLeft,
+				sideAngleRight: modification.sideAngleRight,
+				fullRadiusDepth: modification.fullRadiusDepth,
+				points: modification.points,
+			},
+		});
+		setSelectedCorner(null);
+		handlers.onClick(e);
+	}, [isDrawing, shape, setCursorType, setSelectedEdge, setSelectedCorner, handlers]);
+
+	/**
+	 * Handle click on empty edge segment (for adding new modification)
+	 * Creates a new modification at the clicked position
+	 */
+	const handleEmptyEdgeClick = useCallback((
+		edgeIndex: number,
+		point1Id: string,
+		point2Id: string,
+		clickPosition: EdgeShapePosition,
+		e: KonvaEventObject<MouseEvent>,
+	) => {
+		if (isDrawing || e.evt.button !== 0) return;
+
+		const edge = shape.edges.find((edge) => edge.point1Id === point1Id && edge.point2Id === point2Id);
+
+		// Import validation here to avoid circular dependency
+		const { calculateAvailablePosition } = require("../Edge/edgeValidation");
+		const validPosition = calculateAvailablePosition(edge, clickPosition);
+
+		setCursorType(CursorTypes.Curves);
+
+		setSelectedEdge({
+			shapeId: shape.id,
+			edgeIndex,
+			edgeId: edge?.id ?? null,
+			edgePoint1Id: point1Id,
+			edgePoint2Id: point2Id,
+			edgeModification: {
+				id: null, // null = new modification
+				type: EdgeModificationType.None,
+				position: validPosition,
+				distance: 0,
+				depth: 0,
+				width: 0,
+				sideAngleLeft: 0,
+				sideAngleRight: 0,
+				fullRadiusDepth: 0,
+				points: [],
+			},
+		});
+		setSelectedCorner(null);
+		handlers.onClick(e);
+	}, [isDrawing, shape, setCursorType, setSelectedEdge, setSelectedCorner, handlers]);
+
+	/**
+	 * Handle mouse enter on a specific modification
+	 * Only highlights that modification, not the entire edge
+	 */
+	const handleModificationMouseEnter = useCallback((modificationId: string) => {
+		if (!isDrawing) {
+			setHoveredModificationId(modificationId);
+			handlers.onMouseEnter();
+		}
+	}, [isDrawing, setHoveredModificationId, handlers]);
+
+	/**
+	 * Handle mouse leave from a modification
+	 */
+	const handleModificationMouseLeave = useCallback(() => {
+		setHoveredModificationId(null);
+		handlers.onMouseLeave();
+	}, [setHoveredModificationId, handlers]);
+
 	return {
 		handleDragStart,
 		handleDragMove,
@@ -169,6 +279,10 @@ export const useShapeInteractions = (
 		handleEdgeMouseLeave,
 		handlePointMouseEnter,
 		handlePointMouseLeave,
+		handleModificationClick,
+		handleEmptyEdgeClick,
+		handleModificationMouseEnter,
+		handleModificationMouseLeave,
 	};
 };
 

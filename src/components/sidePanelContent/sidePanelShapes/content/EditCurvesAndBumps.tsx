@@ -1,5 +1,6 @@
 import { IconArrowLeft, IconCopy, IconTrash } from "@tabler/icons-react";
 import type { FC } from "react";
+import { useMemo } from "react";
 import Button from "~/components/header/header/Button";
 import { Icon } from "~/components/header/header/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
@@ -15,6 +16,8 @@ import { useDeleteEdgeModification } from "~/hooks/mutations/edges/useDeleteEdge
 import { useRouter } from "next/router";
 import { useUpdateEdgeModificationDebounced } from "~/hooks/mutations/edges/useUpdateEdgeModificationDebounced";
 import FullRadiusDepthInput from "../components/FullRadiusDepthInput";
+import { getAvailablePositions } from "~/components/shape/edge/edgeValidation";
+import { api } from "~/utils/api";
 
 interface EditCurvesAndBumpsProps {
 	setView: (value: ShapeSidePanelView) => void;
@@ -27,6 +30,36 @@ const EditCurvesAndBumps: FC<EditCurvesAndBumpsProps> = ({ setView }) => {
 	const { selectedEdge } = useShape();
 	const deleteEdgeModification = useDeleteEdgeModification(designId);
 	const updateEdgeMod = useUpdateEdgeModificationDebounced(designId);
+	
+	// Get cached design data (don't trigger a new query)
+	const utils = api.useUtils();
+	const designData = designId ? utils.design.getById.getData({ id: designId }) : undefined;
+
+	// Calculate available positions for this edge
+	const availablePositions = useMemo(() => {
+		if (!selectedEdge || !designData) {
+			return undefined; // No validation if we don't have the data
+		}
+
+		// Find the shape
+		const shape = designData.shapes.find((s) => s.id === selectedEdge.shapeId);
+		if (!shape) return undefined;
+
+		// Find the edge
+		const edge = shape.edges.find((e) => e.id === selectedEdge.edgeId);
+		if (!edge) return undefined;
+
+		// Get available positions (including current position)
+		const available = getAvailablePositions(edge.edgeModifications);
+		
+		// Always include the current position (user is editing existing modification)
+		const currentPosition = selectedEdge.edgeModification?.position;
+		if (currentPosition && !available.includes(currentPosition)) {
+			return [...available, currentPosition];
+		}
+
+		return available;
+	}, [selectedEdge, designData]);
 
 	const handleSizeChange = (value: { depth: number; width: number }) => {
 		if (!selectedEdge?.edgeModification?.id) return;
@@ -132,6 +165,7 @@ const EditCurvesAndBumps: FC<EditCurvesAndBumpsProps> = ({ setView }) => {
 							selectedEdge?.edgeModification?.position ??
 							EdgeShapePosition.Center
 						}
+						availablePositions={availablePositions}
 					/>
 				)}
 				{bumpType !== EdgeModificationType.FullCurve && hasPosition && (

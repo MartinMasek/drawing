@@ -177,6 +177,8 @@ model EdgeModification {
     edgeId String
     edge   Edge   @relation(fields: [edgeId], references: [id], onDelete: Cascade)
 
+    // Points are used to store the points of the edge modification. They are used to render that modification and show where we have edges due to modifications.
+    // Maybe this will be renamed or moved to different model in the future But for now it works.
     points Point[] @relation("EdgeModificationPoints")
 }
 

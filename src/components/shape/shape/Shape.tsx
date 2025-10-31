@@ -28,9 +28,9 @@ interface ShapeProps {
 }
 
 /**
- * Main Shape component (orchestrator)
- * Composition of sub-components based on the active tab with custom hooks for state management
- * Maintains same public API as original monolithic component
+ * Main Shape component
+ * Composition of sub-components based on the active tab
+ * If you need to understand how shape rendering works look at the README.md file in the root of the shape folder.
  */
 const Shape = ({
 	shape,
@@ -56,6 +56,8 @@ const Shape = ({
 		setHoveredEdgeIndex,
 		hoveredPointIndex,
 		setHoveredPointIndex,
+		hoveredModificationId,
+		setHoveredModificationId,
 		setIsDragging,
 	} = useShapeState(shape);
 
@@ -74,6 +76,10 @@ const Shape = ({
 		handleEdgeMouseLeave,
 		handlePointMouseEnter,
 		handlePointMouseLeave,
+		handleModificationClick,
+		handleEmptyEdgeClick,
+		handleModificationMouseEnter,
+		handleModificationMouseLeave,
 	} = useShapeInteractions(
 		shape,
 		absolutePoints,
@@ -90,6 +96,7 @@ const Shape = ({
 		},
 		setHoveredEdgeIndex,
 		setHoveredPointIndex,
+		setHoveredModificationId,
 		setIsDragging,
 		setDragOffset,
 	);
@@ -107,6 +114,12 @@ const Shape = ({
 			? selectedCorner.pointIndex
 			: null;
 
+	const selectedModificationId =
+		selectedEdge?.edgeModification?.id !== undefined &&
+		selectedEdge?.shapeId === shape.id
+			? selectedEdge.edgeModification.id
+			: null;
+
 	// Render appropriate variant based on active tab
 	if (activeTab === DrawingTab.Shape) {
 		return (
@@ -122,6 +135,8 @@ const Shape = ({
 				isDraggable={isDraggable}
 				hoveredEdgeIndex={hoveredEdgeIndex}
 				selectedEdgeIndex={selectedEdgeIndex}
+				hoveredModificationId={hoveredModificationId}
+				selectedModificationId={selectedModificationId}
 				hoveredPointIndex={hoveredPointIndex}
 				selectedPointIndex={selectedPointIndex}
 				onClick={onClick}
@@ -129,8 +144,12 @@ const Shape = ({
 				onMouseLeave={onMouseLeave}
 				onContextMenu={onContextMenu}
 				handleEdgeClick={handleEdgeClick}
+				handleModificationClick={handleModificationClick}
+				handleEmptyEdgeClick={handleEmptyEdgeClick}
 				handleEdgeMouseEnter={handleEdgeMouseEnter}
 				handleEdgeMouseLeave={handleEdgeMouseLeave}
+				handleModificationMouseEnter={handleModificationMouseEnter}
+				handleModificationMouseLeave={handleModificationMouseLeave}
 				handlePointClick={handlePointClick}
 				handlePointMouseEnter={handlePointMouseEnter}
 				handlePointMouseLeave={handlePointMouseLeave}
@@ -157,13 +176,19 @@ const Shape = ({
 				isDraggable={isDraggable}
 				hoveredEdgeIndex={hoveredEdgeIndex}
 				selectedEdgeIndex={selectedEdgeIndex}
+				hoveredModificationId={hoveredModificationId}
+				selectedModificationId={selectedModificationId}
 				onClick={onClick}
 				onMouseEnter={onMouseEnter}
 				onMouseLeave={onMouseLeave}
 				onContextMenu={onContextMenu}
 				handleEdgeClick={handleEdgeClick}
+				handleModificationClick={handleModificationClick}
+				handleEmptyEdgeClick={handleEmptyEdgeClick}
 				handleEdgeMouseEnter={handleEdgeMouseEnter}
 				handleEdgeMouseLeave={handleEdgeMouseLeave}
+				handleModificationMouseEnter={handleModificationMouseEnter}
+				handleModificationMouseLeave={handleModificationMouseLeave}
 				onDragStart={handleDragStart}
 				onDragMove={handleDragMove}
 				onDragEnd={handleDragEnd}

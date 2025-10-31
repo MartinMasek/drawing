@@ -20,6 +20,8 @@ interface EdgeProps {
 	nextPoint: Point;
 	isEdgeHovered: boolean;
 	isEdgeSelected: boolean;
+	hoveredModificationId: string | null;
+	selectedModificationId: string | null;
 	isDrawing: boolean;
 	handleEdgeClick: (
 		index: number,
@@ -27,8 +29,22 @@ interface EdgeProps {
 		point2Id: string,
 		e: KonvaEventObject<MouseEvent>,
 	) => void;
+	handleModificationClick: (
+		edgeIndex: number,
+		modificationId: string,
+		e: KonvaEventObject<MouseEvent>,
+	) => void;
+	handleEmptyEdgeClick: (
+		edgeIndex: number,
+		point1Id: string,
+		point2Id: string,
+		clickPosition: import("@prisma/client").EdgeShapePosition,
+		e: KonvaEventObject<MouseEvent>,
+	) => void;
 	handleEdgeMouseEnter: (index: number) => void;
 	handleEdgeMouseLeave: () => void;
+	handleModificationMouseEnter: (modificationId: string) => void;
+	handleModificationMouseLeave: () => void;
 	edgeModifications: EdgeModification[];
 }
 
@@ -46,10 +62,16 @@ const Edge = ({
 	nextPoint,
 	isEdgeHovered,
 	isEdgeSelected,
+	hoveredModificationId,
+	selectedModificationId,
 	isDrawing,
 	handleEdgeClick,
+	handleModificationClick,
+	handleEmptyEdgeClick,
 	handleEdgeMouseEnter,
 	handleEdgeMouseLeave,
+	handleModificationMouseEnter,
+	handleModificationMouseLeave,
 	edgeModifications,
 }: EdgeProps) => {
 	// If there are modifications, check what type they are
@@ -65,33 +87,46 @@ const Edge = ({
 		if (hasCurve) {
 			return (
 				<EdgeWithCurves
+					edgeIndex={index}
 					point={point}
 					nextPoint={nextPoint}
 					edgeModifications={edgeModifications}
 					isEdgeHovered={isEdgeHovered}
 					isEdgeSelected={isEdgeSelected}
-					onClick={(e) => handleEdgeClick(index, point.id, nextPoint.id, e)}
-					onMouseEnter={() => handleEdgeMouseEnter(index)}
-					onMouseLeave={handleEdgeMouseLeave}
+					hoveredModificationId={hoveredModificationId}
+					selectedModificationId={selectedModificationId}
+					handleModificationClick={handleModificationClick}
+					handleEmptyEdgeClick={handleEmptyEdgeClick}
+					handleEdgeMouseEnter={handleEdgeMouseEnter}
+					handleEdgeMouseLeave={handleEdgeMouseLeave}
+					handleModificationMouseEnter={handleModificationMouseEnter}
+					handleModificationMouseLeave={handleModificationMouseLeave}
 				/>
 			);
 		}
 
 		return (
 			<EdgeStraight
+				edgeIndex={index}
 				point={point}
 				nextPoint={nextPoint}
 				edgeModifications={edgeModifications}
 				isEdgeHovered={isEdgeHovered}
 				isEdgeSelected={isEdgeSelected}
-				onClick={(e) => handleEdgeClick(index, point.id, nextPoint.id, e)}
-				onMouseEnter={() => handleEdgeMouseEnter(index)}
-				onMouseLeave={handleEdgeMouseLeave}
+				hoveredModificationId={hoveredModificationId}
+				selectedModificationId={selectedModificationId}
+				handleModificationClick={handleModificationClick}
+				handleEmptyEdgeClick={handleEmptyEdgeClick}
+				handleEdgeMouseEnter={handleEdgeMouseEnter}
+				handleEdgeMouseLeave={handleEdgeMouseLeave}
+				handleModificationMouseEnter={handleModificationMouseEnter}
+				handleModificationMouseLeave={handleModificationMouseLeave}
 			/>
 		);
 	}
 
 	// Simple edge without modifications - render directly
+	// Click on empty edge defaults to Center position
 	return (
 		<Line
 			key={`${shape.id}-edge-${index}`}
@@ -106,7 +141,11 @@ const Edge = ({
 			}
 			hitStrokeWidth={EDGE_HIT_STROKE_WIDTH}
 			listening={!isDrawing}
-			onClick={(e) => handleEdgeClick(index, point.id, nextPoint.id, e)}
+			onClick={(e) => {
+				// Empty edge - add new modification at Center position
+				const EdgeShapePosition = require("@prisma/client").EdgeShapePosition;
+				handleEmptyEdgeClick(index, point.id, nextPoint.id, EdgeShapePosition.Center, e);
+			}}
 			onMouseEnter={() => handleEdgeMouseEnter(index)}
 			onMouseLeave={handleEdgeMouseLeave}
 		/>
