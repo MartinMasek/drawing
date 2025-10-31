@@ -266,7 +266,11 @@ export type EdgeModification = {
 	sideAngleLeft: number;
 	sideAngleRight: number;
 	fullRadiusDepth: number;
+	points: Point[];
 };
+
+// TODO COMMENT
+export type EdgeModificationForCalculation = Pick<EdgeModification, "type" | "position" | "distance" | "width" | "depth" | "fullRadiusDepth" | "sideAngleLeft" | "sideAngleRight">;
 
 export const EdgeModificationList: {
 	id: EdgeModificationType;

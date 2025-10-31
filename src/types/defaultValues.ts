@@ -24,8 +24,8 @@ type CornerDefaults = {
 export const defaultEdgeBumpOutValues = {
 	depth: 3,
 	width: 30,
-	sideAngleLeft: 90,
-	sideAngleRight: 90,
+	sideAngleLeft: 0,
+	sideAngleRight: 0,
 	distance: 0,
 	fullRadiusDepth: 0,
 	position: EdgeShapePosition.Center,
@@ -34,8 +34,8 @@ export const defaultEdgeBumpOutValues = {
 export const defaultEdgeBumpInValues = {
 	depth: 3,
 	width: 30,
-	sideAngleLeft: 90,
-	sideAngleRight: 90,
+	sideAngleLeft: 0,
+	sideAngleRight: 0,
 	distance: 0,
 	fullRadiusDepth: 0,
 	position: EdgeShapePosition.Center,
@@ -59,6 +59,7 @@ export const defaultEdgeBumpOutCurveValues = {
 	distance: 0,
 	fullRadiusDepth: 0,
 	position: EdgeShapePosition.Center,
+	points: [],
 };
 
 export const defaultEdgeFullCurveValues = {

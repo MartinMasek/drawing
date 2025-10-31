@@ -1,11 +1,13 @@
 import { IconBug } from "@tabler/icons-react";
 import { XIcon } from "lucide-react";
 import { type FC, useState } from "react";
-import type { CardinalDirection, Coordinate } from "~/types/drawing";
+import type { CardinalDirection, Coordinate, EdgeModification } from "~/types/drawing";
 import type { PreviewShape } from "~/hooks/useShapeDrawing";
 
 import { Icon } from "./header/header/Icon";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
+import { useDrawing } from "./header/context/DrawingContext";
+import { cn } from "~/lib/utils";
 
 interface DebugSidePanelProps {
 	previewBounds: Coordinate[] | null;
@@ -13,6 +15,8 @@ interface DebugSidePanelProps {
 	canChangeDirectionNow: boolean;
 	lastDirection: CardinalDirection | null;
 	onDebugModeChange: (enabled: boolean) => void;
+	allModifications: EdgeModification[];
+	shapePointsCount?: number;
 }
 
 const DebugSidePanel: FC<DebugSidePanelProps> = ({
@@ -21,7 +25,11 @@ const DebugSidePanel: FC<DebugSidePanelProps> = ({
 	canChangeDirectionNow,
 	lastDirection,
 	onDebugModeChange,
+	allModifications,
+	shapePointsCount = 0,
 }) => {
+		const { isOpenSideDialog} = useDrawing();
+
 	const [debugMode, setDebugMode] = useState(false);
 
 	const handleToggleDebugMode = (enabled: boolean) => {
@@ -44,7 +52,7 @@ const DebugSidePanel: FC<DebugSidePanelProps> = ({
 			</SheetTrigger>
 			<SheetContent
 				side="right"
-				className="w-[400px] gap-0 overflow-y-auto"
+				className={cn("w-[400px] gap-0 overflow-y-auto", isOpenSideDialog ? "right-[339px]" : "right-0")}
 				onInteractOutside={(e) => {
 					// Prevent the sheet from closing when clicking outside
 					e.preventDefault();
@@ -62,6 +70,59 @@ const DebugSidePanel: FC<DebugSidePanelProps> = ({
 								<XIcon className="size-4" />
 							</button>
 						</SheetTrigger>
+					</div>
+
+					<div className="rounded-lg bg-gray-100 p-4">
+						<h3 className="mb-2 font-semibold text-lg">Points Visualization</h3>
+						<div className="space-y-2">
+							<div className="flex items-center justify-between rounded bg-white px-3 py-2">
+								<span className="font-medium text-sm">
+									<span className="mr-2 inline-block size-3 rounded-full bg-[#00BFFF]" />
+									Shape Points:
+								</span>
+								<span className="font-mono text-sm">
+									{shapePointsCount}
+								</span>
+							</div>
+							<div className="flex items-center justify-between rounded bg-white px-3 py-2">
+								<span className="font-medium text-sm">
+									<span className="mr-2 inline-block size-3 rounded-full bg-[#FF00FF]" />
+									Modification Points:
+								</span>
+								<span className="font-mono text-sm">
+									{allModifications.reduce((sum, mod) => sum + (mod.points?.length || 0), 0)}
+								</span>
+							</div>
+							<div className="flex items-center justify-between rounded bg-white px-3 py-2">
+								<span className="font-medium text-sm">Total Modifications:</span>
+								<span className="font-mono text-sm">
+									{allModifications.length}
+								</span>
+							</div>
+							{allModifications.map((mod, idx) => (
+								<div key={mod.id || idx} className="rounded bg-white px-3 py-2">
+									<div className="flex items-center justify-between">
+										<span className="font-medium text-sm">Mod {idx + 1}:</span>
+										<span className="font-mono text-gray-600 text-xs">
+											{mod.type}
+										</span>
+									</div>
+									<div className="mt-1 flex items-center justify-between">
+										<span className="text-gray-600 text-xs">Points:</span>
+										<span className="font-mono text-xs">
+											{mod.points?.length || 0}
+										</span>
+									</div>
+								</div>
+							))}
+						</div>
+					</div>
+
+					<div className="rounded-lg bg-gray-100 p-4">
+						<h3 className="mb-2 font-semibold text-lg">All Modifications (Raw)</h3>
+						<pre className="overflow-auto rounded bg-white p-3 text-xs">
+							{JSON.stringify(allModifications, null, 2)}
+						</pre>
 					</div>
 
 					<div className="rounded-lg bg-gray-100 p-4">
