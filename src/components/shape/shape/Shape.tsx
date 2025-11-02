@@ -104,19 +104,19 @@ const Shape = ({
 	// Determine selected indices
 	const selectedEdgeIndex =
 		selectedEdge?.edgeIndex !== undefined &&
-		selectedEdge?.shapeId === shape.id
+			selectedEdge?.shapeId === shape.id
 			? selectedEdge.edgeIndex
 			: null;
 
 	const selectedPointIndex =
 		selectedCorner?.pointIndex !== undefined &&
-		selectedCorner?.shapeId === shape.id
+			selectedCorner?.shapeId === shape.id
 			? selectedCorner.pointIndex
 			: null;
 
 	const selectedModificationId =
 		selectedEdge?.edgeModification?.id !== undefined &&
-		selectedEdge?.shapeId === shape.id
+			selectedEdge?.shapeId === shape.id
 			? selectedEdge.edgeModification.id
 			: null;
 
