@@ -30,7 +30,7 @@ export default function Drawing() {
 
 	return (
 		<>
-			<DrawingProvider>
+			<DrawingProvider designIdParam={designId}>
 				<main className="flex min-h-screen flex-col overflow-hidden bg-white">
 					<ShapeProvider shapes={design?.shapes}>
 						<DrawingHeader title={design.name} />

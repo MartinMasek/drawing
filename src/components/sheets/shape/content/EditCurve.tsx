@@ -13,20 +13,18 @@ import { useShape } from "~/components/header/context/ShapeContext";
 import { EdgeModificationList } from "~/types/drawing";
 import { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
 import { useDeleteEdgeModification } from "~/hooks/mutations/edges/useDeleteEdgeModification";
-import { useRouter } from "next/router";
 import { useUpdateEdgeModificationDebounced } from "~/hooks/mutations/edges/useUpdateEdgeModificationDebounced";
 import FullRadiusDepthInput from "../components/FullRadiusDepthInput";
 import { getAvailablePositions } from "~/components/shape/edge/edgeValidation";
 import { api } from "~/utils/api";
+import { useDrawing } from "~/components/header/context/DrawingContext";
 
 interface EditCurveProps {
 	setView: (value: ShapeSheetView) => void;
 }
 
 const EditCurve: FC<EditCurveProps> = ({ setView }) => {
-	const router = useRouter();
-	const idParam = router.query.id;
-	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
+	const { designId } = useDrawing();
 	const { selectedEdge } = useShape();
 	const deleteEdgeModification = useDeleteEdgeModification(designId);
 	const updateEdgeMod = useUpdateEdgeModificationDebounced(designId);

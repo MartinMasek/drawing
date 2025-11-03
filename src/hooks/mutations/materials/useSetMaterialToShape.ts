@@ -1,7 +1,7 @@
 import { api } from "~/utils/api";
 import type { CanvasShape, MaterialExtended } from "~/types/drawing";
-import { useRouter } from "next/router";
 import { useShape } from "~/components/header/context/ShapeContext";
+import { useDrawing } from "~/components/header/context/DrawingContext";
 
 /**
  * Hook for setting material to shapes with optimistic updates.
@@ -14,9 +14,8 @@ interface UseSetMaterialToShapeProps {
 export function useSetMaterialToShape({
 	material,
 }: UseSetMaterialToShapeProps) {
-	const router = useRouter();
-	const idParam = router.query.id;
-	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
+	const { designId } = useDrawing();
+
 	const utils = api.useUtils();
 
 	const { materials, selectedShape, setSelectedShape } = useShape();

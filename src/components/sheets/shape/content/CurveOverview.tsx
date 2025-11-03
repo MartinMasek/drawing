@@ -1,6 +1,5 @@
 import type { FC, JSX } from "react";
-import { useRouter } from "next/router";
-import { CornerType, EdgeModificationType, EdgeShapePosition } from "@prisma/client";
+import { EdgeModificationType } from "@prisma/client";
 import { useUpdateEdgeModification } from "~/hooks/mutations/edges/useUpdateEdgeModification";
 import { useShape } from "~/components/header/context/ShapeContext";
 import { SheetHeader, SheetTitle } from "~/components/ui/sheet";
@@ -17,6 +16,7 @@ import CurvesNoneIcon from "~/components/icons/CurvesNoneIcon";
 import { getDefaultValueForEdgeModification } from "~/types/defaultValues";
 import { generateEdgePoints } from "~/components/shape/edgeUtils";
 import { EdgeModificationList } from "~/types/drawing";
+import { useDrawing } from "~/components/header/context/DrawingContext";
 
 interface CurveOverviewProps {
 	setView: (value: ShapeSheetView) => void;
@@ -33,10 +33,10 @@ const curveAndBumpIcons: Record<EdgeModificationType, JSX.Element> = {
 const CurveOverview: FC<
 	CurveOverviewProps
 > = ({ setView }) => {
+	const { designId } = useDrawing();
+
 	const { selectedEdge, selectedShape, addToMostRecentlyUsedEdgeModification, mostRecentlyUsedEdgeModification } = useShape();
-	const router = useRouter();
-	const idParam = router.query.id;
-	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
+
 	const updateEdge = useUpdateEdgeModification(designId);
 	const createEdge = useCreateEdgeModification(designId);
 	const deleteEdgeModification = useDeleteEdgeModification(designId);

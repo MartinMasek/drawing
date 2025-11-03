@@ -11,21 +11,20 @@ import RadiusInput from "../components/RadiusInput";
 import DepthInput from "../components/DepthInput";
 import { CornerType } from "@prisma/client";
 import useDeleteCornerModification from "~/hooks/mutations/corners/useDeleteCornerModification";
-import { useRouter } from "next/router";
 import useUpdateCornerLengthDebounced from "~/hooks/mutations/corners/useUpdateCornerLengthDebounced";
 import useUpdateCornerRadiusDebounced from "~/hooks/mutations/corners/useUpdateCornerRadiusDebounced";
 import useUpdateCornerDepthDebounced from "~/hooks/mutations/corners/useUpdateCornerDepthDebounced";
 import useUpdateCornerClipDebounced from "~/hooks/mutations/corners/useUpdateCornerClipDebounced";
 import ClipInput from "../components/ClipInput";
+import { useDrawing } from "~/components/header/context/DrawingContext";
 
 interface EditCornerProps {
 	setView: (value: ShapeSheetView) => void;
 }
 
 const EditCorner: FC<EditCornerProps> = ({ setView }) => {
-	const router = useRouter();
-	const idParam = router.query.id;
-	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
+	const { designId } = useDrawing();
+
 	const { selectedCorner, selectedShape } = useShape();
 	const deleteCornerModification = useDeleteCornerModification(designId);
 	const updateCornerRadius = useUpdateCornerRadiusDebounced(designId);

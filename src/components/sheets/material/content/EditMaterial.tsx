@@ -6,22 +6,20 @@ import { Icon } from "~/components/header/header/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import type { MaterialSheetView } from "../MaterialSheet";
 import { useShape } from "~/components/header/context/ShapeContext";
-import { useRouter } from "next/router";
 import { useSetMaterialToShape } from "~/hooks/mutations/materials/useSetMaterialToShape";
 import { useSetMaterialToShapesWithoutMaterial } from "~/hooks/mutations/materials/useSetMaterialToShapesWithoutMaterial";
 import { useSetMaterialToAllShapes } from "~/hooks/mutations/materials/useSetMaterialToAllShapes";
 import { useRemoveMaterialFromShapes } from "~/hooks/mutations/materials/useRemoveMaterialFromShapes";
 import EditNoneMaterial from "../components/EditNoneMaterial";
 import EditSelectedMaterial from "../components/EditSelectedMaterial";
+import { useDrawing } from "~/components/header/context/DrawingContext";
 
 interface EditMaterialProps {
 	setView: (value: MaterialSheetView) => void;
 }
 
 const EditMaterial: FC<EditMaterialProps> = ({ setView }) => {
-	const router = useRouter();
-	const idParam = router.query.id;
-	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
+	const { designId } = useDrawing();
 
 	const {
 		selectedMaterial,

@@ -33,25 +33,26 @@ interface DrawingCanvasProps {
 }
 
 const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
-	const router = useRouter();
-	const idParam = router.query.id;
-	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
+	// const router = useRouter();
+	// const idParam = router.query.id;
+	// const designId = Array.isArray(idParam) ? idParam[0] : idParam;
+	const { designId } = useDrawing();
+	const {
+		selectedShape,
+		setSelectedShape,
+		setSelectedEdge,
+		setSelectedCorner,
+		hoveredId,
+		setHoveredId,
+		draggingId,
+		setDraggingId,
+		contextMenu,
+		setContextMenu,
+		cutoutContextMenu,
+		setCutoutContextMenu,
+	} = useShape();
 
-	const { selectedShape, setSelectedShape, setSelectedEdge, setSelectedCorner } =
-		useShape();
-	const [hoveredId, setHoveredId] = useState<string | null>(null);
-	const [draggingId, setDraggingId] = useState<string | null>(null);
 	const [isDebugMode, setIsDebugMode] = useState(false);
-	const [contextMenu, setContextMenu] = useState<{
-		shapeId: string;
-		x: number;
-		y: number;
-	} | null>(null);
-	const [cutoutContextMenu, setCutoutContextMenu] = useState<{
-		shapeId: string;
-		x: number;
-		y: number;
-	} | null>(null);
 
 	const {
 		containerSize,

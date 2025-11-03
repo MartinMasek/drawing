@@ -38,13 +38,16 @@ type DrawingContextType = {
 	setIsOpenSideDialog: (isOpen: boolean) => void;
 	totalArea: number;
 	setTotalArea: (area: number) => void;
+	designId?: string;
+	setDesignId: (id?: string) => void;
 };
 
 const DrawingContext = createContext<DrawingContextType | null>(null);
 
 export const DrawingProvider = ({
 	children,
-}: { children: React.ReactNode }) => {
+	designIdParam,
+}: { children: React.ReactNode; designIdParam?: string }) => {
 	const [zoom, setZoom] = useState(CANVAS_DEFAULT_ZOOM);
 	const [isOpenSideDialog, setIsOpenSideDialog] = useState(false);
 	const [activeTab, setActiveTab] = useQueryState("tab", {
@@ -52,6 +55,8 @@ export const DrawingProvider = ({
 		parse: (v) => Number(v) as DrawingTab,
 		serialize: String,
 	});
+
+	const [designId, setDesignId] = useState<string | undefined>(designIdParam);
 
 	const [cursorType, setCursorType] = useState(CursorTypes.Dimesions);
 	const [containerSize, setContainerSize] = useState({
@@ -126,6 +131,8 @@ export const DrawingProvider = ({
 			setIsOpenSideDialog,
 			totalArea,
 			setTotalArea,
+			designId,
+			setDesignId,
 		}),
 		[
 			activeTab,
@@ -139,6 +146,7 @@ export const DrawingProvider = ({
 			panStart,
 			isOpenSideDialog,
 			totalArea,
+			designId,
 		],
 	);
 

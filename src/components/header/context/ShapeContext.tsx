@@ -27,6 +27,30 @@ type ShapeContextType = {
 	addToMostRecentlyUsedCornerModification: (modification: CornerType) => void;
 	selectedCutout: SinkCutout | null;
 	setSelectedCutout: (cutout: SinkCutout | null) => void;
+	hoveredId: string | null;
+	setHoveredId: (id: string | null) => void;
+	draggingId: string | null;
+	setDraggingId: (id: string | null) => void;
+	contextMenu: {
+		shapeId: string;
+		x: number;
+		y: number;
+	} | null;
+	setContextMenu: (contextMenu: {
+		shapeId: string;
+		x: number;
+		y: number;
+	} | null) => void;
+	cutoutContextMenu: {
+		shapeId: string;
+		x: number;
+		y: number;
+	} | null;
+	setCutoutContextMenu: (cutoutContextMenu: {
+		shapeId: string;
+		x: number;
+		y: number;
+	} | null) => void;
 };
 const MAX_STACK_ITEMS = 4;
 
@@ -43,11 +67,25 @@ export const ShapeProvider = ({
 	const [selectedCorner, setSelectedCorner] = useState<SelectedCorner | null>(null);
 	const [selectedCutout, setSelectedCutout] = useState<SinkCutout | null>(null);
 
+	const [selectedMaterial, setSelectedMaterial] = useState<MaterialExtended | null>(null);
+
 	const [mostRecentlyUsedEdgeModification, setMostRecentlyUsedEdgeModification] = useState<EdgeModificationType[]>([]);
 	const [mostRecentlyUsedCornerModification, setMostRecentlyUsedCornerModification] = useState<CornerType[]>([]);
 
-	const [selectedMaterial, setSelectedMaterial] =
-		useState<MaterialExtended | null>(null);
+	const [hoveredId, setHoveredId] = useState<string | null>(null);
+	const [draggingId, setDraggingId] = useState<string | null>(null);
+	const [contextMenu, setContextMenu] = useState<{
+		shapeId: string;
+		x: number;
+		y: number;
+	} | null>(null);
+	const [cutoutContextMenu, setCutoutContextMenu] = useState<{
+		shapeId: string;
+		x: number;
+		y: number;
+	} | null>(null);
+
+
 
 	const addToMostRecentlyUsedEdgeModification = (modification: EdgeModificationType) => {
 		setMostRecentlyUsedEdgeModification(prev => {
@@ -62,7 +100,6 @@ export const ShapeProvider = ({
 			return [modification, ...prev].slice(0, MAX_STACK_ITEMS);
 		});
 	};
-
 
 	// All material ids that are applied to the shapes
 	const [materials, setMaterials] = useState<MaterialExtended[]>(() => {
@@ -117,6 +154,14 @@ export const ShapeProvider = ({
 		addToMostRecentlyUsedCornerModification,
 		selectedCutout,
 		setSelectedCutout,
+		hoveredId,
+		setHoveredId,
+		draggingId,
+		setDraggingId,
+		contextMenu,
+		setContextMenu,
+		cutoutContextMenu,
+		setCutoutContextMenu,
 	};
 
 	return (

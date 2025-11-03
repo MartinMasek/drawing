@@ -11,10 +11,11 @@ import NoneCornerIcon from "~/components/icons/NoneCornerIcon";
 import { CornerType } from "@prisma/client";
 import useCreateCornerModification from "~/hooks/mutations/corners/useCreateCornerModification";
 import useUpdateCornerModification from "~/hooks/mutations/corners/useUpdateCornerModification";
-import { useRouter } from "next/router";
+
 import useDeleteCornerModification from "~/hooks/mutations/corners/useDeleteCornerModification";
 import { getDefaultValueForCornerModification } from "~/types/defaultValues";
-import { CornerModificationList, EdgeModificationList } from "~/types/drawing";
+import { CornerModificationList } from "~/types/drawing";
+import { useDrawing } from "~/components/header/context/DrawingContext";
 
 interface CornerOverviewProps {
 	setView: (value: ShapeSheetView) => void;
@@ -31,9 +32,7 @@ const cornerIcons: Record<CornerType, JSX.Element> = {
 const CornerOverview: FC<CornerOverviewProps> = ({
 	setView,
 }) => {
-	const router = useRouter();
-	const idParam = router.query.id;
-	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
+	const { designId } = useDrawing();
 	const { selectedCorner, selectedShape, addToMostRecentlyUsedCornerModification, mostRecentlyUsedCornerModification } = useShape();
 	const createCornerModification = useCreateCornerModification(designId);
 	const updateCornerModification = useUpdateCornerModification(designId);

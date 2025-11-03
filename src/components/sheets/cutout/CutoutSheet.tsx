@@ -17,11 +17,10 @@ import useUpdateSinkShapeDebounced from "~/hooks/mutations/cutouts/useUpdateSink
 import useUpdateSinkFaucetHolesDebounced from "~/hooks/mutations/cutouts/useUpdateSinkFaucetHolesDebounced";
 import useUpdateSinkCentrelinesDebounced from "~/hooks/mutations/cutouts/useUpdateSinkCentrelinesDebounced";
 import useRemoveCutout from "~/hooks/mutations/cutouts/useRemoveCutout";
+import { useDrawing } from "~/components/header/context/DrawingContext";
 
 const CutoutSheet: FC = () => {
-	const router = useRouter();
-	const idParam = router.query.id;
-	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
+	const { designId } = useDrawing();
 	const { selectedCutout } = useShape();
 
 	const updateSinkType = useUpdateSinkTypeDebounced(designId);
