@@ -26,7 +26,7 @@ export const useCursorLogic = ({
 		isCursorCurves: cursorType === CursorTypes.Curves,
 		isCursorCorners: cursorType === CursorTypes.Corners,
 		isCursorCutouts: cursorType === CursorTypes.Cutouts,
-		isCursorEdges: cursorType === CursorTypes.Egdes,
+		isCursorEdges: cursorType === CursorTypes.Edges,
 		isCursorText: cursorType === CursorTypes.Text,
 	};
 

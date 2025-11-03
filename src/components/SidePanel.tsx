@@ -19,7 +19,7 @@ const SidePanel: FC = () => {
 					{cursorType === CursorTypes.Dimesions && <MaterialSheet />}
 					{cursorType === CursorTypes.Curves && <ShapeSheet />}
 					{cursorType === CursorTypes.Corners && <ShapeSheet />}
-					{cursorType === CursorTypes.Egdes && <EdgeSheet />}
+					{cursorType === CursorTypes.Edges && <EdgeSheet />}
 					{cursorType === CursorTypes.Cutouts && <CutoutSheet />}
 				</>
 			)}

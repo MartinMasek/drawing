@@ -19,7 +19,7 @@ export enum CursorTypes {
 	Dimesions = 1,
 	Curves = 2,
 	Corners = 3,
-	Egdes = 4,
+	Edges = 4,
 	Cutouts = 5,
 	Layout = 6,
 	Quote = 7,
@@ -31,7 +31,7 @@ export enum CursorTypes {
 export const defaultCursorByTab: Record<DrawingTab, CursorTypes> = {
 	[DrawingTab.Dimensions]: CursorTypes.Dimesions,
 	[DrawingTab.Shape]: CursorTypes.Curves,
-	[DrawingTab.Edges]: CursorTypes.Egdes,
+	[DrawingTab.Edges]: CursorTypes.Edges,
 	[DrawingTab.Cutouts]: CursorTypes.Cutouts,
 	[DrawingTab.Layout]: CursorTypes.Layout,
 	[DrawingTab.Quote]: CursorTypes.Quote,
