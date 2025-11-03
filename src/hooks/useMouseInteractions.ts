@@ -16,8 +16,8 @@ interface UseMouseInteractionsProps {
 	isPanning: boolean;
 	isDragging: boolean;
 	isDrawing: boolean;
-	editingText: CanvasText | null;
-	setEditingText: (text: CanvasText | null) => void;
+	selectedText: CanvasText | null;
+	setSelectedText: (text: CanvasText | null) => void;
 	newTextPos: { x: number; y: number } | null;
 	setNewTextPos: (pos: { x: number; y: number } | null) => void;
 	handleDrawStart: (e: KonvaEventObject<MouseEvent>) => void;
@@ -45,8 +45,8 @@ export const useMouseInteractions = ({
 	isPanning,
 	isDragging,
 	isDrawing,
-	editingText,
-	setEditingText,
+	selectedText,
+	setSelectedText,
 	newTextPos,
 	setNewTextPos,
 	handleDrawStart,
@@ -121,8 +121,8 @@ export const useMouseInteractions = ({
 			}
 
 			// Reset text editing if clicking on empty canvas
-			if (editingText !== null && e.target === e.target.getStage()) {
-				setEditingText(null);
+			if (selectedText !== null && e.target === e.target.getStage()) {
+				setSelectedText(null);
 				setHoveredId(null); // Clear hover state to reset cursor
 				return;
 			}
@@ -154,8 +154,8 @@ export const useMouseInteractions = ({
 		[
 			closeContextMenu,
 			closeCutoutContextMenu,
-			editingText,
-			setEditingText,
+			selectedText,
+			setSelectedText,
 			setHoveredId,
 			cursorType,
 			handleTextMouseDown,

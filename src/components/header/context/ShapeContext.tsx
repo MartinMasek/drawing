@@ -6,6 +6,7 @@ import type {
 	MaterialExtended,
 	SelectedCorner,
 	SelectedEdge,
+	CanvasText,
 } from "~/types/drawing";
 
 type ShapeContextType = {
@@ -51,6 +52,8 @@ type ShapeContextType = {
 		x: number;
 		y: number;
 	} | null) => void;
+	selectedText: CanvasText | null;
+	setSelectedText: (text: CanvasText | null) => void;
 };
 const MAX_STACK_ITEMS = 4;
 
@@ -63,6 +66,8 @@ export const ShapeProvider = ({
 	shapes?: ReadonlyArray<CanvasShape>;
 }) => {
 	const [selectedShape, setSelectedShape] = useState<CanvasShape | null>(null);
+	const [selectedText, setSelectedText] = useState<CanvasText | null>(null);
+
 	const [selectedEdge, setSelectedEdge] = useState<SelectedEdge | null>(null);
 	const [selectedCorner, setSelectedCorner] = useState<SelectedCorner | null>(null);
 	const [selectedCutout, setSelectedCutout] = useState<SinkCutout | null>(null);
@@ -162,6 +167,8 @@ export const ShapeProvider = ({
 		setContextMenu,
 		cutoutContextMenu,
 		setCutoutContextMenu,
+		selectedText,
+		setSelectedText,
 	};
 
 	return (

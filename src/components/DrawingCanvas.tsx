@@ -47,6 +47,8 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		setContextMenu,
 		cutoutContextMenu,
 		setCutoutContextMenu,
+		selectedText,
+		setSelectedText,
 	} = useShape();
 
 	const [isDebugMode, setIsDebugMode] = useState(false);
@@ -65,8 +67,6 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 
 	// Text handling
 	const {
-		editingText,
-		setEditingText,
 		newTextPos,
 		setNewTextPos,
 		currentTextPos,
@@ -74,7 +74,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		handleDelete,
 		handleEscape,
 		handleTextDragEnd,
-	} = useText(designId ?? "");
+	} = useText({ designId, selectedText, setSelectedText });
 
 	// Calculate total area when shapes are loaded
 	useEffect(() => {
@@ -298,8 +298,8 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		isPanning,
 		isDragging: !!draggingId,
 		isDrawing,
-		editingText,
-		setEditingText,
+		selectedText,
+		setSelectedText,
 		newTextPos,
 		setNewTextPos,
 		handleDrawStart,
@@ -457,7 +457,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 
 					{/* Render saved texts with optimistic updates */}
 					{texts.map((t) =>
-						editingText && editingText.id === t.id ? null : ( // hide the one being edited
+						selectedText && selectedText.id === t.id ? null : ( // hide the one being edited
 							<Text
 								key={t.id}
 								x={t.xPos}
@@ -468,7 +468,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 								fill={t.textColor}
 								onMouseEnter={() => setHoveredId(t.id)}
 								onMouseLeave={() => setHoveredId(null)}
-								onClick={() => setEditingText(t)}
+								onClick={() => setSelectedText(t)}
 								draggable
 								onDragEnd={(e) => handleTextDragEnd(e, t)}
 							/>
@@ -478,11 +478,11 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 			</Stage>
 
 			{/* Add text input */}
-			{(newTextPos !== null || editingText !== null) && (
+			{(newTextPos !== null || selectedText !== null) && (
 				<CanvasTextInput
-					key={editingText?.id || `${currentTextPos.x}-${currentTextPos.y}`}
+					key={selectedText?.id || `${currentTextPos.x}-${currentTextPos.y}`}
 					position={currentTextPos}
-					initialText={editingText}
+					initialText={selectedText}
 					onSave={handleSaveTextWrapper}
 					onDelete={handleDeleteTextWrapper}
 					onEscape={handleEscapeTextWrapper}

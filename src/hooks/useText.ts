@@ -6,7 +6,17 @@ import { useUpdateText } from "./mutations/texts/useUpdateText";
 import { useDeleteText } from "./mutations/texts/useDeleteText";
 import { useChangeTextPosition } from "./mutations/texts/useChangeTextPosition";
 
-export const useText = (designId: string) => {
+interface UseTextProps {
+	designId?: string;
+	selectedText: CanvasText | null;
+	setSelectedText: (text: CanvasText | null) => void;
+}
+
+export const useText = ({
+	designId,
+	selectedText,
+	setSelectedText,
+}: UseTextProps) => {
 	const createText = useCreateText(designId);
 	const updateText = useUpdateText(designId);
 	const deleteText = useDeleteText(designId);
@@ -15,38 +25,38 @@ export const useText = (designId: string) => {
 	const [newTextPos, setNewTextPos] = useState<{ x: number; y: number } | null>(
 		null,
 	);
-	const [editingText, setEditingText] = useState<CanvasText | null>(null);
 
-	const currentTextPos = editingText
-		? { x: editingText.xPos, y: editingText.yPos }
+	const currentTextPos = selectedText
+		? { x: selectedText.xPos, y: selectedText.yPos }
 		: newTextPos
 			? newTextPos
 			: { x: 0, y: 0 };
 
 	const handleDelete = useCallback(() => {
-		if (editingText) {
-			deleteText.mutate({ id: editingText.id });
-			setEditingText(null);
+		if (selectedText) {
+			deleteText.mutate({ id: selectedText.id });
+			setSelectedText(null);
 		}
 		setNewTextPos(null);
-	}, [editingText, deleteText]);
+	}, [selectedText, deleteText, setSelectedText]);
 
 	const handleEscape = useCallback(() => {
-		setEditingText(null);
+		setSelectedText(null);
 		setNewTextPos(null);
-	}, []);
+	}, [setSelectedText]);
 
 	const handleSave = useCallback(
 		(textData: CanvasTextData) => {
-			if (editingText) {
-				updateText.mutate({ id: editingText.id, ...textData });
-				setEditingText(null);
+			if (selectedText) {
+				updateText.mutate({ id: selectedText.id, ...textData });
+				setSelectedText(null);
 			} else {
+				if (!designId) return;
 				createText.mutate({ designId, ...textData });
 				setNewTextPos(null);
 			}
 		},
-		[editingText, updateText, createText, designId],
+		[selectedText, updateText, createText, designId, setSelectedText],
 	);
 
 	const handleTextDragEnd = useCallback(
@@ -62,8 +72,6 @@ export const useText = (designId: string) => {
 	return {
 		newTextPos,
 		setNewTextPos,
-		editingText,
-		setEditingText,
 		handleSave,
 		handleDelete,
 		handleEscape,
