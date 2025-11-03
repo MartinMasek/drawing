@@ -7,6 +7,18 @@ CREATE TYPE "public"."EdgeModificationType" AS ENUM ('BumpIn', 'BumpOut', 'BumpI
 -- CreateEnum
 CREATE TYPE "public"."CornerType" AS ENUM ('Clip', 'Radius', 'BumpOut', 'Notch', 'None');
 
+-- CreateEnum
+CREATE TYPE "public"."CentrelinesX" AS ENUM ('Left', 'Right');
+
+-- CreateEnum
+CREATE TYPE "public"."CentrelinesY" AS ENUM ('Top', 'Bottom');
+
+-- CreateEnum
+CREATE TYPE "public"."CutoutSinkType" AS ENUM ('Undermount', 'DropIn', 'Oval', 'Double');
+
+-- CreateEnum
+CREATE TYPE "public"."CutoutShape" AS ENUM ('Rectangle', 'Oval', 'Double');
+
 -- CreateTable
 CREATE TABLE "public"."Account" (
     "id" TEXT NOT NULL,
@@ -147,7 +159,7 @@ CREATE TABLE "public"."Corner" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Cutout" (
+CREATE TABLE "public"."SinkCutout" (
     "id" TEXT NOT NULL,
     "posX" DOUBLE PRECISION NOT NULL,
     "posY" DOUBLE PRECISION NOT NULL,
@@ -155,32 +167,55 @@ CREATE TABLE "public"."Cutout" (
     "configId" TEXT NOT NULL,
     "templateId" TEXT,
 
-    CONSTRAINT "Cutout_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "SinkCutout_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "public"."CutoutTemplate" (
+CREATE TABLE "public"."CooktopCutout" (
+    "id" TEXT NOT NULL,
+    "posX" DOUBLE PRECISION NOT NULL,
+    "posY" DOUBLE PRECISION NOT NULL,
+    "shapeId" TEXT NOT NULL,
+    "configId" TEXT NOT NULL,
+
+    CONSTRAINT "CooktopCutout_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."SinkCutoutTemplate" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "configId" TEXT NOT NULL,
 
-    CONSTRAINT "CutoutTemplate_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "SinkCutoutTemplate_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "public"."CutoutConfig" (
+CREATE TABLE "public"."SinkCutoutConfig" (
     "id" TEXT NOT NULL,
-    "sinkType" TEXT NOT NULL,
-    "shape" TEXT NOT NULL,
+    "sinkType" "public"."CutoutSinkType" NOT NULL,
+    "shape" "public"."CutoutShape" NOT NULL,
     "length" DOUBLE PRECISION NOT NULL,
     "width" DOUBLE PRECISION NOT NULL,
     "holeCount" INTEGER NOT NULL,
-    "centerRules" TEXT,
-    "faucetRules" TEXT,
-    "productId" TEXT NOT NULL,
-    "serviceId" TEXT NOT NULL,
+    "centrelinesX" "public"."CentrelinesX" NOT NULL DEFAULT 'Left',
+    "centrelinesY" "public"."CentrelinesY" NOT NULL DEFAULT 'Top',
+    "productId" TEXT,
+    "serviceId" TEXT,
 
-    CONSTRAINT "CutoutConfig_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "SinkCutoutConfig_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."CooktopCutoutConfig" (
+    "id" TEXT NOT NULL,
+    "length" DOUBLE PRECISION NOT NULL,
+    "width" DOUBLE PRECISION NOT NULL,
+    "burnerCount" INTEGER NOT NULL,
+    "centrelinesX" "public"."CentrelinesX" NOT NULL DEFAULT 'Left',
+    "centrelinesY" "public"."CentrelinesY" NOT NULL DEFAULT 'Top',
+
+    CONSTRAINT "CooktopCutoutConfig_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -260,10 +295,13 @@ CREATE UNIQUE INDEX "VerificationToken_identifier_token_key" ON "public"."Verifi
 CREATE UNIQUE INDEX "Corner_pointId_key" ON "public"."Corner"("pointId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Cutout_configId_key" ON "public"."Cutout"("configId");
+CREATE UNIQUE INDEX "SinkCutout_configId_key" ON "public"."SinkCutout"("configId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "CutoutTemplate_configId_key" ON "public"."CutoutTemplate"("configId");
+CREATE UNIQUE INDEX "CooktopCutout_configId_key" ON "public"."CooktopCutout"("configId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "SinkCutoutTemplate_configId_key" ON "public"."SinkCutoutTemplate"("configId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "BacksplashConfig_edgeId_key" ON "public"."BacksplashConfig"("edgeId");
@@ -323,22 +361,28 @@ ALTER TABLE "public"."Corner" ADD CONSTRAINT "Corner_pointId_fkey" FOREIGN KEY (
 ALTER TABLE "public"."Corner" ADD CONSTRAINT "Corner_shapeId_fkey" FOREIGN KEY ("shapeId") REFERENCES "public"."Shape"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Cutout" ADD CONSTRAINT "Cutout_shapeId_fkey" FOREIGN KEY ("shapeId") REFERENCES "public"."Shape"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."SinkCutout" ADD CONSTRAINT "SinkCutout_shapeId_fkey" FOREIGN KEY ("shapeId") REFERENCES "public"."Shape"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Cutout" ADD CONSTRAINT "Cutout_configId_fkey" FOREIGN KEY ("configId") REFERENCES "public"."CutoutConfig"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."SinkCutout" ADD CONSTRAINT "SinkCutout_configId_fkey" FOREIGN KEY ("configId") REFERENCES "public"."SinkCutoutConfig"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Cutout" ADD CONSTRAINT "Cutout_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "public"."CutoutTemplate"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "public"."SinkCutout" ADD CONSTRAINT "SinkCutout_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "public"."SinkCutoutTemplate"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."CutoutTemplate" ADD CONSTRAINT "CutoutTemplate_configId_fkey" FOREIGN KEY ("configId") REFERENCES "public"."CutoutConfig"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."CooktopCutout" ADD CONSTRAINT "CooktopCutout_shapeId_fkey" FOREIGN KEY ("shapeId") REFERENCES "public"."Shape"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."CutoutConfig" ADD CONSTRAINT "CutoutConfig_productId_fkey" FOREIGN KEY ("productId") REFERENCES "public"."Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."CooktopCutout" ADD CONSTRAINT "CooktopCutout_configId_fkey" FOREIGN KEY ("configId") REFERENCES "public"."CooktopCutoutConfig"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."CutoutConfig" ADD CONSTRAINT "CutoutConfig_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "public"."Service"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."SinkCutoutTemplate" ADD CONSTRAINT "SinkCutoutTemplate_configId_fkey" FOREIGN KEY ("configId") REFERENCES "public"."SinkCutoutConfig"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."SinkCutoutConfig" ADD CONSTRAINT "SinkCutoutConfig_productId_fkey" FOREIGN KEY ("productId") REFERENCES "public"."Product"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."SinkCutoutConfig" ADD CONSTRAINT "SinkCutoutConfig_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "public"."Service"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."BacksplashConfig" ADD CONSTRAINT "BacksplashConfig_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "public"."Service"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
