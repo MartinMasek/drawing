@@ -1,4 +1,4 @@
-import { useRouter } from "next/router";
+
 import { useEffect, useState, useMemo } from "react";
 import { Layer, Stage, Text } from "react-konva";
 import { useShapeDrawing } from "~/hooks/useShapeDrawing";
@@ -33,9 +33,6 @@ interface DrawingCanvasProps {
 }
 
 const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
-	// const router = useRouter();
-	// const idParam = router.query.id;
-	// const designId = Array.isArray(idParam) ? idParam[0] : idParam;
 	const { designId } = useDrawing();
 	const {
 		selectedShape,
