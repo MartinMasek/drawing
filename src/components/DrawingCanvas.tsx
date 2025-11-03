@@ -18,14 +18,14 @@ import CursorPanel from "./CursorPanel";
 import DebugSidePanel from "./DebugSidePanel";
 import DrawingPreview from "./shape/shape/drawingPreview/DrawingPreview";
 import Shape from "./shape/shape/Shape";
-import ShapeContextMenu from "./shape/shapeContextMenu/ShapeContextMenu";
+import ShapeContextMenu from "./shape/contextMenu/ShapeContextMenu";
 import SidePanel from "./SidePanel";
 import { useDrawing } from "./header/context/DrawingContext";
 import { useShape } from "./header/context/ShapeContext";
-import CanvasTextInput from "./canvasTextInput/CanvasTextInput";
+import CanvasTextInput from "./text/CanvasTextInput";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { DrawingTab } from "./header/header/drawing-types";
-import CutoutContextMenu from "./canvasShapes/CutoutContextMenu";
+import CutoutContextMenu from "./shape/contextMenu/CutoutContextMenu";
 
 interface DrawingCanvasProps {
 	shapes?: ReadonlyArray<CanvasShape>;

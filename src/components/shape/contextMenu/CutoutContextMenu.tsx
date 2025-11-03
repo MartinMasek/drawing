@@ -1,6 +1,6 @@
-import { Icon } from "../header/header/Icon";
+import { Icon } from "../../header/header/Icon";
 import { IconDroplet, IconFlame, IconFrame } from "@tabler/icons-react";
-import Button from "../header/header/Button";
+import Button from "../../header/header/Button";
 import type { CanvasShape } from "~/types/drawing";
 import useCreateCutout from "~/hooks/mutations/cutouts/useCreateCutout";
 import { CutoutShape, CutoutSinkType } from "@prisma/client";
