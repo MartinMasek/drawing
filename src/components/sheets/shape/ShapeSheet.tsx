@@ -1,9 +1,9 @@
 import { type FC, useEffect, useState } from "react";
 import { SheetContent } from "../../ui/sheet";
-import { useDrawing } from "~/components/header/context/DrawingContext";
+import { useDrawing } from "~/components/context/DrawingContext";
 import { CursorTypes } from "~/components/header/header/drawing-types";
 import EditCorner from "./content/EditCorner";
-import { useShape } from "~/components/header/context/ShapeContext";
+import { useShape } from "~/components/context/ShapeContext";
 import CornerOverview from "./content/CornerOverview";
 import CurveOverview from "./content/CurveOverview";
 import EditCurve from "./content/EditCurve";

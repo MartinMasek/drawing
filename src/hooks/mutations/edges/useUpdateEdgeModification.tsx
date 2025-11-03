@@ -1,5 +1,5 @@
 import { api } from "~/utils/api";
-import { useShape } from "~/components/header/context/ShapeContext";
+import { useShape } from "~/components/context/ShapeContext";
 import { generateEdgePoints } from "~/components/shape/edgeUtils";
 import type { Point } from "~/types/drawing";
 
@@ -22,16 +22,16 @@ export const useUpdateEdgeModification = (designId: string | undefined) => {
             let calculatedPoints: Point[] = [];
             if (previousData) {
                 // Find the edge to get point IDs
-                const shape = previousData.shapes.find((s) => 
+                const shape = previousData.shapes.find((s) =>
                     s.edges.some((e) => e.id === variables.edgeId)
                 );
-                
+
                 if (shape) {
                     const edge = shape.edges.find((e) => e.id === variables.edgeId);
                     if (edge) {
                         const point1 = shape.points.find((p) => p.id === edge.point1Id);
                         const point2 = shape.points.find((p) => p.id === edge.point2Id);
-                        
+
                         if (point1 && point2) {
                             const edgeModification = {
                                 id: null,
@@ -45,13 +45,13 @@ export const useUpdateEdgeModification = (designId: string | undefined) => {
                                 fullRadiusDepth: variables.edgeModification.fullRadiusDepth ?? 0,
                                 points: [],
                             };
-                            
+
                             const pointsWithoutIds = generateEdgePoints(
                                 point1,
                                 point2,
                                 [edgeModification],
                             );
-                            
+
                             calculatedPoints = pointsWithoutIds.map((coord) => ({
                                 id: '',
                                 xPos: coord.xPos,
@@ -99,7 +99,7 @@ export const useUpdateEdgeModification = (designId: string | undefined) => {
                                                 ],
                                             };
                                         }
-                                        
+
                                         // Otherwise, update existing modification
                                         return {
                                             ...edge,
@@ -157,7 +157,7 @@ export const useUpdateEdgeModification = (designId: string | undefined) => {
                                     ],
                                 };
                             }
-                            
+
                             // Otherwise, update existing modification
                             return {
                                 ...edge,
@@ -188,7 +188,7 @@ export const useUpdateEdgeModification = (designId: string | undefined) => {
                 // Update selected edge if it matches the one being updated
                 if (selectedEdge && selectedEdge.edgeId === variables.edgeId) {
                     const optimisticEdge = {
-                            ...selectedEdge,
+                        ...selectedEdge,
                         edgeModification: {
                             id: tempModificationId,
                             type: variables.edgeModification.edgeType,
@@ -220,7 +220,7 @@ export const useUpdateEdgeModification = (designId: string | undefined) => {
         },
         onSuccess: (data, variables, context) => {
             if (!designId) return;
-            
+
             const current = utils.design.getById.getData({ id: designId });
             if (!current) return;
 
@@ -260,7 +260,7 @@ export const useUpdateEdgeModification = (designId: string | undefined) => {
                 if (selectedEdge && selectedEdge.edgeId === variables.edgeId) {
                     const matchesTempId = selectedEdge.edgeModification?.id === context.tempModificationId;
                     const isNullId = selectedEdge.edgeModification?.id === null;
-                    
+
                     if (matchesTempId || isNullId) {
                         // Check if user made changes while creation was in progress
                         const serverMod = {
@@ -272,7 +272,7 @@ export const useUpdateEdgeModification = (designId: string | undefined) => {
                             sideAngleRight: data.sideAngleRight ?? variables.edgeModification.sideAngleRight,
                             fullRadiusDepth: data.fullRadiusDepth ?? variables.edgeModification.fullRadiusDepth,
                         };
-                        
+
                         const hasUserChanges = selectedEdge.edgeModification && (
                             selectedEdge.edgeModification.depth !== serverMod.depth ||
                             selectedEdge.edgeModification.width !== serverMod.width ||
@@ -303,7 +303,7 @@ export const useUpdateEdgeModification = (designId: string | undefined) => {
                         if (hasUserChanges && selectedEdge.edgeModification && selectedShape) {
                             const point1 = selectedShape.points.find((p) => p.id === selectedEdge.edgePoint1Id);
                             const point2 = selectedShape.points.find((p) => p.id === selectedEdge.edgePoint2Id);
-                            
+
                             if (point1 && point2) {
                                 const pointsCoords = generateEdgePoints(
                                     point1,

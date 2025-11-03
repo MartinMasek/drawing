@@ -2,7 +2,7 @@ import { IconArrowLeft } from "@tabler/icons-react";
 import type { FC } from "react";
 
 import { useRouter } from "next/navigation";
-import { useDrawing } from "../context/DrawingContext";
+import { useDrawing } from "~/components/context/DrawingContext";
 import Button from "./Button";
 import { Divider } from "./Divider";
 import { Icon } from "./Icon";

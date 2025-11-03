@@ -6,7 +6,7 @@ import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import type { ShapeSheetView } from "../ShapeSheet";
 import LengthInput from "../components/LengthInput";
 import { CornerModificationList } from "~/types/drawing";
-import { useShape } from "~/components/header/context/ShapeContext";
+import { useShape } from "~/components/context/ShapeContext";
 import RadiusInput from "../components/RadiusInput";
 import DepthInput from "../components/DepthInput";
 import { CornerType } from "@prisma/client";
@@ -16,7 +16,7 @@ import useUpdateCornerRadiusDebounced from "~/hooks/mutations/corners/useUpdateC
 import useUpdateCornerDepthDebounced from "~/hooks/mutations/corners/useUpdateCornerDepthDebounced";
 import useUpdateCornerClipDebounced from "~/hooks/mutations/corners/useUpdateCornerClipDebounced";
 import ClipInput from "../components/ClipInput";
-import { useDrawing } from "~/components/header/context/DrawingContext";
+import { useDrawing } from "~/components/context/DrawingContext";
 
 interface EditCornerProps {
 	setView: (value: ShapeSheetView) => void;

@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useShape } from "~/components/header/context/ShapeContext";
+import { useShape } from "~/components/context/ShapeContext";
 import { api } from "~/utils/api";
 import { useDebouncedCallback } from "use-debounce";
 import { DEBOUNCE_DELAY } from "~/utils/canvas-constants";
@@ -41,7 +41,7 @@ export const useUpdateEdgeModificationDebounced = (designId: string | undefined)
                         const hasModification = shape.edges.some((edge) =>
                             edge.edgeModifications.some((mod) => mod.id === edgeModificationId)
                         );
-                        
+
                         if (!hasModification) return shape;
 
                         return {
@@ -51,13 +51,13 @@ export const useUpdateEdgeModificationDebounced = (designId: string | undefined)
                                 const hasEdgeModification = edge.edgeModifications.some(
                                     (mod) => mod.id === edgeModificationId
                                 );
-                                
+
                                 if (!hasEdgeModification) return edge;
 
                                 // Update the modification and recalculate its points
                                 const point1 = shape.points.find((p) => p.id === edge.point1Id);
                                 const point2 = shape.points.find((p) => p.id === edge.point2Id);
-                                
+
                                 if (!point1 || !point2) {
                                     return edge;
                                 }
@@ -66,14 +66,14 @@ export const useUpdateEdgeModificationDebounced = (designId: string | undefined)
                                 const updatedModifications = edge.edgeModifications.map((mod) => {
                                     if (mod.id === edgeModificationId) {
                                         const updatedMod = { ...mod, ...updates };
-                                        
+
                                         // Recalculate points for THIS modification only
                                         const calculatedCoords = generateEdgePoints(
                                             point1,
                                             point2,
                                             [updatedMod],
                                         );
-                                        
+
                                         // Map coordinates to points with temp IDs
                                         const calculatedPoints = calculatedCoords.map((coord, index) => {
                                             const existingPoint = mod.points[index];
@@ -83,7 +83,7 @@ export const useUpdateEdgeModificationDebounced = (designId: string | undefined)
                                                 yPos: coord.yPos,
                                             };
                                         });
-                                        
+
                                         return {
                                             ...updatedMod,
                                             points: calculatedPoints,
@@ -91,7 +91,7 @@ export const useUpdateEdgeModificationDebounced = (designId: string | undefined)
                                     }
                                     return mod;
                                 });
-                                
+
                                 return {
                                     ...edge,
                                     edgeModifications: updatedModifications,
@@ -123,13 +123,13 @@ export const useUpdateEdgeModificationDebounced = (designId: string | undefined)
                     const hasEdgeModification = edge.edgeModifications.some(
                         (mod) => mod.id === edgeModificationId
                     );
-                    
+
                     if (!hasEdgeModification) return edge;
 
                     // Update the modification and recalculate its points
                     const point1 = selectedShape.points.find((p) => p.id === edge.point1Id);
                     const point2 = selectedShape.points.find((p) => p.id === edge.point2Id);
-                    
+
                     if (!point1 || !point2) {
                         return edge;
                     }
@@ -138,14 +138,14 @@ export const useUpdateEdgeModificationDebounced = (designId: string | undefined)
                     const updatedModifications = edge.edgeModifications.map((mod) => {
                         if (mod.id === edgeModificationId) {
                             const updatedMod = { ...mod, ...updates };
-                            
+
                             // Recalculate points for THIS modification only
                             const calculatedCoords = generateEdgePoints(
                                 point1,
                                 point2,
                                 [updatedMod],
                             );
-                            
+
                             // Map coordinates to points with temp IDs
                             const calculatedPoints = calculatedCoords.map((coord, index) => {
                                 const existingPoint = mod.points[index];
@@ -155,7 +155,7 @@ export const useUpdateEdgeModificationDebounced = (designId: string | undefined)
                                     yPos: coord.yPos,
                                 };
                             });
-                            
+
                             return {
                                 ...updatedMod,
                                 points: calculatedPoints,
@@ -189,7 +189,7 @@ export const useUpdateEdgeModificationDebounced = (designId: string | undefined)
             if (edgeModificationId.startsWith('temp-')) {
                 return;
             }
-            
+
             // Calculate points before sending to backend
             if (!designId) return;
             const previousData = utils.design.getById.getData({ id: designId });
@@ -266,15 +266,15 @@ export const useUpdateEdgeModificationDebounced = (designId: string | undefined)
     return {
         updateModification,
         // Convenience methods for specific updates
-        updateSize: useCallback((id: string, depth: number, width: number) => 
+        updateSize: useCallback((id: string, depth: number, width: number) =>
             updateModification(id, { depth, width }), [updateModification]),
-        updateAngles: useCallback((id: string, left: number, right: number) => 
+        updateAngles: useCallback((id: string, left: number, right: number) =>
             updateModification(id, { sideAngleLeft: left, sideAngleRight: right }), [updateModification]),
-        updatePosition: useCallback((id: string, position: EdgeShapePosition) => 
+        updatePosition: useCallback((id: string, position: EdgeShapePosition) =>
             updateModification(id, { position }), [updateModification]),
-        updateDistance: useCallback((id: string, distance: number) => 
+        updateDistance: useCallback((id: string, distance: number) =>
             updateModification(id, { distance }), [updateModification]),
-        updateFullRadiusDepth: useCallback((id: string, fullRadiusDepth: number) => 
+        updateFullRadiusDepth: useCallback((id: string, fullRadiusDepth: number) =>
             updateModification(id, { fullRadiusDepth }), [updateModification]),
         isLoading: updateShapeEdge.isPending,
         error: updateShapeEdge.error,

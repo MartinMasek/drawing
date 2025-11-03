@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { useDrawing } from "./header/context/DrawingContext";
+
 import { Sheet } from "./ui/sheet";
 import { CursorTypes } from "./header/header/drawing-types";
 import MaterialSheet from "./sheets/material/MaterialSheet";
@@ -7,6 +7,7 @@ import CutoutSheet from "./sheets/cutout/CutoutSheet";
 import ShapeSheet from "./sheets/shape/ShapeSheet";
 import EdgeSheet from "./sheets/edge/EdgeSheet";
 import SidePanelTriggerButton from "./SidePanelTriggerButton";
+import { useDrawing } from "~/components/context/DrawingContext";
 
 const SidePanel: FC = () => {
 	const { isOpenSideDialog, setIsOpenSideDialog, cursorType } = useDrawing();

@@ -1,4 +1,4 @@
-import { useShape } from "~/components/header/context/ShapeContext";
+import { useShape } from "~/components/context/ShapeContext";
 import { api } from "~/utils/api";
 
 const useRemoveCutout = (designId: string | undefined) => {

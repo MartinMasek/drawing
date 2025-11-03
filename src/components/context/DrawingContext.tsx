@@ -8,13 +8,13 @@ import {
 	useRef,
 	useState,
 } from "react";
-import { CANVAS_DEFAULT_ZOOM } from "../../../utils/canvas-constants";
+import { CANVAS_DEFAULT_ZOOM } from "~/utils/canvas-constants";
 import {
 	CursorTypes,
 	DrawingTab,
 	DrawingTabList,
 	defaultCursorByTab,
-} from "../header/drawing-types";
+} from "~/components/header/header/drawing-types";
 
 type DrawingContextType = {
 	activeTab: number;
