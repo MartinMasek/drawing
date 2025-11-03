@@ -1,6 +1,6 @@
 import type { FC } from "react";
 import { SheetContent, SheetFooter, SheetHeader, SheetTitle } from "../../ui/sheet";
-import { useShape } from "~/components/context/ShapeContext";
+import { useShape } from "~/context/ShapeContext";
 import SinkTypeInput from "./components/SinkTypeInput";
 import SinkShapeInput from "./components/SinkShapeInput";
 import SinkSizeInput from "./components/SinkSizeInput";
@@ -16,7 +16,7 @@ import useUpdateSinkShapeDebounced from "~/hooks/mutations/cutouts/useUpdateSink
 import useUpdateSinkFaucetHolesDebounced from "~/hooks/mutations/cutouts/useUpdateSinkFaucetHolesDebounced";
 import useUpdateSinkCentrelinesDebounced from "~/hooks/mutations/cutouts/useUpdateSinkCentrelinesDebounced";
 import useRemoveCutout from "~/hooks/mutations/cutouts/useRemoveCutout";
-import { useDrawing } from "~/components/context/DrawingContext";
+import { useDrawing } from "~/context/DrawingContext";
 
 const CutoutSheet: FC = () => {
 	const { designId } = useDrawing();

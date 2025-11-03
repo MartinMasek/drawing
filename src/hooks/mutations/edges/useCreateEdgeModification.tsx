@@ -1,5 +1,5 @@
 import { api } from "~/utils/api";
-import { useShape } from "~/components/context/ShapeContext";
+import { useShape } from "~/context/ShapeContext";
 import { generateEdgePoints } from "~/components/shape/edgeUtils";
 import type { Point } from "~/types/drawing";
 

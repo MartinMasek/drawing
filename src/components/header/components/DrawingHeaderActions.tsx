@@ -7,7 +7,7 @@ import {
 } from "@tabler/icons-react";
 import type { FC } from "react";
 
-import { useDrawing } from "~/components/context/DrawingContext";
+import { useDrawing } from "~/context/DrawingContext";
 import Button from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { Icon } from "~/components/Icon";

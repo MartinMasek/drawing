@@ -9,7 +9,7 @@ import CurvesSizeInput from "../components/CurvesSizeInput";
 import CurvesAnglesInput from "../components/CurvesAnglesInput";
 import PositioningInput from "../components/PositioningInput";
 import DistanceInput from "../components/DistanceInput";
-import { useShape } from "~/components/context/ShapeContext";
+import { useShape } from "~/context/ShapeContext";
 import { EdgeModificationList } from "~/types/drawing";
 import { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
 import { useDeleteEdgeModification } from "~/hooks/mutations/edges/useDeleteEdgeModification";
@@ -17,7 +17,7 @@ import { useUpdateEdgeModificationDebounced } from "~/hooks/mutations/edges/useU
 import FullRadiusDepthInput from "../components/FullRadiusDepthInput";
 import { getAvailablePositions } from "~/components/shape/edge/edgeValidation";
 import { api } from "~/utils/api";
-import { useDrawing } from "~/components/context/DrawingContext";
+import { useDrawing } from "~/context/DrawingContext";
 
 interface EditCurveProps {
 	setView: (value: ShapeSheetView) => void;

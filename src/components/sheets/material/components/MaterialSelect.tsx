@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { useShape } from "~/components/context/ShapeContext";
+import { useShape } from "~/context/ShapeContext";
 import { SelectStyled } from "~/components/SelectStyled";
 import type { MaterialExtended } from "~/types/drawing";
 import { api } from "~/utils/api";

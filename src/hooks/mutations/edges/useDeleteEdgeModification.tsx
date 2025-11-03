@@ -1,4 +1,4 @@
-import { useShape } from "~/components/context/ShapeContext";
+import { useShape } from "~/context/ShapeContext";
 import { api } from "~/utils/api";
 
 export const useDeleteEdgeModification = (designId: string | undefined) => {

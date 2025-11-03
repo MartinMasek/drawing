@@ -1,7 +1,7 @@
 import type { KonvaEventObject } from "konva/lib/Node";
 import type { CanvasShape } from "~/types/drawing";
 import { DrawingTab } from "~/types/drawing";
-import { useShape } from "~/components/context/ShapeContext";
+import { useShape } from "~/context/ShapeContext";
 import { useShapeState } from "../hooks/useShapeState";
 import { useShapeTransform } from "../hooks/useShapeTransform";
 import { useShapeInteractions } from "../hooks/useShapeInteractions";

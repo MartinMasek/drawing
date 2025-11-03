@@ -6,7 +6,7 @@ import type { PreviewShape } from "~/hooks/useShapeDrawing";
 
 import { Icon } from "~/components/Icon";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
-import { useDrawing } from "~/components/context/DrawingContext";
+import { useDrawing } from "~/context/DrawingContext";
 import { cn } from "~/lib/utils";
 
 interface DebugSidePanelProps {

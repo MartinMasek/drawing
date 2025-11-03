@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { api } from "~/utils/api";
-import { useShape } from "~/components/context/ShapeContext";
+import { useShape } from "~/context/ShapeContext";
 import { DEBOUNCE_DELAY } from "~/utils/canvas-constants";
 import { useDebouncedCallback } from "use-debounce";
 import type { CentrelinesX, CentrelinesY } from "@prisma/client";

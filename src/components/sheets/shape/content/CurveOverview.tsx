@@ -1,7 +1,7 @@
 import type { FC, JSX } from "react";
 import { EdgeModificationType } from "@prisma/client";
 import { useUpdateEdgeModification } from "~/hooks/mutations/edges/useUpdateEdgeModification";
-import { useShape } from "~/components/context/ShapeContext";
+import { useShape } from "~/context/ShapeContext";
 import { SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import ShapeCard from "../../components/ShapeCard";
 import type { ShapeSheetView } from "../ShapeSheet";
@@ -16,7 +16,7 @@ import CurvesNoneIcon from "~/components/icons/CurvesNoneIcon";
 import { getDefaultValueForEdgeModification } from "~/types/defaultValues";
 import { generateEdgePoints } from "~/components/shape/edgeUtils";
 import { EdgeModificationList } from "~/types/drawing";
-import { useDrawing } from "~/components/context/DrawingContext";
+import { useDrawing } from "~/context/DrawingContext";
 
 interface CurveOverviewProps {
 	setView: (value: ShapeSheetView) => void;

@@ -7,7 +7,7 @@ import CutoutSheet from "./sheets/cutout/CutoutSheet";
 import ShapeSheet from "./sheets/shape/ShapeSheet";
 import EdgeSheet from "./sheets/edge/EdgeSheet";
 import SidePanelTriggerButton from "./SidePanelTriggerButton";
-import { useDrawing } from "~/components/context/DrawingContext";
+import { useDrawing } from "~/context/DrawingContext";
 
 const SidePanel: FC = () => {
 	const { isOpenSideDialog, setIsOpenSideDialog, cursorType } = useDrawing();

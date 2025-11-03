@@ -1,6 +1,6 @@
 import { IconAlertCircleFilled, IconPlus } from "@tabler/icons-react";
 import type { FC } from "react";
-import { useShape } from "~/components/context/ShapeContext";
+import { useShape } from "~/context/ShapeContext";
 import Button from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { Icon } from "~/components/Icon";

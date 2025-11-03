@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, type FC, useLayoutEffect } from "react";
 import type { CanvasText, CanvasTextData } from "~/types/drawing";
 import TextInputToolbar from "./TextInputToolbar";
-import { useDrawing } from "~/components/context/DrawingContext";
+import { useDrawing } from "~/context/DrawingContext";
 import { CursorTypes } from "~/types/drawing";
 
 interface CanvasTextInputProps {

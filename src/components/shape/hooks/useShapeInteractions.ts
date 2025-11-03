@@ -7,8 +7,8 @@ import {
 	EdgeShapePosition,
 } from "@prisma/client";
 import { CursorTypes } from "~/types/drawing";
-import { useDrawing } from "~/components/context/DrawingContext";
-import { useShape } from "~/components/context/ShapeContext";
+import { useDrawing } from "~/context/DrawingContext";
+import { useShape } from "~/context/ShapeContext";
 
 interface ShapeInteractionHandlers {
 	onDragStart?: () => void;

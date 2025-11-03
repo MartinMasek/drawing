@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useShape } from "~/components/context/ShapeContext";
+import { useShape } from "~/context/ShapeContext";
 import { api } from "~/utils/api";
 import { useDebouncedCallback } from "use-debounce";
 import { DEBOUNCE_DELAY } from "~/utils/canvas-constants";

@@ -2,8 +2,8 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import DrawingLoading from "~/components/DrawingLoading";
 import DrawingHeader from "~/components/header/DrawingHeader";
-import { DrawingProvider } from "~/components/context/DrawingContext";
-import { ShapeProvider } from "~/components/context/ShapeContext";
+import { DrawingProvider } from "~/context/DrawingContext";
+import { ShapeProvider } from "~/context/ShapeContext";
 import { api } from "~/utils/api";
 
 const DrawingCanvas = dynamic(() => import("~/components/DrawingCanvas"), {

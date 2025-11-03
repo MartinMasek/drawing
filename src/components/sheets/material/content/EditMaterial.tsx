@@ -5,14 +5,14 @@ import Button from "~/components/Button";
 import { Icon } from "~/components/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import type { MaterialSheetView } from "../MaterialSheet";
-import { useShape } from "~/components/context/ShapeContext";
+import { useShape } from "~/context/ShapeContext";
 import { useSetMaterialToShape } from "~/hooks/mutations/materials/useSetMaterialToShape";
 import { useSetMaterialToShapesWithoutMaterial } from "~/hooks/mutations/materials/useSetMaterialToShapesWithoutMaterial";
 import { useSetMaterialToAllShapes } from "~/hooks/mutations/materials/useSetMaterialToAllShapes";
 import { useRemoveMaterialFromShapes } from "~/hooks/mutations/materials/useRemoveMaterialFromShapes";
 import EditNoneMaterial from "../components/EditNoneMaterial";
 import EditSelectedMaterial from "../components/EditSelectedMaterial";
-import { useDrawing } from "~/components/context/DrawingContext";
+import { useDrawing } from "~/context/DrawingContext";
 
 interface EditMaterialProps {
 	setView: (value: MaterialSheetView) => void;

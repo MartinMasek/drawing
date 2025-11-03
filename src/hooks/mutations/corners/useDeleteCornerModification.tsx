@@ -1,5 +1,5 @@
 import { CornerType } from "@prisma/client";
-import { useShape } from "~/components/context/ShapeContext";
+import { useShape } from "~/context/ShapeContext";
 import { api } from "~/utils/api";
 
 const useDeleteCornerModification = (designId: string | undefined) => {

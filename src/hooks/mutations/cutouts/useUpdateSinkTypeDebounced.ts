@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { api } from "~/utils/api";
 import type { CutoutSinkType } from "@prisma/client";
-import { useShape } from "~/components/context/ShapeContext";
+import { useShape } from "~/context/ShapeContext";
 import { DEBOUNCE_DELAY } from "~/utils/canvas-constants";
 import { useDebouncedCallback } from "use-debounce";
 

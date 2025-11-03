@@ -5,7 +5,7 @@ import Button from "~/components/Button";
 import { Icon } from "~/components/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import type { MaterialSheetView } from "../MaterialSheet";
-import { useShape } from "~/components/context/ShapeContext";
+import { useShape } from "~/context/ShapeContext";
 import MaterialDetail from "../components/MaterialDetail";
 import { useSetMaterialToShape } from "~/hooks/mutations/materials/useSetMaterialToShape";
 import type { MaterialExtended } from "~/types/drawing";

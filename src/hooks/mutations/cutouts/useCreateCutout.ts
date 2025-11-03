@@ -1,4 +1,4 @@
-import { useShape } from "~/components/context/ShapeContext";
+import { useShape } from "~/context/ShapeContext";
 import { defaultSinkCutoutValues } from "~/types/defaultValues";
 import { api } from "~/utils/api";
 

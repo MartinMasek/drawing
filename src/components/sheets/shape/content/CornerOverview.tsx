@@ -1,5 +1,5 @@
 import type { FC, JSX } from "react";
-import { useShape } from "~/components/context/ShapeContext";
+import { useShape } from "~/context/ShapeContext";
 import { SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import ShapeCard from "../../components/ShapeCard";
 import type { ShapeSheetView } from "../ShapeSheet";
@@ -15,7 +15,7 @@ import useUpdateCornerModification from "~/hooks/mutations/corners/useUpdateCorn
 import useDeleteCornerModification from "~/hooks/mutations/corners/useDeleteCornerModification";
 import { getDefaultValueForCornerModification } from "~/types/defaultValues";
 import { CornerModificationList } from "~/types/drawing";
-import { useDrawing } from "~/components/context/DrawingContext";
+import { useDrawing } from "~/context/DrawingContext";
 
 interface CornerOverviewProps {
 	setView: (value: ShapeSheetView) => void;

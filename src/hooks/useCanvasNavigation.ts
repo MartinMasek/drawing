@@ -1,5 +1,5 @@
 import type { KonvaEventObject } from "konva/lib/Node";
-import { useShape } from "~/components/context/ShapeContext";
+import { useShape } from "~/context/ShapeContext";
 import {
 	CANVAS_MAX_ZOOM,
 	CANVAS_MIN_ZOOM,
@@ -8,7 +8,7 @@ import {
 	CANVAS_PAN_BUTTON_RIGHT,
 	ZOOM_STEP,
 } from "../utils/canvas-constants";
-import { useDrawing } from "~/components/context/DrawingContext";
+import { useDrawing } from "~/context/DrawingContext";
 
 /**
  * Provides event handlers for canvas navigation (pan and zoom).

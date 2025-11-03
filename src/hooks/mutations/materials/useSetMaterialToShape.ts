@@ -1,7 +1,7 @@
 import { api } from "~/utils/api";
 import type { CanvasShape, MaterialExtended } from "~/types/drawing";
-import { useShape } from "~/components/context/ShapeContext";
-import { useDrawing } from "~/components/context/DrawingContext";
+import { useShape } from "~/context/ShapeContext";
+import { useDrawing } from "~/context/DrawingContext";
 
 /**
  * Hook for setting material to shapes with optimistic updates.

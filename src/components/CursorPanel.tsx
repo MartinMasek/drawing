@@ -5,12 +5,12 @@ import {
 	IconTextSize,
 } from "@tabler/icons-react";
 import type { FC } from "react";
-import { useDrawing } from "~/components/context/DrawingContext";
+import { useDrawing } from "~/context/DrawingContext";
 import { CursorTypes, DrawingTab } from "~/types/drawing";
 import Button from "~/components/Button";
 import { Icon } from "~/components/Icon";
 import { Divider } from "~/components/Divider";
-import { useShape } from "./context/ShapeContext";
+import { useShape } from "../context/ShapeContext";
 import ShapeIcon from "./icons/ShapeIcon";
 import EdgeIcon from "./icons/EdgeIcon";
 import CutoutIcon from "./icons/CutoutIcon";

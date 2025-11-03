@@ -15,8 +15,8 @@ import {
 import React, { type FC } from "react";
 
 import { cn } from "~/utils/ui-utils";
-import { useDrawing } from "~/components/context/DrawingContext";
-import { useShape } from "~/components/context/ShapeContext";
+import { useDrawing } from "~/context/DrawingContext";
+import { useShape } from "~/context/ShapeContext";
 import { Icon } from "~/components/Icon";
 import { DrawingTabList } from "~/types/drawing";
 

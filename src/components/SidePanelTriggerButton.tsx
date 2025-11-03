@@ -3,7 +3,7 @@ import {
 	IconLayoutSidebarRightExpand,
 } from "@tabler/icons-react";
 import type { FC } from "react";
-import { useDrawing } from "~/components/context/DrawingContext";
+import { useDrawing } from "~/context/DrawingContext";
 import { Icon } from "~/components/Icon";
 import { CursorTypes, DrawingTab } from "~/types/drawing";
 import { SheetTrigger } from "./ui/sheet";
