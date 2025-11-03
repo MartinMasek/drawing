@@ -56,14 +56,11 @@ npm run db:seed
 
 ## Drawing Canvas (Konva) — Overview
 
-Right now we have 2 versions of the drawing canvas:
-- `src/components/DimensionedPolygon.tsx` (old)
-- `src/components/DrawingCanvas.tsx` (new)
-
-all old components are in `src/components/drawing-old/` they will be removed in the future.
+Main drawing canvas:
+- `src/components/DrawingCanvas.tsx`
 
 ### Canvas Interactions
-The new canvas (`DrawingCanvas.tsx`) provides simple pan and zoom navigation:
+The canvas (`DrawingCanvas.tsx`) provides simple pan and zoom navigation:
 
 **Zoom:**
 - Mouse wheel to zoom in/out
