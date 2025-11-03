@@ -364,3 +364,9 @@ export const defaultCursorByTab: Record<DrawingTab, CursorTypes> = {
 	[DrawingTab.Layout]: CursorTypes.Layout,
 	[DrawingTab.Quote]: CursorTypes.Quote,
 };
+
+export type ContextMenu = {
+	shapeId: string;
+	x: number;
+	y: number;
+};

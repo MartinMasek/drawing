@@ -7,7 +7,10 @@ import type {
 	SelectedCorner,
 	SelectedEdge,
 	CanvasText,
+	ContextMenu,
 } from "~/types/drawing";
+
+const MAX_STACK_ITEMS = 4;
 
 type ShapeContextType = {
 	selectedShape: CanvasShape | null;
@@ -32,30 +35,13 @@ type ShapeContextType = {
 	setHoveredId: (id: string | null) => void;
 	draggingId: string | null;
 	setDraggingId: (id: string | null) => void;
-	contextMenu: {
-		shapeId: string;
-		x: number;
-		y: number;
-	} | null;
-	setContextMenu: (contextMenu: {
-		shapeId: string;
-		x: number;
-		y: number;
-	} | null) => void;
-	cutoutContextMenu: {
-		shapeId: string;
-		x: number;
-		y: number;
-	} | null;
-	setCutoutContextMenu: (cutoutContextMenu: {
-		shapeId: string;
-		x: number;
-		y: number;
-	} | null) => void;
+	contextMenu: ContextMenu | null;
+	setContextMenu: (contextMenu: ContextMenu | null) => void;
+	cutoutContextMenu: ContextMenu | null;
+	setCutoutContextMenu: (cutoutContextMenu: ContextMenu | null) => void;
 	selectedText: CanvasText | null;
 	setSelectedText: (text: CanvasText | null) => void;
 };
-const MAX_STACK_ITEMS = 4;
 
 const ShapeContext = createContext<ShapeContextType | null>(null);
 export const ShapeProvider = ({
@@ -80,18 +66,8 @@ export const ShapeProvider = ({
 
 	const [hoveredId, setHoveredId] = useState<string | null>(null);
 	const [draggingId, setDraggingId] = useState<string | null>(null);
-	const [contextMenu, setContextMenu] = useState<{
-		shapeId: string;
-		x: number;
-		y: number;
-	} | null>(null);
-	const [cutoutContextMenu, setCutoutContextMenu] = useState<{
-		shapeId: string;
-		x: number;
-		y: number;
-	} | null>(null);
-
-
+	const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
+	const [cutoutContextMenu, setCutoutContextMenu] = useState<ContextMenu | null>(null);
 
 	const addToMostRecentlyUsedEdgeModification = (modification: EdgeModificationType) => {
 		setMostRecentlyUsedEdgeModification(prev => {
@@ -128,7 +104,6 @@ export const ShapeProvider = ({
 			materialId ? shape.material?.id === materialId : shape.material === undefined
 		) ?? [];
 	};
-
 
 	// Get the number of shapes with a material, or number without a material if no ID is provided
 	const getNumberOfShapesPerMaterial = (materialId?: string): number => {
