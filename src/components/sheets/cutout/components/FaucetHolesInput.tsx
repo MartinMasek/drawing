@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import Button from "~/components/header/header/Button";
+import Button from "~/components/Button";
 
 interface FaucetHolesInputProps {
     holes: number;

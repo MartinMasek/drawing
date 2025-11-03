@@ -1,5 +1,5 @@
 import { IconAlertCircleFilled } from "@tabler/icons-react";
-import { Icon } from "~/components/header/header/Icon";
+import { Icon } from "~/components/Icon";
 
 const WarningBanner = () => {
 	return (

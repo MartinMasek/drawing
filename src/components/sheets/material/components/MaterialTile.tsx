@@ -1,7 +1,7 @@
 import { IconEdit } from "@tabler/icons-react";
 import type { FC } from "react";
-import Button from "~/components/header/header/Button";
-import { Icon } from "~/components/header/header/Icon";
+import Button from "~/components/Button";
+import { Icon } from "~/components/Icon";
 import { cn } from "~/lib/utils";
 
 interface MaterialTileProps {

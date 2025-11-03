@@ -1,8 +1,8 @@
 import { IconArrowLeft, IconCopy, IconTrash } from "@tabler/icons-react";
 import type { FC } from "react";
 import { useMemo } from "react";
-import Button from "~/components/header/header/Button";
-import { Icon } from "~/components/header/header/Icon";
+import Button from "~/components/Button";
+import { Icon } from "~/components/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import type { ShapeSheetView } from "../ShapeSheet";
 import CurvesSizeInput from "../components/CurvesSizeInput";

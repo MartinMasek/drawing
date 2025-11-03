@@ -34,7 +34,7 @@ const iconVariants = cva("", {
 
 export interface IconProps
 	extends VariantProps<typeof iconVariants>,
-		React.PropsWithChildren {
+	React.PropsWithChildren {
 	className?: string;
 }
 

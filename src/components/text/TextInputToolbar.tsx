@@ -1,6 +1,6 @@
 import type { FC } from "react";
-import Button from "../header/header/Button";
-import { Icon } from "../header/header/Icon";
+import Button from "~/components/Button";
+import { Icon } from "~/components/Icon";
 import {
 	IconMinus,
 	IconPlus,
@@ -11,7 +11,7 @@ import {
 	IconClearFormatting,
 	IconTrash,
 } from "@tabler/icons-react";
-import { Divider } from "../header/header/Divider";
+import { Divider } from "~/components/Divider";
 
 interface TextInputToolbarProps {
 	position: { x: number; y: number };

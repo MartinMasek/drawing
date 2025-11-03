@@ -8,10 +8,10 @@ import {
 import type { FC } from "react";
 
 import { useDrawing } from "~/components/context/DrawingContext";
-import Button from "./Button";
-import { Divider } from "./Divider";
-import { Icon } from "./Icon";
-import Zoom from "./Zoom";
+import Button from "~/components/Button";
+import { Divider } from "~/components/Divider";
+import { Icon } from "~/components/Icon";
+import Zoom from "~/components/Zoom";
 
 const DrawingHeaderActions: FC = () => {
 	const { zoom, setZoom } = useDrawing();

@@ -1,9 +1,9 @@
 import { IconAlertCircleFilled, IconPlus } from "@tabler/icons-react";
 import type { FC } from "react";
 import { useShape } from "~/components/context/ShapeContext";
-import Button from "~/components/header/header/Button";
-import { Divider } from "~/components/header/header/Divider";
-import { Icon } from "~/components/header/header/Icon";
+import Button from "~/components/Button";
+import { Divider } from "~/components/Divider";
+import { Icon } from "~/components/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import MaterialTile from "../components/MaterialTile";
 import type { MaterialSheetView } from "../MaterialSheet";

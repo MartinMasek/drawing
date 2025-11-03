@@ -1,6 +1,6 @@
 import type { FC } from "react";
 
-import { Divider } from "./header/Divider";
+import { Divider } from "~/components/Divider";
 import DrawingHeaderActions from "./header/DrawingHeaderActions";
 import DrawingHeaderInfo from "./header/DrawingHeaderInfo";
 import DrawingTabs from "./header/DrawingTabs";

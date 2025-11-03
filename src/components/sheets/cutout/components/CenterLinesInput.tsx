@@ -1,6 +1,6 @@
 import { CentrelinesX, CentrelinesY } from "@prisma/client";
 import type { FC } from "react";
-import Button from "~/components/header/header/Button";
+import Button from "~/components/Button";
 
 interface CenterLinesInputProps {
     centerLinesX: CentrelinesX;

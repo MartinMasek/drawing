@@ -3,9 +3,9 @@ import type { FC } from "react";
 
 import { useRouter } from "next/navigation";
 import { useDrawing } from "~/components/context/DrawingContext";
-import Button from "./Button";
-import { Divider } from "./Divider";
-import { Icon } from "./Icon";
+import Button from "~/components/Button";
+import { Divider } from "~/components/Divider";
+import { Icon } from "~/components/Icon";
 
 interface Props {
 	title?: string;

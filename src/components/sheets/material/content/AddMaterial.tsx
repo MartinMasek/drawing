@@ -1,8 +1,8 @@
 import { IconArrowLeft } from "@tabler/icons-react";
 
 import { useState, type FC } from "react";
-import Button from "~/components/header/header/Button";
-import { Icon } from "~/components/header/header/Icon";
+import Button from "~/components/Button";
+import { Icon } from "~/components/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import type { MaterialSheetView } from "../MaterialSheet";
 import { useShape } from "~/components/context/ShapeContext";

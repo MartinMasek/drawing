@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { Divider } from "~/components/header/header/Divider";
+import { Divider } from "~/components/Divider";
 import PackagesBreakdown from "./PackagesBreakdown";
 import WarningBanner from "./WarningBanner";
 import { getTotalAreaOfShapes } from "~/utils/ui-utils";

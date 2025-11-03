@@ -7,9 +7,9 @@ import {
 import type { FC } from "react";
 import { useDrawing } from "~/components/context/DrawingContext";
 import { CursorTypes, DrawingTab } from "~/types/drawing";
-import Button from "./header/header/Button";
-import { Icon } from "./header/header/Icon";
-import { Divider } from "./header/header/Divider";
+import Button from "~/components/Button";
+import { Icon } from "~/components/Icon";
+import { Divider } from "~/components/Divider";
 import { useShape } from "./context/ShapeContext";
 import ShapeIcon from "./icons/ShapeIcon";
 import EdgeIcon from "./icons/EdgeIcon";

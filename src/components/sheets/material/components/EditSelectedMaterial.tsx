@@ -2,10 +2,10 @@ import type { CanvasShape, MaterialExtended } from "~/types/drawing";
 import MaterialSelect from "./MaterialSelect";
 import type { FC } from "react";
 import MaterialDetail from "./MaterialDetail";
-import { Divider } from "~/components/header/header/Divider";
+import { Divider } from "~/components/Divider";
 import PackagesBreakdown from "./PackagesBreakdown";
-import Button from "~/components/header/header/Button";
-import { Icon } from "~/components/header/header/Icon";
+import Button from "~/components/Button";
+import { Icon } from "~/components/Icon";
 import { IconX } from "@tabler/icons-react";
 import { getTotalAreaOfShapes } from "~/utils/ui-utils";
 
@@ -34,7 +34,7 @@ const EditSelectedMaterial: FC<EditSelectedMaterialProps> = ({
 		<div className="flex flex-col gap-4 p-4">
 			<MaterialSelect
 				value={selectedMaterial}
-				onChange={() => {}}
+				onChange={() => { }}
 				disabled={true}
 			/>
 			<MaterialDetail

@@ -4,7 +4,7 @@ import { type FC, useState } from "react";
 import type { CardinalDirection, Coordinate, EdgeModification } from "~/types/drawing";
 import type { PreviewShape } from "~/hooks/useShapeDrawing";
 
-import { Icon } from "./header/header/Icon";
+import { Icon } from "~/components/Icon";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import { useDrawing } from "~/components/context/DrawingContext";
 import { cn } from "~/lib/utils";
