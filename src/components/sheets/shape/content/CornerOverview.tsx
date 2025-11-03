@@ -2,7 +2,7 @@ import type { FC, JSX } from "react";
 import { useShape } from "~/components/header/context/ShapeContext";
 import { SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import ShapeCard from "../../components/ShapeCard";
-import type { ShapeSidePanelView } from "../ShapeSidePanel";
+import type { ShapeSheetView } from "../ShapeSheet";
 import RadiusIcon from "~/components/icons/RadiusIcon";
 import ClipIcon from "~/components/icons/ClipIcon";
 import BumpOutCornerIcon from "~/components/icons/BumpOutCornerIcon";
@@ -16,8 +16,8 @@ import useDeleteCornerModification from "~/hooks/mutations/corners/useDeleteCorn
 import { getDefaultValueForCornerModification } from "~/types/defaultValues";
 import { CornerModificationList, EdgeModificationList } from "~/types/drawing";
 
-interface CornersSidePanelGeneralProps {
-	setView: (value: ShapeSidePanelView) => void;
+interface CornerOverviewProps {
+	setView: (value: ShapeSheetView) => void;
 }
 
 const cornerIcons: Record<CornerType, JSX.Element> = {
@@ -28,7 +28,7 @@ const cornerIcons: Record<CornerType, JSX.Element> = {
 	[CornerType.None]: <NoneCornerIcon isActive={false} />,
 };
 
-const CornersSidePanelGeneral: FC<CornersSidePanelGeneralProps> = ({
+const CornerOverview: FC<CornerOverviewProps> = ({
 	setView,
 }) => {
 	const router = useRouter();
@@ -166,4 +166,4 @@ const CornersSidePanelGeneral: FC<CornersSidePanelGeneralProps> = ({
 	);
 };
 
-export default CornersSidePanelGeneral;
+export default CornerOverview;

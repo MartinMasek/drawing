@@ -3,7 +3,7 @@ import type { FC } from "react";
 import Button from "~/components/header/header/Button";
 import { Icon } from "~/components/header/header/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
-import type { ShapeSidePanelView } from "../ShapeSidePanel";
+import type { ShapeSheetView } from "../ShapeSheet";
 import LengthInput from "../components/LengthInput";
 import { CornerModificationList } from "~/types/drawing";
 import { useShape } from "~/components/header/context/ShapeContext";
@@ -19,7 +19,7 @@ import useUpdateCornerClipDebounced from "~/hooks/mutations/corners/useUpdateCor
 import ClipInput from "../components/ClipInput";
 
 interface EditCornerProps {
-	setView: (value: ShapeSidePanelView) => void;
+	setView: (value: ShapeSheetView) => void;
 }
 
 const EditCorner: FC<EditCornerProps> = ({ setView }) => {

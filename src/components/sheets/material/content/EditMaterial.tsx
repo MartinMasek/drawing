@@ -4,7 +4,7 @@ import type { FC } from "react";
 import Button from "~/components/header/header/Button";
 import { Icon } from "~/components/header/header/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
-import type { MaterialSidePanelView } from "../MaterialSidePanel";
+import type { MaterialSheetView } from "../MaterialSheet";
 import { useShape } from "~/components/header/context/ShapeContext";
 import { useRouter } from "next/router";
 import { useSetMaterialToShape } from "~/hooks/mutations/materials/useSetMaterialToShape";
@@ -15,7 +15,7 @@ import EditNoneMaterial from "../components/EditNoneMaterial";
 import EditSelectedMaterial from "../components/EditSelectedMaterial";
 
 interface EditMaterialProps {
-	setView: (value: MaterialSidePanelView) => void;
+	setView: (value: MaterialSheetView) => void;
 }
 
 const EditMaterial: FC<EditMaterialProps> = ({ setView }) => {

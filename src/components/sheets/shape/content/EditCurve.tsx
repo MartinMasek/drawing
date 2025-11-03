@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import Button from "~/components/header/header/Button";
 import { Icon } from "~/components/header/header/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
-import type { ShapeSidePanelView } from "../ShapeSidePanel";
+import type { ShapeSheetView } from "../ShapeSheet";
 import CurvesSizeInput from "../components/CurvesSizeInput";
 import CurvesAnglesInput from "../components/CurvesAnglesInput";
 import PositioningInput from "../components/PositioningInput";
@@ -19,18 +19,18 @@ import FullRadiusDepthInput from "../components/FullRadiusDepthInput";
 import { getAvailablePositions } from "~/components/shape/edge/edgeValidation";
 import { api } from "~/utils/api";
 
-interface EditCurvesAndBumpsProps {
-	setView: (value: ShapeSidePanelView) => void;
+interface EditCurveProps {
+	setView: (value: ShapeSheetView) => void;
 }
 
-const EditCurvesAndBumps: FC<EditCurvesAndBumpsProps> = ({ setView }) => {
+const EditCurve: FC<EditCurveProps> = ({ setView }) => {
 	const router = useRouter();
 	const idParam = router.query.id;
 	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
 	const { selectedEdge } = useShape();
 	const deleteEdgeModification = useDeleteEdgeModification(designId);
 	const updateEdgeMod = useUpdateEdgeModificationDebounced(designId);
-	
+
 	// Get cached design data (don't trigger a new query)
 	const utils = api.useUtils();
 	const designData = designId ? utils.design.getById.getData({ id: designId }) : undefined;
@@ -51,7 +51,7 @@ const EditCurvesAndBumps: FC<EditCurvesAndBumpsProps> = ({ setView }) => {
 
 		// Get available positions (including current position)
 		const available = getAvailablePositions(edge.edgeModifications);
-		
+
 		// Always include the current position (user is editing existing modification)
 		const currentPosition = selectedEdge.edgeModification?.position;
 		if (currentPosition && !available.includes(currentPosition)) {
@@ -152,12 +152,12 @@ const EditCurvesAndBumps: FC<EditCurvesAndBumpsProps> = ({ setView }) => {
 				)}
 				{(bumpType === EdgeModificationType.BumpOut ||
 					bumpType === EdgeModificationType.BumpIn) && (
-					<CurvesAnglesInput
-						onChange={handleAnglesChange}
-						left={selectedEdge?.edgeModification?.sideAngleLeft ?? 0}
-						right={selectedEdge?.edgeModification?.sideAngleRight ?? 0}
-					/>
-				)}
+						<CurvesAnglesInput
+							onChange={handleAnglesChange}
+							left={selectedEdge?.edgeModification?.sideAngleLeft ?? 0}
+							right={selectedEdge?.edgeModification?.sideAngleRight ?? 0}
+						/>
+					)}
 				{bumpType !== EdgeModificationType.FullCurve && (
 					<PositioningInput
 						onChange={handlePositionChange}
@@ -217,4 +217,4 @@ const EditCurvesAndBumps: FC<EditCurvesAndBumpsProps> = ({ setView }) => {
 	);
 };
 
-export default EditCurvesAndBumps;
+export default EditCurve;

@@ -5,7 +5,7 @@ import { useUpdateEdgeModification } from "~/hooks/mutations/edges/useUpdateEdge
 import { useShape } from "~/components/header/context/ShapeContext";
 import { SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import ShapeCard from "../../components/ShapeCard";
-import type { ShapeSidePanelView } from "../ShapeSidePanel";
+import type { ShapeSheetView } from "../ShapeSheet";
 import { useCreateEdgeModification } from "~/hooks/mutations/edges/useCreateEdgeModification";
 import { useDeleteEdgeModification } from "~/hooks/mutations/edges/useDeleteEdgeModification";
 import BumpOutIcon from "~/components/icons/BumpOutIcon";
@@ -18,8 +18,8 @@ import { getDefaultValueForEdgeModification } from "~/types/defaultValues";
 import { generateEdgePoints } from "~/components/shape/edgeUtils";
 import { EdgeModificationList } from "~/types/drawing";
 
-interface CurvesAndBumpsSidePanelGeneralProps {
-	setView: (value: ShapeSidePanelView) => void;
+interface CurveOverviewProps {
+	setView: (value: ShapeSheetView) => void;
 }
 const curveAndBumpIcons: Record<EdgeModificationType, JSX.Element> = {
 	[EdgeModificationType.BumpIn]: <BumpInIcon isActive={false} />,
@@ -30,8 +30,8 @@ const curveAndBumpIcons: Record<EdgeModificationType, JSX.Element> = {
 	[EdgeModificationType.None]: <CurvesNoneIcon isActive={false} />,
 };
 
-const CurvesAndBumpsSidePanelGeneral: FC<
-	CurvesAndBumpsSidePanelGeneralProps
+const CurveOverview: FC<
+	CurveOverviewProps
 > = ({ setView }) => {
 	const { selectedEdge, selectedShape, addToMostRecentlyUsedEdgeModification, mostRecentlyUsedEdgeModification } = useShape();
 	const router = useRouter();
@@ -204,4 +204,4 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 	);
 };
 
-export default CurvesAndBumpsSidePanelGeneral;
+export default CurveOverview;

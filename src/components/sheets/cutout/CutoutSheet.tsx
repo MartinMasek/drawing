@@ -18,7 +18,7 @@ import useUpdateSinkFaucetHolesDebounced from "~/hooks/mutations/cutouts/useUpda
 import useUpdateSinkCentrelinesDebounced from "~/hooks/mutations/cutouts/useUpdateSinkCentrelinesDebounced";
 import useRemoveCutout from "~/hooks/mutations/cutouts/useRemoveCutout";
 
-const CutoutSidePanel: FC = () => {
+const CutoutSheet: FC = () => {
 	const router = useRouter();
 	const idParam = router.query.id;
 	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
@@ -137,4 +137,4 @@ const CutoutSidePanel: FC = () => {
 	);
 };
 
-export default CutoutSidePanel;
+export default CutoutSheet;

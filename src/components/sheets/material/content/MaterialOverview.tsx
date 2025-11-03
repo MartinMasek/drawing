@@ -6,16 +6,16 @@ import { Divider } from "~/components/header/header/Divider";
 import { Icon } from "~/components/header/header/Icon";
 import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
 import MaterialTile from "../components/MaterialTile";
-import type { MaterialSidePanelView } from "../MaterialSidePanel";
+import type { MaterialSheetView } from "../MaterialSheet";
 import type { MaterialExtended } from "~/types/drawing";
 import { useSetMaterialToShape } from "~/hooks/mutations/materials/useSetMaterialToShape";
 import { getTotalAreaOfShapes } from "~/utils/ui-utils";
 
-interface MaterialSidePanelGeneralProps {
-	setView: (value: MaterialSidePanelView) => void;
+interface MaterialOverviewProps {
+	setView: (value: MaterialSheetView) => void;
 }
 
-const MaterialSidePanelGeneral: FC<MaterialSidePanelGeneralProps> = ({
+const MaterialOverview: FC<MaterialOverviewProps> = ({
 	setView,
 }) => {
 	const {
@@ -119,4 +119,4 @@ const MaterialSidePanelGeneral: FC<MaterialSidePanelGeneralProps> = ({
 	);
 };
 
-export default MaterialSidePanelGeneral;
+export default MaterialOverview;

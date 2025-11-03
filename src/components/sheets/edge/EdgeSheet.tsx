@@ -1,7 +1,7 @@
 import type { FC } from "react";
-import { SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
+import { SheetContent, SheetHeader, SheetTitle } from "~/components/ui/sheet";
 
-const SidePanelEdges: FC = () => {
+const EdgeSheet: FC = () => {
 	return (
 		<SheetContent
 			onInteractOutside={(e) => e.preventDefault()}
@@ -20,4 +20,4 @@ const SidePanelEdges: FC = () => {
 	);
 };
 
-export default SidePanelEdges;
+export default EdgeSheet;

@@ -1,23 +1,23 @@
 import { type FC, useEffect, useState } from "react";
 import { SheetContent } from "../../ui/sheet";
-import CurvesAndBumpsSidePanelGeneral from "./content/CurvesAndBumpsSidePanelGeneral";
-import EditCurvesAndBumps from "./content/EditCurvesAndBumps";
-import CornersSidePanelGeneral from "./content/CornersSidePanelGeneral";
 import { useDrawing } from "~/components/header/context/DrawingContext";
 import { CursorTypes } from "~/components/header/header/drawing-types";
 import EditCorner from "./content/EditCorner";
 import { useShape } from "~/components/header/context/ShapeContext";
+import CornerOverview from "./content/CornerOverview";
+import CurveOverview from "./content/CurveOverview";
+import EditCurve from "./content/EditCurve";
 
-export type ShapeSidePanelView =
+export type ShapeSheetView =
 	| "generalCurves"
 	| "generalCorners"
 	| "editCurves"
 	| "editCorners";
 
-const ShapeSidePanel: FC = () => {
+const ShapeSheet: FC = () => {
 	const { cursorType } = useDrawing();
 	const { selectedEdge, selectedCorner } = useShape();
-	const [view, setView] = useState<ShapeSidePanelView>(
+	const [view, setView] = useState<ShapeSheetView>(
 		cursorType === CursorTypes.Curves ? "generalCurves" : "generalCorners",
 	);
 
@@ -37,13 +37,13 @@ const ShapeSidePanel: FC = () => {
 	const renderContent = () => {
 		switch (view) {
 			case "editCurves":
-				return <EditCurvesAndBumps setView={setView} />;
+				return <EditCurve setView={setView} />;
 			case "generalCorners":
-				return <CornersSidePanelGeneral setView={setView} />;
+				return <CornerOverview setView={setView} />;
 			case "editCorners":
 				return <EditCorner setView={setView} />;
 			default:
-				return <CurvesAndBumpsSidePanelGeneral setView={setView} />;
+				return <CurveOverview setView={setView} />;
 		}
 	};
 
@@ -57,4 +57,4 @@ const ShapeSidePanel: FC = () => {
 	);
 };
 
-export default ShapeSidePanel;
+export default ShapeSheet;
