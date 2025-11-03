@@ -25,8 +25,11 @@ const CutoutContextMenu = ({ x, y, shape, designId, onClose }: CutoutContextMenu
             posX: x,
             posY: y,
         });
+        onClose()
     }
+
     const handleAddCooktopCutout = () => { }
+
     const handleAddOtherCutout = () => { }
     return (
         <div
