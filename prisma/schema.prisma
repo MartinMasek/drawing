@@ -96,8 +96,9 @@ model Shape {
     endPoint1     Point?  @relation("ShapeEndPoint1", fields: [endPoint1Id], references: [id])
     endPoint2     Point?  @relation("ShapeEndPoint2", fields: [endPoint2Id], references: [id])
 
-    materialId String?
-    material   Material? @relation(fields: [materialId], references: [id])
+    materialId    String?
+    material      Material?       @relation(fields: [materialId], references: [id])
+    CooktopCutout CooktopCutout[]
 }
 
 model Point {
@@ -235,6 +236,16 @@ model SinkCutout {
     template   SinkCutoutTemplate? @relation(fields: [templateId], references: [id])
 }
 
+model CooktopCutout {
+    id       String              @id @default(cuid())
+    posX     Float
+    posY     Float
+    shapeId  String
+    shape    Shape               @relation(fields: [shapeId], references: [id], onDelete: Cascade)
+    configId String              @unique
+    config   CooktopCutoutConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+}
+
 model SinkCutoutTemplate {
     id          String           @id @default(cuid())
     name        String
@@ -258,6 +269,16 @@ model SinkCutoutConfig {
     service            Service?            @relation(fields: [serviceId], references: [id])
     sinkCutout         SinkCutout?
     sinkCutoutTemplate SinkCutoutTemplate?
+}
+
+model CooktopCutoutConfig {
+    id            String         @id @default(cuid())
+    length        Float
+    width         Float
+    burnerCount   Int
+    centrelinesX  CentrelinesX   @default(Left)
+    centrelinesY  CentrelinesY   @default(Top)
+    cooktopCutout CooktopCutout?
 }
 
 enum CentrelinesX {
