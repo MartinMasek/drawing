@@ -65,6 +65,7 @@ export const ShapeProvider = ({
 	children: React.ReactNode;
 	shapes?: ReadonlyArray<CanvasShape>;
 }) => {
+
 	const [selectedShape, setSelectedShape] = useState<CanvasShape | null>(null);
 	const [selectedText, setSelectedText] = useState<CanvasText | null>(null);
 
@@ -121,23 +122,17 @@ export const ShapeProvider = ({
 			);
 	});
 
-	const getNumberOfShapesPerMaterial = (materialId?: string): number => {
-		// If no materialId is provided, return the number of shapes without a material
-		if (!materialId) {
-			return (
-				shapes?.filter((shape) => shape.material === undefined).length ?? 0
-			);
-		}
-		return (
-			shapes?.filter((shape) => shape.material?.id === materialId).length ?? 0
-		);
+	// Get all shapes with a material, or all shapes without a material if no ID is provided
+	const getAllShapesWithMaterial = (materialId?: string): CanvasShape[] => {
+		return shapes?.filter((shape) =>
+			materialId ? shape.material?.id === materialId : shape.material === undefined
+		) ?? [];
 	};
 
-	const getAllShapesWithMaterial = (materialId?: string): CanvasShape[] => {
-		if (!materialId) {
-			return shapes?.filter((shape) => shape.material === undefined) ?? [];
-		}
-		return shapes?.filter((shape) => shape.material?.id === materialId) ?? [];
+
+	// Get the number of shapes with a material, or number without a material if no ID is provided
+	const getNumberOfShapesPerMaterial = (materialId?: string): number => {
+		return getAllShapesWithMaterial(materialId).length;
 	};
 
 	const value = {
