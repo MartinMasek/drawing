@@ -1,5 +1,5 @@
 import { api } from "~/utils/api";
-import { useShape } from "~/components/header/context/ShapeContext";
+import { useShape } from "~/context/ShapeContext";
 import { generateEdgePoints } from "~/components/shape/edgeUtils";
 import type { Point } from "~/types/drawing";
 
@@ -25,7 +25,7 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
                 if (shape) {
                     const point1 = shape.points.find((p) => p.id === variables.edgePoint1Id);
                     const point2 = shape.points.find((p) => p.id === variables.edgePoint2Id);
-                    
+
                     if (point1 && point2) {
                         const edgeModification = {
                             id: null,
@@ -39,13 +39,13 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
                             fullRadiusDepth: variables.edgeModification.fullRadiusDepth ?? 0,
                             points: [],
                         };
-                        
+
                         const pointsWithoutIds = generateEdgePoints(
                             point1,
                             point2,
                             [edgeModification],
                         );
-                        
+
                         // Convert Coordinate[] to Point[] (without IDs since they'll be created by backend)
                         calculatedPoints = pointsWithoutIds.map((coord) => ({
                             id: '', // Empty ID, will be set by backend
@@ -179,20 +179,20 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
                                 ...shape,
                                 edges: shape.edges.map((edge) => {
                                     if (edge.id !== context.tempEdgeId) return edge;
-                                return {
-                                    ...edge,
-                                    id: data.edgeId, // Use the edgeId from the returned data
-                                    edgeModifications: edge.edgeModifications.map((mod) => {
-                                        if (mod.id === context.tempModificationId) {
-                                            return {
-                                                ...mod,
-                                                id: data.id, // Use the real modification ID
-                                                points: data.points ?? mod.points, // Use server points with real IDs
-                                            };
-                                        }
-                                        return mod;
-                                    }),
-                                };
+                                    return {
+                                        ...edge,
+                                        id: data.edgeId, // Use the edgeId from the returned data
+                                        edgeModifications: edge.edgeModifications.map((mod) => {
+                                            if (mod.id === context.tempModificationId) {
+                                                return {
+                                                    ...mod,
+                                                    id: data.id, // Use the real modification ID
+                                                    points: data.points ?? mod.points, // Use server points with real IDs
+                                                };
+                                            }
+                                            return mod;
+                                        }),
+                                    };
                                 }),
                             };
                         }),
@@ -205,7 +205,7 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
                         ...selectedShape,
                         edges: selectedShape.edges.map((edge) => {
                             if (edge.id !== context.tempEdgeId) return edge;
-                            
+
                             // Replace temp IDs with real IDs, keep all data
                             return {
                                 ...edge,
@@ -228,10 +228,10 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
                     // Check if selectedEdge is for this edge (by index or by point IDs)
                     const isMatchingEdge = selectedEdge && (
                         selectedEdge.edgeIndex === context.edgeIndex ||
-                        (selectedEdge.edgePoint1Id === variables.edgePoint1Id && 
-                         selectedEdge.edgePoint2Id === variables.edgePoint2Id)
+                        (selectedEdge.edgePoint1Id === variables.edgePoint1Id &&
+                            selectedEdge.edgePoint2Id === variables.edgePoint2Id)
                     );
-                    
+
                     if (isMatchingEdge) {
                         const updatedEdge = updatedShape.edges.find(e => e.id === data.edgeId);
                         const realMod = updatedEdge?.edgeModifications.find(m => m.id === data.id);
@@ -261,7 +261,7 @@ export const useCreateEdgeModification = (designId: string | undefined) => {
                             if (hasUserChanges && selectedEdge.edgeModification && selectedShape) {
                                 const point1 = selectedShape.points.find((p) => p.id === variables.edgePoint1Id);
                                 const point2 = selectedShape.points.find((p) => p.id === variables.edgePoint2Id);
-                                
+
                                 if (point1 && point2) {
                                     const pointsCoords = generateEdgePoints(
                                         point1,

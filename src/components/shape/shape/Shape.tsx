@@ -1,7 +1,7 @@
 import type { KonvaEventObject } from "konva/lib/Node";
 import type { CanvasShape } from "~/types/drawing";
-import { DrawingTab } from "~/components/header/header/drawing-types";
-import { useShape } from "~/components/header/context/ShapeContext";
+import { DrawingTab } from "~/types/drawing";
+import { useShape } from "~/context/ShapeContext";
 import { useShapeState } from "../hooks/useShapeState";
 import { useShapeTransform } from "../hooks/useShapeTransform";
 import { useShapeInteractions } from "../hooks/useShapeInteractions";
@@ -104,19 +104,19 @@ const Shape = ({
 	// Determine selected indices
 	const selectedEdgeIndex =
 		selectedEdge?.edgeIndex !== undefined &&
-		selectedEdge?.shapeId === shape.id
+			selectedEdge?.shapeId === shape.id
 			? selectedEdge.edgeIndex
 			: null;
 
 	const selectedPointIndex =
 		selectedCorner?.pointIndex !== undefined &&
-		selectedCorner?.shapeId === shape.id
+			selectedCorner?.shapeId === shape.id
 			? selectedCorner.pointIndex
 			: null;
 
 	const selectedModificationId =
 		selectedEdge?.edgeModification?.id !== undefined &&
-		selectedEdge?.shapeId === shape.id
+			selectedEdge?.shapeId === shape.id
 			? selectedEdge.edgeModification.id
 			: null;
 

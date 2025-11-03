@@ -78,12 +78,12 @@ model Shape {
     design   Design @relation(fields: [designId], references: [id], onDelete: Cascade)
 
     // Points are allways ordered and on normalized coordinates. Position of shape is defined by xPos and yPos.
-    points  Point[]
+    points      Point[]
     // When we defined some modification on edges we store them here
-    edges   Edge[]
+    edges       Edge[]
     // When we defined some modification on corners we store them here
-    corners Corner[]
-    cutouts Cutout[]
+    corners     Corner[]
+    sinkCutouts SinkCutout[]
 
     // We have to remember where we started and ended drawing the shape because from there we can start reshaping the shape
     // TODO REmove this now we calculate them using getShapeEdgePointIndices function
@@ -96,8 +96,9 @@ model Shape {
     endPoint1     Point?  @relation("ShapeEndPoint1", fields: [endPoint1Id], references: [id])
     endPoint2     Point?  @relation("ShapeEndPoint2", fields: [endPoint2Id], references: [id])
 
-    materialId String?
-    material   Material? @relation(fields: [materialId], references: [id])
+    materialId    String?
+    material      Material?       @relation(fields: [materialId], references: [id])
+    CooktopCutout CooktopCutout[]
 }
 
 model Point {
@@ -223,47 +224,90 @@ enum CornerType {
 }
 
 // TODO FINISH THIS when we start working on cutouts
-model Cutout {
-    id         String          @id @default(cuid())
+model SinkCutout {
+    id         String              @id @default(cuid())
     posX       Float
     posY       Float
     shapeId    String
-    shape      Shape           @relation(fields: [shapeId], references: [id], onDelete: Cascade)
-    configId   String          @unique
-    config     CutoutConfig    @relation(fields: [configId], references: [id], onDelete: Cascade)
+    shape      Shape               @relation(fields: [shapeId], references: [id], onDelete: Cascade)
+    configId   String              @unique
+    config     SinkCutoutConfig    @relation(fields: [configId], references: [id], onDelete: Cascade)
     templateId String?
-    template   CutoutTemplate? @relation(fields: [templateId], references: [id])
+    template   SinkCutoutTemplate? @relation(fields: [templateId], references: [id])
 }
 
-model CutoutTemplate {
-    id       String       @id @default(cuid())
-    name     String
-    configId String       @unique
-    config   CutoutConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
-    cutouts  Cutout[]
+model CooktopCutout {
+    id       String              @id @default(cuid())
+    posX     Float
+    posY     Float
+    shapeId  String
+    shape    Shape               @relation(fields: [shapeId], references: [id], onDelete: Cascade)
+    configId String              @unique
+    config   CooktopCutoutConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
 }
 
-model CutoutConfig {
-    id          String          @id @default(cuid())
-    sinkType    String // "Undermount" | "Drop-in" | "Oval" | "Double"
-    shape       String // "Rectangle" | "Oval" | "Double"
-    length      Float
-    width       Float
-    holeCount   Int
-    centerRules String? // TODO: JSON or separate model
-    faucetRules String? // TODO: JSON or separate model
-    productId   String
-    product     Product         @relation(fields: [productId], references: [id])
-    serviceId   String
-    service     Service         @relation(fields: [serviceId], references: [id])
-    cutout      Cutout?
-    template    CutoutTemplate?
+model SinkCutoutTemplate {
+    id          String           @id @default(cuid())
+    name        String
+    configId    String           @unique
+    config      SinkCutoutConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+    sinkCutouts SinkCutout[]
+}
+
+model SinkCutoutConfig {
+    id                 String              @id @default(cuid())
+    sinkType           CutoutSinkType
+    shape              CutoutShape
+    length             Float
+    width              Float
+    holeCount          Int
+    centrelinesX       CentrelinesX        @default(Left)
+    centrelinesY       CentrelinesY        @default(Top)
+    productId          String?
+    product            Product?            @relation(fields: [productId], references: [id])
+    serviceId          String?
+    service            Service?            @relation(fields: [serviceId], references: [id])
+    sinkCutout         SinkCutout?
+    sinkCutoutTemplate SinkCutoutTemplate?
+}
+
+model CooktopCutoutConfig {
+    id            String         @id @default(cuid())
+    length        Float
+    width         Float
+    burnerCount   Int
+    centrelinesX  CentrelinesX   @default(Left)
+    centrelinesY  CentrelinesY   @default(Top)
+    cooktopCutout CooktopCutout?
+}
+
+enum CentrelinesX {
+    Left
+    Right
+}
+
+enum CentrelinesY {
+    Top
+    Bottom
+}
+
+enum CutoutSinkType {
+    Undermount
+    DropIn
+    Oval
+    Double
+}
+
+enum CutoutShape {
+    Rectangle
+    Oval
+    Double
 }
 
 model Service {
     id                String             @id @default(cuid())
     name              String
-    cutoutConfigs     CutoutConfig[]
+    sinkCutoutConfigs SinkCutoutConfig[]
     backsplashConfigs BacksplashConfig[]
     waterfallConfigs  WaterfallConfig[]
 }
@@ -281,9 +325,9 @@ model Material {
 }
 
 model Product {
-    id            String         @id @default(cuid())
-    name          String
-    cutoutConfigs CutoutConfig[]
+    id                String             @id @default(cuid())
+    name              String
+    sinkCutoutConfigs SinkCutoutConfig[]
 }
 
 model BacksplashConfig {

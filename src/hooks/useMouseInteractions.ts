@@ -1,9 +1,6 @@
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useCallback, useMemo } from "react";
-import {
-	CursorTypes,
-	DrawingTab,
-} from "../components/header/header/drawing-types";
+import { CursorTypes, DrawingTab } from "~/types/drawing";
 import type { CanvasText, CanvasShape, CanvasTextData } from "~/types/drawing";
 import { useCanvasNavigation } from "./useCanvasNavigation";
 import { useCursorLogic } from "./useCursorLogic";
@@ -16,8 +13,8 @@ interface UseMouseInteractionsProps {
 	isPanning: boolean;
 	isDragging: boolean;
 	isDrawing: boolean;
-	editingText: CanvasText | null;
-	setEditingText: (text: CanvasText | null) => void;
+	selectedText: CanvasText | null;
+	setSelectedText: (text: CanvasText | null) => void;
 	newTextPos: { x: number; y: number } | null;
 	setNewTextPos: (pos: { x: number; y: number } | null) => void;
 	handleDrawStart: (e: KonvaEventObject<MouseEvent>) => void;
@@ -30,6 +27,7 @@ interface UseMouseInteractionsProps {
 	selectedShape: CanvasShape | null;
 	drawingTab: number;
 	closeContextMenu: () => void;
+	closeCutoutContextMenu: () => void;
 }
 
 /**
@@ -44,8 +42,8 @@ export const useMouseInteractions = ({
 	isPanning,
 	isDragging,
 	isDrawing,
-	editingText,
-	setEditingText,
+	selectedText,
+	setSelectedText,
 	newTextPos,
 	setNewTextPos,
 	handleDrawStart,
@@ -55,6 +53,7 @@ export const useMouseInteractions = ({
 	selectedShape,
 	drawingTab,
 	closeContextMenu,
+	closeCutoutContextMenu,
 }: UseMouseInteractionsProps) => {
 	// Cursor logic
 	const { isInteractiveCursor, getCursor: getCursorFromHook } = useCursorLogic({
@@ -115,11 +114,12 @@ export const useMouseInteractions = ({
 			// Close context menu if clicking on empty canvas (stage)
 			if (e.target === e.target.getStage()) {
 				closeContextMenu();
+				closeCutoutContextMenu();
 			}
 
 			// Reset text editing if clicking on empty canvas
-			if (editingText !== null && e.target === e.target.getStage()) {
-				setEditingText(null);
+			if (selectedText !== null && e.target === e.target.getStage()) {
+				setSelectedText(null);
 				setHoveredId(null); // Clear hover state to reset cursor
 				return;
 			}
@@ -150,8 +150,9 @@ export const useMouseInteractions = ({
 		},
 		[
 			closeContextMenu,
-			editingText,
-			setEditingText,
+			closeCutoutContextMenu,
+			selectedText,
+			setSelectedText,
 			setHoveredId,
 			cursorType,
 			handleTextMouseDown,
