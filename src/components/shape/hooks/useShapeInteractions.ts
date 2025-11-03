@@ -6,7 +6,7 @@ import {
 	EdgeModificationType,
 	EdgeShapePosition,
 } from "@prisma/client";
-import { CursorTypes } from "~/components/header/header/drawing-types";
+import { CursorTypes } from "~/types/drawing";
 import { useDrawing } from "~/components/context/DrawingContext";
 import { useShape } from "~/components/context/ShapeContext";
 

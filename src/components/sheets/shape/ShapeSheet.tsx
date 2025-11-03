@@ -1,7 +1,7 @@
 import { type FC, useEffect, useState } from "react";
 import { SheetContent } from "../../ui/sheet";
 import { useDrawing } from "~/components/context/DrawingContext";
-import { CursorTypes } from "~/components/header/header/drawing-types";
+import { CursorTypes } from "~/types/drawing";
 import EditCorner from "./content/EditCorner";
 import { useShape } from "~/components/context/ShapeContext";
 import CornerOverview from "./content/CornerOverview";

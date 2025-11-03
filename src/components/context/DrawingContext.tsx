@@ -14,7 +14,7 @@ import {
 	DrawingTab,
 	DrawingTabList,
 	defaultCursorByTab,
-} from "~/components/header/header/drawing-types";
+} from "~/types/drawing";
 
 type DrawingContextType = {
 	activeTab: number;

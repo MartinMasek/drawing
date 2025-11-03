@@ -1,4 +1,4 @@
-import { CursorTypes } from "../components/header/header/drawing-types";
+import { CursorTypes } from "~/types/drawing";
 import type { CanvasText } from "~/types/drawing";
 
 interface UseCursorLogicProps {

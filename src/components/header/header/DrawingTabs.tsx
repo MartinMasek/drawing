@@ -18,7 +18,7 @@ import { cn } from "~/utils/ui-utils";
 import { useDrawing } from "~/components/context/DrawingContext";
 import { useShape } from "~/components/context/ShapeContext";
 import { Icon } from "./Icon";
-import { DrawingTabList } from "./drawing-types";
+import { DrawingTabList } from "~/types/drawing";
 
 const DrawingTabs: FC = () => {
 	const { activeTab, setActiveTab } = useDrawing();

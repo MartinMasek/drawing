@@ -6,7 +6,7 @@ import {
 } from "@tabler/icons-react";
 import type { FC } from "react";
 import { useDrawing } from "~/components/context/DrawingContext";
-import { CursorTypes, DrawingTab } from "./header/header/drawing-types";
+import { CursorTypes, DrawingTab } from "~/types/drawing";
 import Button from "./header/header/Button";
 import { Icon } from "./header/header/Icon";
 import { Divider } from "./header/header/Divider";

@@ -1,9 +1,6 @@
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useCallback, useMemo } from "react";
-import {
-	CursorTypes,
-	DrawingTab,
-} from "../components/header/header/drawing-types";
+import { CursorTypes, DrawingTab } from "~/types/drawing";
 import type { CanvasText, CanvasShape, CanvasTextData } from "~/types/drawing";
 import { useCanvasNavigation } from "./useCanvasNavigation";
 import { useCursorLogic } from "./useCursorLogic";

@@ -24,7 +24,7 @@ import { useDrawing } from "~/components/context/DrawingContext";
 import { useShape } from "./context/ShapeContext";
 import CanvasTextInput from "./text/CanvasTextInput";
 import type { KonvaEventObject } from "konva/lib/Node";
-import { DrawingTab } from "./header/header/drawing-types";
+import { DrawingTab } from "~/types/drawing";
 import CutoutContextMenu from "./shape/contextMenu/CutoutContextMenu";
 
 interface DrawingCanvasProps {

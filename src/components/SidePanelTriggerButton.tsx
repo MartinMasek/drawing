@@ -5,7 +5,7 @@ import {
 import type { FC } from "react";
 import { useDrawing } from "~/components/context/DrawingContext";
 import { Icon } from "./header/header/Icon";
-import { CursorTypes, DrawingTab } from "./header/header/drawing-types";
+import { CursorTypes, DrawingTab } from "~/types/drawing";
 import { SheetTrigger } from "./ui/sheet";
 
 const SidePanelTriggerButton: FC = () => {

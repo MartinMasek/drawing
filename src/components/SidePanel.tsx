@@ -1,7 +1,7 @@
 import type { FC } from "react";
 
 import { Sheet } from "./ui/sheet";
-import { CursorTypes } from "./header/header/drawing-types";
+import { CursorTypes } from "~/types/drawing";
 import MaterialSheet from "./sheets/material/MaterialSheet";
 import CutoutSheet from "./sheets/cutout/CutoutSheet";
 import ShapeSheet from "./sheets/shape/ShapeSheet";
