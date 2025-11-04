@@ -222,8 +222,6 @@ export const useShapeInteractions = (
 		if (isDrawing || e.evt.button !== 0) return;
 
 		const edge = shape.edges.find((edge) => edge.point1Id === point1Id && edge.point2Id === point2Id);
-
-		// Import validation here to avoid circular dependency
 		
 		const validPosition = calculateAvailablePosition(edge, clickPosition);
 

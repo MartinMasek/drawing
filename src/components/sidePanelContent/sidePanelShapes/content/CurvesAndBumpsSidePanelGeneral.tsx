@@ -1,4 +1,5 @@
 import type { FC, JSX } from "react";
+import { useMemo } from "react";
 import { useRouter } from "next/router";
 import {
 	CornerType,
@@ -53,49 +54,43 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 	const createEdge = useCreateEdgeModification(designId);
 	const deleteEdgeModification = useDeleteEdgeModification(designId);
 
+	// Memoize the current edge to avoid finding it multiple times
+	const currentEdge = useMemo(() => {
+		if (!selectedEdge || !selectedShape) return undefined;
+		return selectedShape.edges.find(
+			(e) =>
+				e.point1Id === selectedEdge.edgePoint1Id &&
+				e.point2Id === selectedEdge.edgePoint2Id,
+		);
+	}, [selectedEdge, selectedShape]);
+
 	// Check if edge is at maximum capacity (2 modifications)
-	const isEdgeFull =
-		selectedEdge && selectedShape
-			? (() => {
-					const edge = selectedShape.edges.find(
-						(e) =>
-							e.point1Id === selectedEdge.edgePoint1Id &&
-							e.point2Id === selectedEdge.edgePoint2Id,
-					);
-					// If we're trying to add a new modification (id is null) and edge already has 2, it's full
-					return (
-						selectedEdge.edgeModification?.id === null &&
-						edge &&
-						edge.edgeModifications.length >= 2
-					);
-				})()
-			: false;
+	const isEdgeFull = useMemo(() => {
+		if (!selectedEdge || !currentEdge) return false;
+		// If we're trying to add a new modification (id is null) and edge already has 2, it's full
+		return (
+			selectedEdge.edgeModification?.id === null &&
+			currentEdge.edgeModifications.length >= 2
+		);
+	}, [selectedEdge, currentEdge]);
 
 	// Check if Full Curve should be enabled
 	// Enable only if: 1) first modification on edge, OR 2) editing existing modification with no other modifications
-	const isFullCurveEnabled =
-		selectedEdge && selectedShape
-			? (() => {
-					const edge = selectedShape.edges.find(
-						(e) =>
-							e.point1Id === selectedEdge.edgePoint1Id &&
-							e.point2Id === selectedEdge.edgePoint2Id,
-					);
+	const isFullCurveEnabled = useMemo(() => {
+		if (!selectedEdge || !selectedShape) return false;
+		if (!currentEdge) return true;
 
-					if (!edge) return true;
+		const isNewModification = selectedEdge.edgeModification?.id === null;
+		const modificationCount = currentEdge.edgeModifications.length;
 
-					const isNewModification = selectedEdge.edgeModification?.id === null;
-					const modificationCount = edge.edgeModifications.length;
+		// Enable if it's a new modification and there are no existing modifications
+		if (isNewModification && modificationCount === 0) return true;
 
-					// Enable if it's a new modification and there are no existing modifications
-					if (isNewModification && modificationCount === 0) return true;
+		// Enable if we're editing an existing modification and there are no other modifications
+		if (!isNewModification && modificationCount === 1) return true;
 
-					// Enable if we're editing an existing modification and there are no other modifications
-					if (!isNewModification && modificationCount === 1) return true;
-
-					return false;
-				})()
-			: false;
+		return false;
+	}, [selectedEdge, selectedShape, currentEdge]);
 
 	const handleSelectModification = (type: EdgeModificationType) => {
 		if (!selectedEdge) return;
@@ -107,15 +102,8 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 			return;
 		}
 
-		// Find the edge to pass to default value calculation
-		const edge = selectedShape.edges.find(
-			(e) =>
-				e.point1Id === selectedEdge.edgePoint1Id &&
-				e.point2Id === selectedEdge.edgePoint2Id,
-		);
-
 		// Calculate default values with smart position selection based on existing modifications
-		const defaultValues = getDefaultValueForEdgeModification(type, edge);
+		const defaultValues = getDefaultValueForEdgeModification(type, currentEdge);
 
 		const point1 = selectedShape.points.find(
 			(p) => p.id === selectedEdge.edgePoint1Id,
@@ -131,57 +119,57 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 			},
 		]);
 
-	if (!selectedEdge.edgeId) {
-		// If no edge id, create a new edge
-		// Validate that we can add a new modification (check the 2-modification limit)
-		const validation = canAddModification(edge, defaultValues.position);
-		if (!validation.allowed) {
-			console.warn(`Cannot add modification: ${validation.reason}`);
-			return; // UI will show the warning message
-		}
-
-		createEdge.mutate({
-			shapeId: selectedShape.id,
-			edgePoint1Id: selectedEdge.edgePoint1Id,
-			edgePoint2Id: selectedEdge.edgePoint2Id,
-			edgeModification: {
-				edgeType: type,
-				...defaultValues,
-				points,
-			},
-		});
-
-		addToMostRecentlyUsedEdgeModification(type);
-	} else {
-		// If edge id, update the existing edge
-		// When updating an existing modification, we're changing the type
-		// If this is a new modification (id is null), validate
-		if (selectedEdge.edgeModification.id === null) {
-			const validation = canAddModification(edge, defaultValues.position);
+		if (!selectedEdge.edgeId) {
+			// If no edge id, create a new edge
+			// Validate that we can add a new modification (check the 2-modification limit)
+			const validation = canAddModification(currentEdge, defaultValues.position);
 			if (!validation.allowed) {
 				console.warn(`Cannot add modification: ${validation.reason}`);
 				return; // UI will show the warning message
 			}
+
+			createEdge.mutate({
+				shapeId: selectedShape.id,
+				edgePoint1Id: selectedEdge.edgePoint1Id,
+				edgePoint2Id: selectedEdge.edgePoint2Id,
+				edgeModification: {
+					edgeType: type,
+					...defaultValues,
+					points,
+				},
+			});
+
+			addToMostRecentlyUsedEdgeModification(type);
+		} else {
+			// If edge id, update the existing edge
+			// When updating an existing modification, we're changing the type
+			// If this is a new modification (id is null), validate
+			if (selectedEdge.edgeModification.id === null) {
+				const validation = canAddModification(currentEdge, defaultValues.position);
+				if (!validation.allowed) {
+					console.warn(`Cannot add modification: ${validation.reason}`);
+					return; // UI will show the warning message
+				}
+			}
+
+			updateEdge.mutate({
+				edgeId: selectedEdge.edgeId,
+				shapeId: selectedShape.id,
+				edgeModificationId: selectedEdge.edgeModification.id,
+				// When modification is changed, we want to reset to default values
+				edgeModification: {
+					edgeType: type,
+					...defaultValues,
+					points,
+				},
+			});
+
+			addToMostRecentlyUsedEdgeModification(type);
 		}
 
-		updateEdge.mutate({
-			edgeId: selectedEdge.edgeId,
-			shapeId: selectedShape.id,
-			edgeModificationId: selectedEdge.edgeModification.id,
-			// When modification is changed, we want to reset to default values
-			edgeModification: {
-				edgeType: type,
-				...defaultValues,
-				points,
-			},
-		});
-
-		addToMostRecentlyUsedEdgeModification(type);
-	}
-
-	// Defer view change to next tick to allow optimistic state updates to propagate
-	setTimeout(() => setView("editCurves"), 0);
-};
+		// Defer view change to next tick to allow optimistic state updates to propagate
+		setTimeout(() => setView("editCurves"), 0);
+	};
 
 	const handleDeleteEdgeModification = () => {
 		if (!selectedEdge?.edgeModification?.id) return;

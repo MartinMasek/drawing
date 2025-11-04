@@ -36,6 +36,12 @@ export const SHAPE_DRAWING_FILL_COLOR = "#93C5FD";
 // Debounce timing
 export const DEBOUNCE_DELAY = 500; // Debounce delay in milliseconds
 
+// Edge stroke widths for interactive elements
+export const EDGE_STROKE_WIDTH = 2;
+export const EDGE_STROKE_WIDTH_HOVERED = 4;
+export const EDGE_STROKE_WIDTH_SELECTED = 6;
+export const EDGE_HIT_STROKE_WIDTH = 16;
+
 /**
  * Get stroke color based on shape/edge selection and hover state
  * Priority: selected > hovered > default
@@ -60,4 +66,31 @@ export const getFillColor = (
 	if (isSelected) return SHAPE_SELECTED_FILL_COLOR;
 	if (isHovered) return SHAPE_HOVERED_FILL_COLOR;
 	return SHAPE_DEFAULT_FILL_COLOR;
+};
+
+/**
+ * Calculate stroke styling based on edge and modification states
+ * Applies edge-level styling if edge is selected/hovered (even if this specific mod isn't)
+ */
+export const getEdgeStrokeStyle = (
+	isEdgeSelected: boolean,
+	isEdgeHovered: boolean,
+	isModSelected: boolean,
+	isModHovered: boolean,
+): { strokeColor: string; strokeWidth: number } => {
+	const shouldUseEdgeStyle = !isModSelected && (isEdgeSelected || isEdgeHovered);
+	
+	const strokeColor = shouldUseEdgeStyle 
+		? getStrokeColor(isEdgeSelected, isEdgeHovered)
+		: getStrokeColor(isModSelected, isModHovered);
+	
+	const strokeWidth = shouldUseEdgeStyle
+		? (isEdgeSelected ? EDGE_STROKE_WIDTH_SELECTED : EDGE_STROKE_WIDTH_HOVERED)
+		: (isModSelected
+			? EDGE_STROKE_WIDTH_SELECTED
+			: isModHovered
+				? EDGE_STROKE_WIDTH_HOVERED
+				: EDGE_STROKE_WIDTH);
+	
+	return { strokeColor, strokeWidth };
 };

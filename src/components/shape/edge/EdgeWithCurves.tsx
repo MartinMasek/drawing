@@ -3,14 +3,15 @@ import { Shape, Line, Group } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import type { EdgeModification, Point } from "~/types/drawing";
 import { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
-import { getStrokeColor } from "~/utils/canvas-constants";
+import {
+	getStrokeColor,
+	getEdgeStrokeStyle,
+	EDGE_STROKE_WIDTH,
+	EDGE_STROKE_WIDTH_HOVERED,
+	EDGE_STROKE_WIDTH_SELECTED,
+	EDGE_HIT_STROKE_WIDTH,
+} from "~/utils/canvas-constants";
 import { drawEdgeWithModifications } from "~/components/shape/edgeUtils";
-
-// Constants for interactive elements
-const EDGE_STROKE_WIDTH = 2;
-const EDGE_STROKE_WIDTH_HOVERED = 4;
-const EDGE_STROKE_WIDTH_SELECTED = 6;
-const EDGE_HIT_STROKE_WIDTH = 16;
 
 interface EdgeWithCurvesProps {
 	edgeIndex: number;
@@ -94,18 +95,12 @@ const EdgeWithCurves = ({
 		const isModHovered = hoveredModificationId === modId;
 		const isModSelected = selectedModificationId === modId;
 
-		// Apply edge-level styling if edge is selected/hovered (even if this specific mod isn't)
-		const shouldUseEdgeStyle = !isModSelected && (isEdgeSelected || isEdgeHovered);
-		const strokeColor = shouldUseEdgeStyle 
-			? getStrokeColor(isEdgeSelected, isEdgeHovered)
-			: getStrokeColor(isModSelected, isModHovered);
-		const strokeWidth = shouldUseEdgeStyle
-			? (isEdgeSelected ? EDGE_STROKE_WIDTH_SELECTED : EDGE_STROKE_WIDTH_HOVERED)
-			: (isModSelected
-				? EDGE_STROKE_WIDTH_SELECTED
-				: isModHovered
-					? EDGE_STROKE_WIDTH_HOVERED
-					: EDGE_STROKE_WIDTH);
+		const { strokeColor, strokeWidth } = getEdgeStrokeStyle(
+			isEdgeSelected,
+			isEdgeHovered,
+			isModSelected,
+			isModHovered,
+		);
 
 		// FullCurve - single Shape for entire edge
 		return (
@@ -201,18 +196,12 @@ const EdgeWithCurves = ({
 					const isModHovered = hoveredModificationId === modId;
 					const isModSelected = selectedModificationId === modId;
 
-					// Apply edge-level styling if edge is selected/hovered (even if this specific mod isn't)
-					const shouldUseEdgeStyle = !isModSelected && (isEdgeSelected || isEdgeHovered);
-					const strokeColor = shouldUseEdgeStyle 
-						? getStrokeColor(isEdgeSelected, isEdgeHovered)
-						: getStrokeColor(isModSelected, isModHovered);
-					const strokeWidth = shouldUseEdgeStyle
-						? (isEdgeSelected ? EDGE_STROKE_WIDTH_SELECTED : EDGE_STROKE_WIDTH_HOVERED)
-						: (isModSelected
-							? EDGE_STROKE_WIDTH_SELECTED
-							: isModHovered
-								? EDGE_STROKE_WIDTH_HOVERED
-								: EDGE_STROKE_WIDTH);
+					const { strokeColor, strokeWidth } = getEdgeStrokeStyle(
+						isEdgeSelected,
+						isEdgeHovered,
+						isModSelected,
+						isModHovered,
+					);
 
 					// Check if this is a straight bump or a curve
 					const isStraightBump = mod.type === EdgeModificationType.BumpIn || 
