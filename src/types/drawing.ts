@@ -271,7 +271,10 @@ export type EdgeModification = {
 	points: Point[];
 };
 
-// TODO COMMENT
+/**
+ * Minimal edge modification type for edge calculations and rendering.
+ * Includes precalculated points if available from database.
+ */
 export type EdgeModificationForCalculation = Pick<
 	EdgeModification,
 	| "type"

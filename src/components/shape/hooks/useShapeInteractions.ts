@@ -276,35 +276,35 @@ export const useShapeInteractions = (
 		) => {
 			if (isDrawing || e.evt.button !== 0) return;
 
-		const edge = shape.edges.find((edge) => edge.point1Id === point1Id && edge.point2Id === point2Id);
-		
-		const validPosition = calculateAvailablePosition(edge, clickPosition);
+			const edge = shape.edges.find((edge) => edge.point1Id === point1Id && edge.point2Id === point2Id);
+			
+			const validPosition = calculateAvailablePosition(edge, clickPosition);
 
 			setCursorType(CursorTypes.Curves);
 
-		// Always open side panel - it will show a message if edge is full
-		setSelectedEdge({
-			shapeId: shape.id,
-			edgeIndex,
-			edgeId: edge?.id ?? null,
-			edgePoint1Id: point1Id,
-			edgePoint2Id: point2Id,
-			edgeModification: {
-				id: null, // null = new modification
-				type: EdgeModificationType.None,
-				position: validPosition,
-				distance: 0,
-				depth: 0,
-				width: 0,
-				sideAngleLeft: 0,
-				sideAngleRight: 0,
-				fullRadiusDepth: 0,
-				points: [],
-			},
-		});
-		setSelectedCorner(null);
-		handlers.onClick(e);
-	}, [isDrawing, shape, setCursorType, setSelectedEdge, setSelectedCorner, handlers]);
+			// Always open side panel - it will show a message if edge is full
+			setSelectedEdge({
+				shapeId: shape.id,
+				edgeIndex,
+				edgeId: edge?.id ?? null,
+				edgePoint1Id: point1Id,
+				edgePoint2Id: point2Id,
+				edgeModification: {
+					id: null, // null = new modification
+					type: EdgeModificationType.None,
+					position: validPosition,
+					distance: 0,
+					depth: 0,
+					width: 0,
+					sideAngleLeft: 0,
+					sideAngleRight: 0,
+					fullRadiusDepth: 0,
+					points: [],
+				},
+			});
+			setSelectedCorner(null);
+			handlers.onClick(e);
+		}, [isDrawing, shape, setCursorType, setSelectedEdge, setSelectedCorner, handlers]);
 
 	/**
 	 * Handle mouse enter on a specific modification
