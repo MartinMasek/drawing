@@ -3,13 +3,14 @@ import { Line, Group } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import type { EdgeModification, Point } from "~/types/drawing";
 import { EdgeShapePosition } from "@prisma/client";
-import { getStrokeColor } from "~/utils/canvas-constants";
-
-// Constants for interactive elements
-const EDGE_STROKE_WIDTH = 2;
-const EDGE_STROKE_WIDTH_HOVERED = 4;
-const EDGE_STROKE_WIDTH_SELECTED = 6;
-const EDGE_HIT_STROKE_WIDTH = 16;
+import {
+	getStrokeColor,
+	getEdgeStrokeStyle,
+	EDGE_STROKE_WIDTH,
+	EDGE_STROKE_WIDTH_HOVERED,
+	EDGE_STROKE_WIDTH_SELECTED,
+	EDGE_HIT_STROKE_WIDTH,
+} from "~/utils/canvas-constants";
 
 interface EdgeStraightProps {
 	edgeIndex: number;
@@ -180,18 +181,19 @@ const EdgeStraight = ({
 					const isModHovered = hoveredModificationId === modId;
 					const isModSelected = selectedModificationId === modId;
 
+					const { strokeColor, strokeWidth } = getEdgeStrokeStyle(
+						isEdgeSelected,
+						isEdgeHovered,
+						isModSelected,
+						isModHovered,
+					);
+
 					return (
 						<Line
 							key={`mod-${modId}`}
 							points={segment.points}
-							stroke={getStrokeColor(isModSelected, isModHovered)}
-							strokeWidth={
-								isModSelected
-									? EDGE_STROKE_WIDTH_SELECTED
-									: isModHovered
-										? EDGE_STROKE_WIDTH_HOVERED
-										: EDGE_STROKE_WIDTH
-							}
+							stroke={strokeColor}
+							strokeWidth={strokeWidth}
 							hitStrokeWidth={EDGE_HIT_STROKE_WIDTH}
 							listening
 							onClick={(e) =>

@@ -7,8 +7,9 @@ interface ShapeCardProps {
 	icon: ReactNode;
 	onClick?: () => void;
 	isActive: boolean;
+	disabled?: boolean;
 }
-const ShapeCard: FC<ShapeCardProps> = ({ name, icon, onClick, isActive }) => {
+const ShapeCard: FC<ShapeCardProps> = ({ name, icon, onClick, isActive, disabled = false }) => {
 	return (
 		// biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
 		<div
@@ -16,8 +17,9 @@ const ShapeCard: FC<ShapeCardProps> = ({ name, icon, onClick, isActive }) => {
 				"flex h-[116px] cursor-pointer flex-col rounded-md border border-border-button-gray-default",
 				isActive &&
 				"border-border-checkboxes-active bg-background-button-secondary-brand-active",
+				disabled && "cursor-not-allowed opacity-50",
 			)}
-			onClick={onClick}
+			onClick={disabled ? undefined : onClick}
 		>
 			<div className="flex h-[80px] flex-col items-center justify-center">
 				{icon}

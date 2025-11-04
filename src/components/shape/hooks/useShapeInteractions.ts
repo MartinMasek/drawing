@@ -9,6 +9,7 @@ import {
 import { CursorTypes } from "~/types/drawing";
 import { useDrawing } from "~/context/DrawingContext";
 import { useShape } from "~/context/ShapeContext";
+import { calculateAvailablePosition } from "../edge/edgeValidation";
 
 interface ShapeInteractionHandlers {
 	onDragStart?: () => void;
@@ -263,6 +264,7 @@ export const useShapeInteractions = (
 	/**
 	 * Handle click on empty edge segment (for adding new modification)
 	 * Creates a new modification at the clicked position
+	 * Opens side panel even if edge is full (will show warning message in UI)
 	 */
 	const handleEmptyEdgeClick = useCallback(
 		(
@@ -274,16 +276,13 @@ export const useShapeInteractions = (
 		) => {
 			if (isDrawing || e.evt.button !== 0) return;
 
-			const edge = shape.edges.find(
-				(edge) => edge.point1Id === point1Id && edge.point2Id === point2Id,
-			);
-
-			// Import validation here to avoid circular dependency
-			const { calculateAvailablePosition } = require("../Edge/edgeValidation");
+			const edge = shape.edges.find((edge) => edge.point1Id === point1Id && edge.point2Id === point2Id);
+			
 			const validPosition = calculateAvailablePosition(edge, clickPosition);
 
 			setCursorType(CursorTypes.Curves);
 
+			// Always open side panel - it will show a message if edge is full
 			setSelectedEdge({
 				shapeId: shape.id,
 				edgeIndex,
@@ -305,16 +304,7 @@ export const useShapeInteractions = (
 			});
 			setSelectedCorner(null);
 			handlers.onClick(e);
-		},
-		[
-			isDrawing,
-			shape,
-			setCursorType,
-			setSelectedEdge,
-			setSelectedCorner,
-			handlers,
-		],
-	);
+		}, [isDrawing, shape, setCursorType, setSelectedEdge, setSelectedCorner, handlers]);
 
 	/**
 	 * Handle mouse enter on a specific modification

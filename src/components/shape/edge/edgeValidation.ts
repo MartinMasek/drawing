@@ -72,9 +72,12 @@ export function calculateAvailablePosition(
 /**
  * Get all available positions for a new modification on an edge
  * Returns empty array if edge is full or has FullCurve
+ * @param edgeModifications - All modifications on the edge
+ * @param excludeModificationId - Optional ID of modification to exclude (when editing existing mod)
  */
 export function getAvailablePositions(
-	edgeModifications: Array<{ type: EdgeModificationType; position: EdgeShapePosition }> | undefined,
+	edgeModifications: Array<{ id?: string | null; type: EdgeModificationType; position: EdgeShapePosition }> | undefined,
+	excludeModificationId?: string | null,
 ): EdgeShapePosition[] {
 	if (!edgeModifications || edgeModifications.length === 0) {
 		return [
@@ -84,17 +87,22 @@ export function getAvailablePositions(
 		];
 	}
 
-	// FullCurve occupies entire edge - no positions available
-	if (edgeModifications.some((m) => m.type === EdgeModificationType.FullCurve)) {
+	// Filter out the modification being edited
+	const otherMods = excludeModificationId 
+		? edgeModifications.filter(m => m.id !== excludeModificationId)
+		: edgeModifications;
+
+	// FullCurve in other modifications occupies entire edge - no positions available
+	if (otherMods.some((m) => m.type === EdgeModificationType.FullCurve)) {
 		return [];
 	}
 
-	// Max 2 modifications - return empty if full
-	if (edgeModifications.length >= 2) {
+	// Max 2 modifications total (including the one being edited) - check if we can add more
+	if (edgeModifications.length >= 2 && !excludeModificationId) {
 		return [];
 	}
 
-	const occupied = edgeModifications.map((m) => m.position);
+	const occupied = otherMods.map((m) => m.position);
 	return [
 		EdgeShapePosition.Left,
 		EdgeShapePosition.Center,

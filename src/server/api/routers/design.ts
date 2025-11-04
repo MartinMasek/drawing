@@ -627,13 +627,38 @@ export const designRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			const edge = await ctx.db.edge.create({
-				data: {
+			// Check if an edge already exists for these points
+			const existingEdge = await ctx.db.edge.findFirst({
+				where: {
 					shapeId: input.shapeId,
 					point1Id: input.edgePoint1Id,
 					point2Id: input.edgePoint2Id,
 				},
+				select: {
+					id: true,
+					edgeModifications: {
+						select: {
+							id: true,
+						},
+					},
+				},
 			});
+
+			// If edge exists and already has 2 modifications, reject
+			if (existingEdge && existingEdge.edgeModifications.length >= 2) {
+				throw new Error("Maximum 2 modifications per edge");
+			}
+
+			// Use existing edge or create new one
+			const edge =
+				existingEdge ??
+				(await ctx.db.edge.create({
+					data: {
+						shapeId: input.shapeId,
+						point1Id: input.edgePoint1Id,
+						point2Id: input.edgePoint2Id,
+					},
+				}));
 			return await ctx.db.edgeModification.create({
 				data: {
 					edgeType: input.edgeModification.edgeType,
@@ -743,6 +768,23 @@ export const designRouter = createTRPCRouter({
 					},
 				});
 				return result;
+			}
+
+			// Creating a new modification - check if edge already has 2 modifications
+			const edge = await ctx.db.edge.findUnique({
+				where: { id: input.edgeId },
+				select: {
+					id: true,
+					edgeModifications: {
+						select: {
+							id: true,
+						},
+					},
+				},
+			});
+
+			if (edge && edge.edgeModifications.length >= 2) {
+				throw new Error("Maximum 2 modifications per edge");
 			}
 
 			const result = await ctx.db.edgeModification.create({

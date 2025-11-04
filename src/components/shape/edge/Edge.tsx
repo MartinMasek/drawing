@@ -65,7 +65,6 @@ const Edge = ({
 	hoveredModificationId,
 	selectedModificationId,
 	isDrawing,
-	handleEdgeClick,
 	handleModificationClick,
 	handleEmptyEdgeClick,
 	handleEdgeMouseEnter,

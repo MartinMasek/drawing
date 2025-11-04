@@ -3,14 +3,15 @@ import { Shape, Line, Group } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import type { EdgeModification, Point } from "~/types/drawing";
 import { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
-import { getStrokeColor } from "~/utils/canvas-constants";
+import {
+	getStrokeColor,
+	getEdgeStrokeStyle,
+	EDGE_STROKE_WIDTH,
+	EDGE_STROKE_WIDTH_HOVERED,
+	EDGE_STROKE_WIDTH_SELECTED,
+	EDGE_HIT_STROKE_WIDTH,
+} from "~/utils/canvas-constants";
 import { drawEdgeWithModifications } from "~/components/shape/edgeUtils";
-
-// Constants for interactive elements
-const EDGE_STROKE_WIDTH = 2;
-const EDGE_STROKE_WIDTH_HOVERED = 4;
-const EDGE_STROKE_WIDTH_SELECTED = 6;
-const EDGE_HIT_STROKE_WIDTH = 16;
 
 interface EdgeWithCurvesProps {
 	edgeIndex: number;
@@ -94,6 +95,13 @@ const EdgeWithCurves = ({
 		const isModHovered = hoveredModificationId === modId;
 		const isModSelected = selectedModificationId === modId;
 
+		const { strokeColor, strokeWidth } = getEdgeStrokeStyle(
+			isEdgeSelected,
+			isEdgeHovered,
+			isModSelected,
+			isModHovered,
+		);
+
 		// FullCurve - single Shape for entire edge
 		return (
 			<Shape
@@ -102,14 +110,8 @@ const EdgeWithCurves = ({
 					drawEdgeWithModifications(ctx, point, nextPoint, [fullCurveMod], false);
 					ctx.fillStrokeShape(shape);
 				}}
-				stroke={getStrokeColor(isModSelected, isModHovered)}
-				strokeWidth={
-					isModSelected
-						? EDGE_STROKE_WIDTH_SELECTED
-						: isModHovered
-							? EDGE_STROKE_WIDTH_HOVERED
-							: EDGE_STROKE_WIDTH
-				}
+				stroke={strokeColor}
+				strokeWidth={strokeWidth}
 				hitStrokeWidth={EDGE_HIT_STROKE_WIDTH}
 				listening
 				onClick={(e) =>
@@ -194,6 +196,50 @@ const EdgeWithCurves = ({
 					const isModHovered = hoveredModificationId === modId;
 					const isModSelected = selectedModificationId === modId;
 
+					const { strokeColor, strokeWidth } = getEdgeStrokeStyle(
+						isEdgeSelected,
+						isEdgeHovered,
+						isModSelected,
+						isModHovered,
+					);
+
+					// Check if this is a straight bump or a curve
+					const isStraightBump = mod.type === EdgeModificationType.BumpIn || 
+											mod.type === EdgeModificationType.BumpOut;
+
+					if (isStraightBump) {
+						// Render straight bumps as polylines using their calculated points
+						const modAllPoints: number[] = [];
+						if (mod.points && mod.points.length > 0) {
+							for (const p of mod.points) {
+								modAllPoints.push(p.xPos, p.yPos);
+							}
+						}
+
+						return (
+							<Line
+								key={`mod-${modId}`}
+								points={modAllPoints}
+								stroke={strokeColor}
+								strokeWidth={strokeWidth}
+								hitStrokeWidth={EDGE_HIT_STROKE_WIDTH}
+								listening
+								onClick={(e) => {
+									if (modId) {
+										handleModificationClick(edgeIndex, modId, e);
+									}
+								}}
+								onMouseEnter={() => {
+									if (modId) {
+										handleModificationMouseEnter(modId);
+									}
+								}}
+								onMouseLeave={handleModificationMouseLeave}
+							/>
+						);
+					}
+
+					// Render curves using Shape with drawEdgeWithModifications
 					return (
 						<Shape
 							key={`mod-${modId}`}
@@ -208,14 +254,8 @@ const EdgeWithCurves = ({
 								);
 								ctx.fillStrokeShape(shape);
 							}}
-							stroke={getStrokeColor(isModSelected, isModHovered)}
-							strokeWidth={
-								isModSelected
-									? EDGE_STROKE_WIDTH_SELECTED
-									: isModHovered
-										? EDGE_STROKE_WIDTH_HOVERED
-										: EDGE_STROKE_WIDTH
-							}
+							stroke={strokeColor}
+							strokeWidth={strokeWidth}
 							hitStrokeWidth={EDGE_HIT_STROKE_WIDTH}
 							listening
 							onClick={(e) => {

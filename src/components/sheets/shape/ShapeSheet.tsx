@@ -27,7 +27,8 @@ const ShapeSheet: FC = () => {
 			setView("generalCurves");
 		}
 	}, [selectedEdge?.edgeIndex]);
-
+	
+	// Reset to general view when corner changes
 	useEffect(() => {
 		if (selectedCorner?.pointIndex) {
 			setView("generalCorners");

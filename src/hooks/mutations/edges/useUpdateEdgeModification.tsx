@@ -3,7 +3,12 @@ import { useShape } from "~/context/ShapeContext";
 import { generateEdgePoints } from "~/components/shape/edgeUtils";
 import type { Point } from "~/types/drawing";
 
-export const useUpdateEdgeModification = (designId: string | undefined) => {
+export const useUpdateEdgeModification = (
+    designId: string | undefined,
+    options?: {
+        onSuccess?: () => void;
+    }
+) => {
     const utils = api.useUtils();
     const { selectedShape, setSelectedShape, selectedEdge, setSelectedEdge } = useShape();
     const updateMutation = api.design.updateShapeEdge.useMutation();
@@ -446,6 +451,11 @@ export const useUpdateEdgeModification = (designId: string | undefined) => {
                     };
                     setSelectedShape(updatedShape);
                 }
+            }
+            
+            // Call the custom onSuccess callback after state is updated
+            if (options?.onSuccess) {
+                options.onSuccess();
             }
         },
     });

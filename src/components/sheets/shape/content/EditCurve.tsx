@@ -47,14 +47,12 @@ const EditCurve: FC<EditCurveProps> = ({ setView }) => {
 		const edge = shape.edges.find((e) => e.id === selectedEdge.edgeId);
 		if (!edge) return undefined;
 
-		// Get available positions (including current position)
-		const available = getAvailablePositions(edge.edgeModifications);
-
-		// Always include the current position (user is editing existing modification)
-		const currentPosition = selectedEdge.edgeModification?.position;
-		if (currentPosition && !available.includes(currentPosition)) {
-			return [...available, currentPosition];
-		}
+		// Get available positions, excluding the current modification being edited
+		// This way the current position is automatically included in available positions
+		const available = getAvailablePositions(
+			edge.edgeModifications,
+			selectedEdge.edgeModification?.id
+		);
 
 		return available;
 	}, [selectedEdge, designData]);

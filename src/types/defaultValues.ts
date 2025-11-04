@@ -7,6 +7,7 @@ import {
 	EdgeModificationType,
 	EdgeShapePosition,
 } from "@prisma/client";
+import { calculateAvailablePosition } from "~/components/shape/edge/edgeValidation";
 
 type EdgeDefaults = {
 	depth: number;
@@ -24,6 +25,11 @@ type CornerDefaults = {
 	modificationLength: number;
 	modificationDepth: number;
 };
+
+// Minimal edge interface for default value calculation
+interface EdgeForDefaults {
+	edgeModifications?: Array<{ type: EdgeModificationType; position: EdgeShapePosition }>;
+}
 
 export const defaultEdgeBumpOutValues = {
 	depth: 3,
@@ -116,21 +122,41 @@ export const defaultSinkCutoutValues = {
 
 export const getDefaultValueForEdgeModification = (
 	type: EdgeModificationType,
+	edge?: EdgeForDefaults,
 ): EdgeDefaults => {
+	let baseDefaults: EdgeDefaults;
+	
 	switch (type) {
 		case EdgeModificationType.BumpOut:
-			return defaultEdgeBumpOutValues;
+			baseDefaults = defaultEdgeBumpOutValues;
+			break;
 		case EdgeModificationType.BumpIn:
-			return defaultEdgeBumpInValues;
+			baseDefaults = defaultEdgeBumpInValues;
+			break;
 		case EdgeModificationType.BumpInCurve:
-			return defaultEdgeBumpInCurveValues;
+			baseDefaults = defaultEdgeBumpInCurveValues;
+			break;
 		case EdgeModificationType.BumpOutCurve:
-			return defaultEdgeBumpOutCurveValues;
+			baseDefaults = defaultEdgeBumpOutCurveValues;
+			break;
 		case EdgeModificationType.FullCurve:
-			return defaultEdgeFullCurveValues;
+			baseDefaults = defaultEdgeFullCurveValues;
+			break;
 		default:
-			return defaultEdgeBumpOutValues;
+			baseDefaults = defaultEdgeBumpOutValues;
 	}
+
+	// If edge is provided, calculate available position based on existing modifications
+	// This ensures each new modification gets an unoccupied position
+	if (edge) {
+		const availablePosition = calculateAvailablePosition(edge, EdgeShapePosition.Center);
+		return {
+			...baseDefaults,
+			position: availablePosition,
+		};
+	}
+
+	return baseDefaults;
 };
 
 export const getDefaultValueForCornerModification = (
