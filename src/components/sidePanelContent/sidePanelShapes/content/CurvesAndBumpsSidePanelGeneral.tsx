@@ -1,6 +1,10 @@
 import type { FC, JSX } from "react";
 import { useRouter } from "next/router";
-import { CornerType, EdgeModificationType, EdgeShapePosition } from "@prisma/client";
+import {
+	CornerType,
+	EdgeModificationType,
+	EdgeShapePosition,
+} from "@prisma/client";
 import { useUpdateEdgeModification } from "~/hooks/mutations/edges/useUpdateEdgeModification";
 import { useShape } from "~/components/header/context/ShapeContext";
 import { SheetHeader, SheetTitle } from "~/components/ui/sheet";
@@ -17,6 +21,7 @@ import CurvesNoneIcon from "~/components/icons/CurvesNoneIcon";
 import { getDefaultValueForEdgeModification } from "~/types/defaultValues";
 import { generateEdgePoints } from "~/components/shape/edgeUtils";
 import { EdgeModificationList } from "~/types/drawing";
+import { canAddModification } from "~/components/shape/edge/edgeValidation";
 
 interface CurvesAndBumpsSidePanelGeneralProps {
 	setView: (value: ShapeSidePanelView) => void;
@@ -33,13 +38,64 @@ const curveAndBumpIcons: Record<EdgeModificationType, JSX.Element> = {
 const CurvesAndBumpsSidePanelGeneral: FC<
 	CurvesAndBumpsSidePanelGeneralProps
 > = ({ setView }) => {
-	const { selectedEdge, selectedShape, addToMostRecentlyUsedEdgeModification, mostRecentlyUsedEdgeModification } = useShape();
+	const {
+		selectedEdge,
+		selectedShape,
+		addToMostRecentlyUsedEdgeModification,
+		mostRecentlyUsedEdgeModification,
+	} = useShape();
 	const router = useRouter();
 	const idParam = router.query.id;
 	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
+
+	// Mutations handle optimistic updates in onMutate
 	const updateEdge = useUpdateEdgeModification(designId);
 	const createEdge = useCreateEdgeModification(designId);
 	const deleteEdgeModification = useDeleteEdgeModification(designId);
+
+	// Check if edge is at maximum capacity (2 modifications)
+	const isEdgeFull =
+		selectedEdge && selectedShape
+			? (() => {
+					const edge = selectedShape.edges.find(
+						(e) =>
+							e.point1Id === selectedEdge.edgePoint1Id &&
+							e.point2Id === selectedEdge.edgePoint2Id,
+					);
+					// If we're trying to add a new modification (id is null) and edge already has 2, it's full
+					return (
+						selectedEdge.edgeModification?.id === null &&
+						edge &&
+						edge.edgeModifications.length >= 2
+					);
+				})()
+			: false;
+
+	// Check if Full Curve should be enabled
+	// Enable only if: 1) first modification on edge, OR 2) editing existing modification with no other modifications
+	const isFullCurveEnabled =
+		selectedEdge && selectedShape
+			? (() => {
+					const edge = selectedShape.edges.find(
+						(e) =>
+							e.point1Id === selectedEdge.edgePoint1Id &&
+							e.point2Id === selectedEdge.edgePoint2Id,
+					);
+
+					if (!edge) return true;
+
+					const isNewModification = selectedEdge.edgeModification?.id === null;
+					const modificationCount = edge.edgeModifications.length;
+
+					// Enable if it's a new modification and there are no existing modifications
+					if (isNewModification && modificationCount === 0) return true;
+
+					// Enable if we're editing an existing modification and there are no other modifications
+					if (!isNewModification && modificationCount === 1) return true;
+
+					return false;
+				})()
+			: false;
 
 	const handleSelectModification = (type: EdgeModificationType) => {
 		if (!selectedEdge) return;
@@ -49,55 +105,83 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 		if (selectedEdge.edgeModification.type === type) {
 			setView("editCurves");
 			return;
-		};
-
-		const defaultValues = getDefaultValueForEdgeModification(type);
-
-		const point1 = selectedShape.points.find((p) => p.id === selectedEdge.edgePoint1Id);
-		const point2 = selectedShape.points.find((p) => p.id === selectedEdge.edgePoint2Id);
-		if (!point1 || !point2) return;
-		const points = generateEdgePoints(
-			point1,
-			point2,
-			[{
-				type: type,
-				...defaultValues,
-			}],
-		);
-		console.log(points);
-
-		if (!selectedEdge.edgeId) { // If no edge id, create a new edge
-			createEdge.mutate({
-				shapeId: selectedShape.id,
-				edgePoint1Id: selectedEdge.edgePoint1Id,
-				edgePoint2Id: selectedEdge.edgePoint2Id,
-				edgeModification: {
-					edgeType: type,
-					...defaultValues,
-					points,
-				},
-			});
-
-			addToMostRecentlyUsedEdgeModification(type);
-		} else { // If edge id, update the existing edge
-			updateEdge.mutate({
-				edgeId: selectedEdge.edgeId,
-				shapeId: selectedShape.id,
-				edgeModificationId: selectedEdge.edgeModification.id,
-				// When modification is changed, we want to reset to default values
-				edgeModification: {
-					edgeType: type,
-					...defaultValues,
-					points,
-				}
-			});
-
-			addToMostRecentlyUsedEdgeModification(type);
 		}
 
-		setView("editCurves");
-	};
+		// Find the edge to pass to default value calculation
+		const edge = selectedShape.edges.find(
+			(e) =>
+				e.point1Id === selectedEdge.edgePoint1Id &&
+				e.point2Id === selectedEdge.edgePoint2Id,
+		);
 
+		// Calculate default values with smart position selection based on existing modifications
+		const defaultValues = getDefaultValueForEdgeModification(type, edge);
+
+		const point1 = selectedShape.points.find(
+			(p) => p.id === selectedEdge.edgePoint1Id,
+		);
+		const point2 = selectedShape.points.find(
+			(p) => p.id === selectedEdge.edgePoint2Id,
+		);
+		if (!point1 || !point2) return;
+		const points = generateEdgePoints(point1, point2, [
+			{
+				type: type,
+				...defaultValues,
+			},
+		]);
+
+	if (!selectedEdge.edgeId) {
+		// If no edge id, create a new edge
+		// Validate that we can add a new modification (check the 2-modification limit)
+		const validation = canAddModification(edge, defaultValues.position);
+		if (!validation.allowed) {
+			console.warn(`Cannot add modification: ${validation.reason}`);
+			return; // UI will show the warning message
+		}
+
+		createEdge.mutate({
+			shapeId: selectedShape.id,
+			edgePoint1Id: selectedEdge.edgePoint1Id,
+			edgePoint2Id: selectedEdge.edgePoint2Id,
+			edgeModification: {
+				edgeType: type,
+				...defaultValues,
+				points,
+			},
+		});
+
+		addToMostRecentlyUsedEdgeModification(type);
+	} else {
+		// If edge id, update the existing edge
+		// When updating an existing modification, we're changing the type
+		// If this is a new modification (id is null), validate
+		if (selectedEdge.edgeModification.id === null) {
+			const validation = canAddModification(edge, defaultValues.position);
+			if (!validation.allowed) {
+				console.warn(`Cannot add modification: ${validation.reason}`);
+				return; // UI will show the warning message
+			}
+		}
+
+		updateEdge.mutate({
+			edgeId: selectedEdge.edgeId,
+			shapeId: selectedShape.id,
+			edgeModificationId: selectedEdge.edgeModification.id,
+			// When modification is changed, we want to reset to default values
+			edgeModification: {
+				edgeType: type,
+				...defaultValues,
+				points,
+			},
+		});
+
+		addToMostRecentlyUsedEdgeModification(type);
+	}
+
+	// Defer view change to next tick to allow optimistic state updates to propagate
+	setTimeout(() => setView("editCurves"), 0);
+};
 
 	const handleDeleteEdgeModification = () => {
 		if (!selectedEdge?.edgeModification?.id) return;
@@ -121,16 +205,31 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 				</div>
 			) : (
 				<>
+					{isEdgeFull && (
+						<div className="mx-4 mt-4 rounded-md border border-amber-300 bg-amber-50 p-3">
+							<p className="font-medium text-amber-800 text-sm">
+								Maximum modifications reached
+							</p>
+							<p className="mt-1 text-amber-700 text-xs">
+								This edge already has 2 modifications. Remove an existing
+								modification to add a new one.
+							</p>
+						</div>
+					)}
 
-					{mostRecentlyUsedEdgeModification.length > 0 && (
+					{!isEdgeFull && mostRecentlyUsedEdgeModification.length > 0 && (
 						<>
 							<p className=" px-4 pt-4 font-semibold text-text-neutral-secondary text-xs">
 								USED
 							</p>
 							<div className="grid grid-cols-2 gap-4 p-4">
 								{mostRecentlyUsedEdgeModification.map((modification) => {
-									const label = EdgeModificationList.find(item => item.id === modification)?.label ?? '';
-									const icon = curveAndBumpIcons[modification as EdgeModificationType];
+									const label =
+										EdgeModificationList.find(
+											(item) => item.id === modification,
+										)?.label ?? "";
+									const icon =
+										curveAndBumpIcons[modification as EdgeModificationType];
 
 									return (
 										<ShapeCard
@@ -146,58 +245,138 @@ const CurvesAndBumpsSidePanelGeneral: FC<
 							</div>
 						</>
 					)}
-					<p className=" px-4 pt-4 font-semibold text-text-neutral-secondary text-xs">
-						GENERAL
-					</p>
-					<div className="grid grid-cols-2 gap-4 p-4">
-						<ShapeCard
-							id='BumpOut'
-							name={"Bump-Out"}
-							icon={<BumpOutIcon isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpOut} />}
-							onClick={() => handleSelectModification(EdgeModificationType.BumpOut)}
-							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpOut}
-						/>
+					{!isEdgeFull && (
+						<>
+							<p className=" px-4 pt-4 font-semibold text-text-neutral-secondary text-xs">
+								GENERAL
+							</p>
+							<div className="grid grid-cols-2 gap-4 p-4">
+								<ShapeCard
+									id="BumpOut"
+									name={"Bump-Out"}
+									icon={
+										<BumpOutIcon
+											isActive={
+												selectedEdge?.edgeModification?.type ===
+												EdgeModificationType.BumpOut
+											}
+										/>
+									}
+									onClick={() =>
+										handleSelectModification(EdgeModificationType.BumpOut)
+									}
+									isActive={
+										selectedEdge?.edgeModification?.type ===
+										EdgeModificationType.BumpOut
+									}
+								/>
 
-						<ShapeCard
-							id="BumpIn"
-							name={"Bump-In"}
-							icon={<BumpInIcon isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpIn} />}
-							onClick={() => handleSelectModification(EdgeModificationType.BumpIn)}
-							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpIn}
-						/>
+								<ShapeCard
+									id="BumpIn"
+									name={"Bump-In"}
+									icon={
+										<BumpInIcon
+											isActive={
+												selectedEdge?.edgeModification?.type ===
+												EdgeModificationType.BumpIn
+											}
+										/>
+									}
+									onClick={() =>
+										handleSelectModification(EdgeModificationType.BumpIn)
+									}
+									isActive={
+										selectedEdge?.edgeModification?.type ===
+										EdgeModificationType.BumpIn
+									}
+								/>
 
-						<ShapeCard
-							id='BumpOutCurve'
-							name={"Bump-Out Curve"}
-							icon={<BumpOutCurveIcon isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpOutCurve} />}
-							onClick={() => handleSelectModification(EdgeModificationType.BumpOutCurve)}
-							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpOutCurve}
-						/>
+								<ShapeCard
+									id="BumpOutCurve"
+									name={"Bump-Out Curve"}
+									icon={
+										<BumpOutCurveIcon
+											isActive={
+												selectedEdge?.edgeModification?.type ===
+												EdgeModificationType.BumpOutCurve
+											}
+										/>
+									}
+									onClick={() =>
+										handleSelectModification(EdgeModificationType.BumpOutCurve)
+									}
+									isActive={
+										selectedEdge?.edgeModification?.type ===
+										EdgeModificationType.BumpOutCurve
+									}
+								/>
 
-						<ShapeCard
-							id='BumpInCurve'
-							name={"Bump-In Curve"}
-							icon={<BumpInCurveIcon isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpInCurve} />}
-							onClick={() => handleSelectModification(EdgeModificationType.BumpInCurve)}
-							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.BumpInCurve}
-						/>
+								<ShapeCard
+									id="BumpInCurve"
+									name={"Bump-In Curve"}
+									icon={
+										<BumpInCurveIcon
+											isActive={
+												selectedEdge?.edgeModification?.type ===
+												EdgeModificationType.BumpInCurve
+											}
+										/>
+									}
+									onClick={() =>
+										handleSelectModification(EdgeModificationType.BumpInCurve)
+									}
+									isActive={
+										selectedEdge?.edgeModification?.type ===
+										EdgeModificationType.BumpInCurve
+									}
+								/>
 
-						<ShapeCard
-							id='FullCurve'
-							name={"Full Curve"}
-							icon={<FullCurveIcon isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.FullCurve} />}
-							onClick={() => handleSelectModification(EdgeModificationType.FullCurve)}
-							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.FullCurve}
-						/>
+								<ShapeCard
+									id="FullCurve"
+									name={"Full Curve"}
+									icon={
+										<FullCurveIcon
+											isActive={
+												selectedEdge?.edgeModification?.type ===
+												EdgeModificationType.FullCurve
+											}
+										/>
+									}
+									onClick={
+										isFullCurveEnabled
+											? () =>
+													handleSelectModification(
+														EdgeModificationType.FullCurve,
+													)
+											: undefined
+									}
+									isActive={
+										selectedEdge?.edgeModification?.type ===
+										EdgeModificationType.FullCurve
+									}
+									disabled={!isFullCurveEnabled}
+								/>
 
-						<ShapeCard
-							id='None'
-							name={"None"}
-							icon={<CurvesNoneIcon isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.None} />}
-							onClick={handleDeleteEdgeModification}
-							isActive={selectedEdge?.edgeModification?.type === EdgeModificationType.None}
-						/>
-					</div>
+								<ShapeCard
+									id="None"
+									name={"None"}
+									icon={
+										<CurvesNoneIcon
+											isActive={
+												selectedEdge?.edgeModification?.type ===
+												EdgeModificationType.None
+											}
+										/>
+									}
+									onClick={handleDeleteEdgeModification}
+									isActive={
+										selectedEdge?.edgeModification?.type ===
+										EdgeModificationType.None
+									}
+								/>
+							</div>
+						</>
+					)}
 				</>
 			)}
 		</>

@@ -29,7 +29,7 @@ const PositioningInput: FC<PositioningInputProps> = ({
 					color={position === EdgeShapePosition.Left ? "primary" : "neutral"}
 					className="h-[36px] flex-1 justify-center rounded-r-none border-r-0"
 					onClick={() => handlePositionChange(EdgeShapePosition.Left)}
-					// disabled={isPositionAvailable(EdgeShapePosition.Left)}
+					disabled={!isPositionAvailable(EdgeShapePosition.Left)}
 					title={!isPositionAvailable(EdgeShapePosition.Left) ? "Position already occupied" : undefined}
 				>
 					Left
@@ -38,8 +38,8 @@ const PositioningInput: FC<PositioningInputProps> = ({
 					color={position === EdgeShapePosition.Center ? "primary" : "neutral"}
 					className="h-[36px] flex-1 justify-center rounded-none"
 					onClick={() => handlePositionChange(EdgeShapePosition.Center)}
-					// disabled={isPositionAvailable(EdgeShapePosition.Center)}
-					title={isPositionAvailable(EdgeShapePosition.Center) ? "Position already occupied" : undefined}
+					disabled={!isPositionAvailable(EdgeShapePosition.Center)}
+					title={!isPositionAvailable(EdgeShapePosition.Center) ? "Position already occupied" : undefined}
 				>
 					Center
 				</Button>
@@ -47,8 +47,8 @@ const PositioningInput: FC<PositioningInputProps> = ({
 					color={position === EdgeShapePosition.Right ? "primary" : "neutral"}
 					className="h-[36px] flex-1 justify-center rounded-l-none border-l-0"
 					onClick={() => handlePositionChange(EdgeShapePosition.Right)}
-					// disabled={isPositionAvailable(EdgeShapePosition.Right)}
-					title={isPositionAvailable(EdgeShapePosition.Right) ? "Position already occupied" : undefined}
+					disabled={!isPositionAvailable(EdgeShapePosition.Right)}
+					title={!isPositionAvailable(EdgeShapePosition.Right) ? "Position already occupied" : undefined}
 				>
 					Right
 				</Button>

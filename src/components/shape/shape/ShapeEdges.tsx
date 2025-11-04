@@ -61,8 +61,10 @@ const ShapeEdges = ({
 				const nextPoint = shape.points[nextIndex];
 				if (!nextPoint) return null;
 
-				const isEdgeHovered = hoveredEdgeIndex === index;
-				const isEdgeSelected = selectedEdgeIndex === index;
+				// Edge is only hovered when hovering the edge as a whole, not a specific modification
+				const isEdgeHovered = hoveredEdgeIndex === index && !hoveredModificationId;
+				// Edge is only selected when selecting the edge as a whole, not a specific modification
+				const isEdgeSelected = selectedEdgeIndex === index && !selectedModificationId;
 
 				const edge = shape.edges.find(
 					(edge) => edge.point1Id === point.id && edge.point2Id === nextPoint.id,

@@ -7,6 +7,7 @@ import {
 } from "~/components/header/header/drawing-types";
 import { useDrawing } from "~/components/header/context/DrawingContext";
 import { useShape } from "~/components/header/context/ShapeContext";
+import { calculateAvailablePosition } from "../edge/edgeValidation";
 
 interface ShapeInteractionHandlers {
 	onDragStart?: () => void;
@@ -209,6 +210,7 @@ export const useShapeInteractions = (
 	/**
 	 * Handle click on empty edge segment (for adding new modification)
 	 * Creates a new modification at the clicked position
+	 * Opens side panel even if edge is full (will show warning message in UI)
 	 */
 	const handleEmptyEdgeClick = useCallback((
 		edgeIndex: number,
@@ -222,11 +224,12 @@ export const useShapeInteractions = (
 		const edge = shape.edges.find((edge) => edge.point1Id === point1Id && edge.point2Id === point2Id);
 
 		// Import validation here to avoid circular dependency
-		const { calculateAvailablePosition } = require("../Edge/edgeValidation");
+		
 		const validPosition = calculateAvailablePosition(edge, clickPosition);
 
 		setCursorType(CursorTypes.Curves);
 
+		// Always open side panel - it will show a message if edge is full
 		setSelectedEdge({
 			shapeId: shape.id,
 			edgeIndex,

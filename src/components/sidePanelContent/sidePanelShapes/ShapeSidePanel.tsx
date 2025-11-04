@@ -21,13 +21,14 @@ const ShapeSidePanel: FC = () => {
 		cursorType === CursorTypes.Curves ? "generalCurves" : "generalCorners",
 	);
 
-	// We need this useEffect to ensure that the view is updated when selected edge is changed
+	// Reset to general view when edge changes or when switching between modifications
 	useEffect(() => {
-		if (selectedEdge?.edgeIndex) {
+		if (selectedEdge) {
 			setView("generalCurves");
 		}
-	}, [selectedEdge?.edgeIndex]);
+	}, [selectedEdge?.edgeIndex, selectedEdge?.edgeModification?.id]);
 
+	// Reset to general view when corner changes
 	useEffect(() => {
 		if (selectedCorner?.pointIndex) {
 			setView("generalCorners");

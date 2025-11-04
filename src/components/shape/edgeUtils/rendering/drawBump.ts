@@ -5,6 +5,7 @@ import { calculateBumpCurveControlPoint } from "../calculations/curveCalculation
 
 /**
  * Draw straight bump (BumpIn or BumpOut) using straight lines
+ * Uses precalculated points if available, otherwise calculates on the fly
  * @param inward - true for bump-in, false for bump-out
  */
 export const drawBumpStraight = (
@@ -19,6 +20,19 @@ export const drawBumpStraight = (
 	perpY: number,
 	inward: boolean,
 ): void => {
+	// Check if modification has precalculated points (from database)
+	// Type assertion needed because EdgeModificationForCalculation doesn't include points
+	const modWithPoints = mod as EdgeModificationForCalculation & { points?: Point[] };
+	
+	if (modWithPoints.points && modWithPoints.points.length > 0) {
+		// Use precalculated points for consistency with shape mode
+		for (const point of modWithPoints.points) {
+			ctx.lineTo(point.xPos, point.yPos);
+		}
+		return;
+	}
+
+	// Fallback: Calculate points on the fly (for backward compatibility)
 	const points = calculateBumpPoints(
 		mod,
 		startPoint,

@@ -180,18 +180,25 @@ const EdgeStraight = ({
 					const isModHovered = hoveredModificationId === modId;
 					const isModSelected = selectedModificationId === modId;
 
+					// Apply edge-level styling if edge is selected/hovered (even if this specific mod isn't)
+					const shouldUseEdgeStyle = !isModSelected && (isEdgeSelected || isEdgeHovered);
+					const strokeColor = shouldUseEdgeStyle 
+						? getStrokeColor(isEdgeSelected, isEdgeHovered)
+						: getStrokeColor(isModSelected, isModHovered);
+					const strokeWidth = shouldUseEdgeStyle
+						? (isEdgeSelected ? EDGE_STROKE_WIDTH_SELECTED : EDGE_STROKE_WIDTH_HOVERED)
+						: (isModSelected
+							? EDGE_STROKE_WIDTH_SELECTED
+							: isModHovered
+								? EDGE_STROKE_WIDTH_HOVERED
+								: EDGE_STROKE_WIDTH);
+
 					return (
 						<Line
 							key={`mod-${modId}`}
 							points={segment.points}
-							stroke={getStrokeColor(isModSelected, isModHovered)}
-							strokeWidth={
-								isModSelected
-									? EDGE_STROKE_WIDTH_SELECTED
-									: isModHovered
-										? EDGE_STROKE_WIDTH_HOVERED
-										: EDGE_STROKE_WIDTH
-							}
+							stroke={strokeColor}
+							strokeWidth={strokeWidth}
 							hitStrokeWidth={EDGE_HIT_STROKE_WIDTH}
 							listening
 							onClick={(e) =>
