@@ -1,6 +1,6 @@
 import { api } from "~/utils/api";
 import type { CanvasShape, MaterialExtended } from "~/types/drawing";
-import { useShape } from "~/components/header/context/ShapeContext";
+import { useShape } from "~/context/ShapeContext";
 
 /**
  * Hook for removing material from shapes with optimistic updates.

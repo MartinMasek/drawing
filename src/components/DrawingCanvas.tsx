@@ -1,4 +1,4 @@
-import { useRouter } from "next/router";
+
 import { useEffect, useState, useMemo } from "react";
 import { Layer, Stage, Text } from "react-konva";
 import { useShapeDrawing } from "~/hooks/useShapeDrawing";
@@ -18,13 +18,14 @@ import CursorPanel from "./CursorPanel";
 import DebugSidePanel from "./DebugSidePanel";
 import DrawingPreview from "./shape/shape/drawingPreview/DrawingPreview";
 import Shape from "./shape/shape/Shape";
-import ShapeContextMenu from "./shape/shapeContextMenu/ShapeContextMenu";
+import ShapeContextMenu from "./shape/contextMenu/ShapeContextMenu";
 import SidePanel from "./SidePanel";
-import { useDrawing } from "./header/context/DrawingContext";
-import { useShape } from "./header/context/ShapeContext";
-import CanvasTextInput from "./canvasTextInput/CanvasTextInput";
+import { useDrawing } from "~/context/DrawingContext";
+import { useShape } from "../context/ShapeContext";
+import CanvasTextInput from "./text/CanvasTextInput";
 import type { KonvaEventObject } from "konva/lib/Node";
-import { DrawingTab } from "./header/header/drawing-types";
+import { DrawingTab } from "~/types/drawing";
+import CutoutContextMenu from "./shape/contextMenu/CutoutContextMenu";
 
 interface DrawingCanvasProps {
 	shapes?: ReadonlyArray<CanvasShape>;
@@ -32,20 +33,25 @@ interface DrawingCanvasProps {
 }
 
 const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
-	const router = useRouter();
-	const idParam = router.query.id;
-	const designId = Array.isArray(idParam) ? idParam[0] : idParam;
+	const { designId } = useDrawing();
+	const {
+		selectedShape,
+		setSelectedShape,
+		setSelectedEdge,
+		setSelectedCorner,
+		hoveredId,
+		setHoveredId,
+		draggingId,
+		setDraggingId,
+		contextMenu,
+		setContextMenu,
+		cutoutContextMenu,
+		setCutoutContextMenu,
+		selectedText,
+		setSelectedText,
+	} = useShape();
 
-	const { selectedShape, setSelectedShape, setSelectedEdge, setSelectedCorner } =
-		useShape();
-	const [hoveredId, setHoveredId] = useState<string | null>(null);
-	const [draggingId, setDraggingId] = useState<string | null>(null);
 	const [isDebugMode, setIsDebugMode] = useState(false);
-	const [contextMenu, setContextMenu] = useState<{
-		shapeId: string;
-		x: number;
-		y: number;
-	} | null>(null);
 
 	const {
 		containerSize,
@@ -61,8 +67,6 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 
 	// Text handling
 	const {
-		editingText,
-		setEditingText,
 		newTextPos,
 		setNewTextPos,
 		currentTextPos,
@@ -70,7 +74,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		handleDelete,
 		handleEscape,
 		handleTextDragEnd,
-	} = useText(designId ?? "");
+	} = useText({ designId, selectedText, setSelectedText });
 
 	// Calculate total area when shapes are loaded
 	useEffect(() => {
@@ -134,6 +138,14 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 				x: e.evt.clientX,
 				y: e.evt.clientY,
 			});
+
+			if (activeTab === DrawingTab.Cutouts) {
+				setCutoutContextMenu({
+					shapeId: shape.id,
+					x: e.evt.clientX,
+					y: e.evt.clientY,
+				});
+			}
 		}
 	};
 
@@ -259,6 +271,10 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		setContextMenu(null);
 	};
 
+	const handleCloseCutoutContextMenu = () => {
+		setCutoutContextMenu(null);
+	};
+
 	const handleStageContextMenu = (e: KonvaEventObject<PointerEvent>) => {
 		// Prevent default browser context menu when right-clicking on empty canvas
 		if (e.target === e.target.getStage()) {
@@ -282,8 +298,8 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		isPanning,
 		isDragging: !!draggingId,
 		isDrawing,
-		editingText,
-		setEditingText,
+		selectedText,
+		setSelectedText,
 		newTextPos,
 		setNewTextPos,
 		handleDrawStart,
@@ -293,6 +309,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 		selectedShape,
 		drawingTab: activeTab,
 		closeContextMenu: handleCloseContextMenu,
+		closeCutoutContextMenu: handleCloseCutoutContextMenu,
 	});
 
 	// Log draftBounds whenever it changes
@@ -440,7 +457,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 
 					{/* Render saved texts with optimistic updates */}
 					{texts.map((t) =>
-						editingText && editingText.id === t.id ? null : ( // hide the one being edited
+						selectedText && selectedText.id === t.id ? null : ( // hide the one being edited
 							<Text
 								key={t.id}
 								x={t.xPos}
@@ -451,7 +468,7 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 								fill={t.textColor}
 								onMouseEnter={() => setHoveredId(t.id)}
 								onMouseLeave={() => setHoveredId(null)}
-								onClick={() => setEditingText(t)}
+								onClick={() => setSelectedText(t)}
 								draggable
 								onDragEnd={(e) => handleTextDragEnd(e, t)}
 							/>
@@ -461,11 +478,11 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 			</Stage>
 
 			{/* Add text input */}
-			{(newTextPos !== null || editingText !== null) && (
+			{(newTextPos !== null || selectedText !== null) && (
 				<CanvasTextInput
-					key={editingText?.id || `${currentTextPos.x}-${currentTextPos.y}`}
+					key={selectedText?.id || `${currentTextPos.x}-${currentTextPos.y}`}
 					position={currentTextPos}
-					initialText={editingText}
+					initialText={selectedText}
 					onSave={handleSaveTextWrapper}
 					onDelete={handleDeleteTextWrapper}
 					onEscape={handleEscapeTextWrapper}
@@ -489,6 +506,24 @@ const DrawingCanvas = ({ shapes = [], texts = [] }: DrawingCanvasProps) => {
 							selectedShapeId={selectedShape?.id ?? null}
 							onShapeDeleted={handleShapeDeleted}
 							onClose={handleCloseContextMenu}
+						/>
+					);
+				})()}
+
+			{cutoutContextMenu &&
+				designId &&
+				(() => {
+					const shape = shapes.find((s) => s.id === cutoutContextMenu.shapeId);
+
+					if (!shape || activeTab !== DrawingTab.Cutouts) return null;
+
+					return (
+						<CutoutContextMenu
+							x={cutoutContextMenu.x}
+							y={cutoutContextMenu.y}
+							shape={shape}
+							designId={designId}
+							onClose={handleCloseCutoutContextMenu}
 						/>
 					);
 				})()}

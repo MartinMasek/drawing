@@ -4,9 +4,9 @@ import { type FC, useState } from "react";
 import type { CardinalDirection, Coordinate, EdgeModification } from "~/types/drawing";
 import type { PreviewShape } from "~/hooks/useShapeDrawing";
 
-import { Icon } from "./header/header/Icon";
+import { Icon } from "~/components/Icon";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
-import { useDrawing } from "./header/context/DrawingContext";
+import { useDrawing } from "~/context/DrawingContext";
 import { cn } from "~/lib/utils";
 
 interface DebugSidePanelProps {
@@ -28,7 +28,7 @@ const DebugSidePanel: FC<DebugSidePanelProps> = ({
 	allModifications,
 	shapePointsCount = 0,
 }) => {
-		const { isOpenSideDialog} = useDrawing();
+	const { isOpenSideDialog } = useDrawing();
 
 	const [debugMode, setDebugMode] = useState(false);
 

@@ -1,5 +1,9 @@
 import {
+	CentrelinesX,
+	CentrelinesY,
 	CornerType,
+	CutoutShape,
+	CutoutSinkType,
 	EdgeModificationType,
 	EdgeShapePosition,
 } from "@prisma/client";
@@ -7,7 +11,12 @@ import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { textCreateSchema, textUpdateSchema } from "~/server/types/text-types";
-import type { CanvasShape, CanvasText, EdgeModification } from "~/types/drawing";
+import { defaultSinkCutoutValues } from "~/types/defaultValues";
+import type {
+	CanvasShape,
+	CanvasText,
+	EdgeModification,
+} from "~/types/drawing";
 import { getShapeEdgePointIndices } from "~/utils/shape-utils";
 import type { PrismaClient } from "@prisma/client";
 import { generateEdgePoints } from "~/components/shape/edgeUtils";
@@ -49,24 +58,22 @@ async function regenerateEdgePoints(
 	}
 
 	// Generate new points using shared utility
-	const modifications: EdgeModification[] = edge.edgeModifications.map((mod) => ({
-		id: mod.id,
-		type: mod.edgeType,
-		position: mod.position ?? EdgeShapePosition.Center,
-		distance: mod.distance ?? 0,
-		depth: mod.depth ?? 0,
-		width: mod.width ?? 0,
-		sideAngleLeft: mod.sideAngleLeft ?? 0,
-		sideAngleRight: mod.sideAngleRight ?? 0,
-		fullRadiusDepth: mod.fullRadiusDepth ?? 0,
-		points: mod.points ?? [],
-	}));
-
-	const newPoints = generateEdgePoints(
-		edge.point1,
-		edge.point2,
-		modifications,
+	const modifications: EdgeModification[] = edge.edgeModifications.map(
+		(mod) => ({
+			id: mod.id,
+			type: mod.edgeType,
+			position: mod.position ?? EdgeShapePosition.Center,
+			distance: mod.distance ?? 0,
+			depth: mod.depth ?? 0,
+			width: mod.width ?? 0,
+			sideAngleLeft: mod.sideAngleLeft ?? 0,
+			sideAngleRight: mod.sideAngleRight ?? 0,
+			fullRadiusDepth: mod.fullRadiusDepth ?? 0,
+			points: mod.points ?? [],
+		}),
 	);
+
+	const newPoints = generateEdgePoints(edge.point1, edge.point2, modifications);
 
 	// Delete old intermediate points
 	await db.point.deleteMany({
@@ -163,6 +170,67 @@ export const designRouter = createTRPCRouter({
 									modificationDepth: true,
 								},
 							},
+							sinkCutouts: {
+								select: {
+									id: true,
+									posX: true,
+									posY: true,
+									config: {
+										select: {
+											id: true,
+											sinkType: true,
+											shape: true,
+											length: true,
+											width: true,
+											holeCount: true,
+											centrelinesX: true,
+											centrelinesY: true,
+											product: {
+												select: {
+													id: true,
+													name: true,
+												},
+											},
+											service: {
+												select: {
+													id: true,
+													name: true,
+												},
+											},
+										},
+									},
+									template: {
+										select: {
+											id: true,
+											name: true,
+											config: {
+												select: {
+													id: true,
+													sinkType: true,
+													shape: true,
+													length: true,
+													width: true,
+													holeCount: true,
+													centrelinesX: true,
+													centrelinesY: true,
+													product: {
+														select: {
+															id: true,
+															name: true,
+														},
+													},
+													service: {
+														select: {
+															id: true,
+															name: true,
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
 						},
 					},
 					texts: {
@@ -217,6 +285,41 @@ export const designRouter = createTRPCRouter({
 					radius: c.radius ?? 0,
 					modificationLength: c.modificationLength ?? 0,
 					modificationDepth: c.modificationDepth ?? 0,
+				})),
+				sinkCutouts: s.sinkCutouts.map((c) => ({
+					id: c.id,
+					posX: c.posX,
+					posY: c.posY,
+					sinkCutoutConfig: {
+						id: c.config.id,
+						sinkType: c.config.sinkType,
+						shape: c.config.shape,
+						length: c.config.length,
+						width: c.config.width,
+						holeCount: c.config.holeCount,
+						centrelinesX: c.config.centrelinesX,
+						centrelinesY: c.config.centrelinesY,
+						product: c.config.product ?? undefined,
+						linkedService: c.config.service ?? undefined,
+					},
+					sinkCutoutTemplate: c.template
+						? {
+								id: c.template.id,
+								name: c.template.name,
+								sinkCutoutConfig: {
+									id: c.template.config.id,
+									sinkType: c.template.config.sinkType,
+									shape: c.template.config.shape,
+									length: c.template.config.length,
+									width: c.template.config.width,
+									holeCount: c.template.config.holeCount,
+									centrelinesX: c.template.config.centrelinesX,
+									centrelinesY: c.template.config.centrelinesY,
+									product: c.template.config.product ?? undefined,
+									linkedService: c.template.config.service ?? undefined,
+								},
+							}
+						: undefined,
 				})),
 			}));
 
@@ -547,51 +650,53 @@ export const designRouter = createTRPCRouter({
 			}
 
 			// Use existing edge or create new one
-			const edge = existingEdge ?? await ctx.db.edge.create({
+			const edge =
+				existingEdge ??
+				(await ctx.db.edge.create({
+					data: {
+						shapeId: input.shapeId,
+						point1Id: input.edgePoint1Id,
+						point2Id: input.edgePoint2Id,
+					},
+				}));
+			return await ctx.db.edgeModification.create({
 				data: {
-					shapeId: input.shapeId,
-					point1Id: input.edgePoint1Id,
-					point2Id: input.edgePoint2Id,
-				},
-			});
-		return await ctx.db.edgeModification.create({
-			data: {
-				edgeType: input.edgeModification.edgeType,
-				position: input.edgeModification.position,
-				distance: input.edgeModification.distance,
-				depth: input.edgeModification.depth,
-				width: input.edgeModification.width,
-				sideAngleLeft: input.edgeModification.sideAngleLeft,
-				sideAngleRight: input.edgeModification.sideAngleRight,
-				fullRadiusDepth: input.edgeModification.fullRadiusDepth,
-				edgeId: edge.id,
-				points: {
-					create: input.edgeModification.points.map((p) => ({
-						xPos: p.xPos,
-						yPos: p.yPos,
-					})),
-				},
-			},
-			select: {
-				id: true,
-				edgeType: true,
-				position: true,
-				distance: true,
-				depth: true,
-				width: true,
-				sideAngleLeft: true,
-				sideAngleRight: true,
-				fullRadiusDepth: true,
-				edgeId: true,
-				points: {
-					select: {
-						id: true,
-						xPos: true,
-						yPos: true,
+					edgeType: input.edgeModification.edgeType,
+					position: input.edgeModification.position,
+					distance: input.edgeModification.distance,
+					depth: input.edgeModification.depth,
+					width: input.edgeModification.width,
+					sideAngleLeft: input.edgeModification.sideAngleLeft,
+					sideAngleRight: input.edgeModification.sideAngleRight,
+					fullRadiusDepth: input.edgeModification.fullRadiusDepth,
+					edgeId: edge.id,
+					points: {
+						create: input.edgeModification.points.map((p) => ({
+							xPos: p.xPos,
+							yPos: p.yPos,
+						})),
 					},
 				},
-			},
-		});
+				select: {
+					id: true,
+					edgeType: true,
+					position: true,
+					distance: true,
+					depth: true,
+					width: true,
+					sideAngleLeft: true,
+					sideAngleRight: true,
+					fullRadiusDepth: true,
+					edgeId: true,
+					points: {
+						select: {
+							id: true,
+							xPos: true,
+							yPos: true,
+						},
+					},
+				},
+			});
 		}),
 	updateShapeEdge: publicProcedure
 		.input(
@@ -624,9 +729,66 @@ export const designRouter = createTRPCRouter({
 					},
 				});
 
-			const result = await ctx.db.edgeModification.update({
+				const result = await ctx.db.edgeModification.update({
 					where: { id: input.edgeModificationId },
 					data: {
+						edgeType: input.edgeModification.edgeType,
+						position: input.edgeModification.position,
+						distance: input.edgeModification.distance,
+						depth: input.edgeModification.depth,
+						width: input.edgeModification.width,
+						sideAngleLeft: input.edgeModification.sideAngleLeft,
+						sideAngleRight: input.edgeModification.sideAngleRight,
+						fullRadiusDepth: input.edgeModification.fullRadiusDepth,
+						points: {
+							create: input.edgeModification.points.map((p) => ({
+								xPos: p.xPos,
+								yPos: p.yPos,
+							})),
+						},
+					},
+					select: {
+						id: true,
+						edgeType: true,
+						position: true,
+						distance: true,
+						depth: true,
+						width: true,
+						sideAngleLeft: true,
+						sideAngleRight: true,
+						fullRadiusDepth: true,
+						edgeId: true,
+						points: {
+							select: {
+								id: true,
+								xPos: true,
+								yPos: true,
+							},
+						},
+					},
+				});
+				return result;
+			}
+
+			// Creating a new modification - check if edge already has 2 modifications
+			const edge = await ctx.db.edge.findUnique({
+				where: { id: input.edgeId },
+				select: {
+					id: true,
+					edgeModifications: {
+						select: {
+							id: true,
+						},
+					},
+				},
+			});
+
+			if (edge && edge.edgeModifications.length >= 2) {
+				throw new Error("Maximum 2 modifications per edge");
+			}
+
+			const result = await ctx.db.edgeModification.create({
+				data: {
 					edgeType: input.edgeModification.edgeType,
 					position: input.edgeModification.position,
 					distance: input.edgeModification.distance,
@@ -635,87 +797,35 @@ export const designRouter = createTRPCRouter({
 					sideAngleLeft: input.edgeModification.sideAngleLeft,
 					sideAngleRight: input.edgeModification.sideAngleRight,
 					fullRadiusDepth: input.edgeModification.fullRadiusDepth,
-						points: {
-							create: input.edgeModification.points.map((p) => ({
-								xPos: p.xPos,
-								yPos: p.yPos,
-							})),
+					edgeId: input.edgeId,
+					points: {
+						create: input.edgeModification.points.map((p) => ({
+							xPos: p.xPos,
+							yPos: p.yPos,
+						})),
+					},
+				},
+				select: {
+					id: true,
+					edgeType: true,
+					position: true,
+					distance: true,
+					depth: true,
+					width: true,
+					sideAngleLeft: true,
+					sideAngleRight: true,
+					fullRadiusDepth: true,
+					edgeId: true,
+					points: {
+						select: {
+							id: true,
+							xPos: true,
+							yPos: true,
 						},
 					},
-					select: {
-						id: true,
-						edgeType: true,
-						position: true,
-						distance: true,
-						depth: true,
-						width: true,
-						sideAngleLeft: true,
-						sideAngleRight: true,
-						fullRadiusDepth: true,
-						edgeId: true,
-						points: {
-							select: {
-								id: true,
-								xPos: true,
-								yPos: true,
-							},
-						},
-					},
+				},
 			});
 			return result;
-			}
-			
-		// Creating a new modification - check if edge already has 2 modifications
-		const edge = await ctx.db.edge.findUnique({
-			where: { id: input.edgeId },
-			include: {
-				edgeModifications: true,
-			},
-		});
-
-		if (edge && edge.edgeModifications.length >= 2) {
-			throw new Error("Maximum 2 modifications per edge");
-		}
-
-		const result = await ctx.db.edgeModification.create({
-					data: {
-				edgeType: input.edgeModification.edgeType,
-				position: input.edgeModification.position,
-				distance: input.edgeModification.distance,
-				depth: input.edgeModification.depth,
-				width: input.edgeModification.width,
-				sideAngleLeft: input.edgeModification.sideAngleLeft,
-				sideAngleRight: input.edgeModification.sideAngleRight,
-				fullRadiusDepth: input.edgeModification.fullRadiusDepth,
-						edgeId: input.edgeId,
-						points: {
-							create: input.edgeModification.points.map((p) => ({
-								xPos: p.xPos,
-								yPos: p.yPos,
-							})),
-						},
-					},
-					select: {
-						id: true,
-						edgeType: true,
-						position: true,
-						distance: true,
-						depth: true,
-						width: true,
-						sideAngleLeft: true,
-						sideAngleRight: true,
-						fullRadiusDepth: true,
-						edgeId: true,
-						points: {
-							select: {
-								id: true,
-								xPos: true,
-								yPos: true,
-							},
-						},
-					},
-			  });
-		return result;
 		}),
 
 	removeShapeEdgeModification: publicProcedure
@@ -957,6 +1067,123 @@ export const designRouter = createTRPCRouter({
 			return await ctx.db.corner.update({
 				where: { id: input.cornerId },
 				data: { clip: input.clip },
+			});
+		}),
+
+	createCutout: publicProcedure
+		.input(
+			z.object({
+				shapeId: z.string(),
+				sinkType: z.nativeEnum(CutoutSinkType),
+				shape: z.nativeEnum(CutoutShape),
+				posX: z.number(),
+				posY: z.number(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const config = await ctx.db.sinkCutoutConfig.create({
+				data: {
+					sinkType: input.sinkType,
+					shape: input.shape,
+					length: defaultSinkCutoutValues.length,
+					width: defaultSinkCutoutValues.width,
+					holeCount: defaultSinkCutoutValues.holeCount,
+				},
+			});
+
+			const cutout = await ctx.db.sinkCutout.create({
+				data: {
+					shapeId: input.shapeId,
+					posX: input.posX,
+					posY: input.posY,
+					configId: config.id,
+				},
+				select: {
+					id: true,
+					posX: true,
+					posY: true,
+					config: {
+						select: {
+							id: true,
+						},
+					},
+				},
+			});
+
+			return cutout;
+		}),
+	updateSinkType: publicProcedure
+		.input(
+			z.object({
+				cutoutConfigId: z.string(),
+				sinkType: z.nativeEnum(CutoutSinkType),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.sinkCutoutConfig.update({
+				where: { id: input.cutoutConfigId },
+				data: { sinkType: input.sinkType },
+			});
+		}),
+	updateSinkShape: publicProcedure
+		.input(
+			z.object({
+				cutoutConfigId: z.string(),
+				cutoutShape: z.nativeEnum(CutoutShape),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.sinkCutoutConfig.update({
+				where: { id: input.cutoutConfigId },
+				data: { shape: input.cutoutShape },
+			});
+		}),
+	updateSinkSize: publicProcedure
+		.input(
+			z.object({
+				cutoutConfigId: z.string(),
+				length: z.number(),
+				width: z.number(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.sinkCutoutConfig.update({
+				where: { id: input.cutoutConfigId },
+				data: { length: input.length, width: input.width },
+			});
+		}),
+	updateSinkFaucetHoles: publicProcedure
+		.input(z.object({ cutoutConfigId: z.string(), holeCount: z.number() }))
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.sinkCutoutConfig.update({
+				where: { id: input.cutoutConfigId },
+				data: { holeCount: input.holeCount },
+			});
+		}),
+
+	updateSinkCentrelines: publicProcedure
+		.input(
+			z.object({
+				cutoutConfigId: z.string(),
+				centrelinesX: z.nativeEnum(CentrelinesX),
+				centrelinesY: z.nativeEnum(CentrelinesY),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.sinkCutoutConfig.update({
+				where: { id: input.cutoutConfigId },
+				data: {
+					centrelinesX: input.centrelinesX,
+					centrelinesY: input.centrelinesY,
+				},
+			});
+		}),
+
+	removeCutout: publicProcedure
+		.input(z.object({ cutoutId: z.string() }))
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.db.sinkCutout.delete({
+				where: { id: input.cutoutId },
 			});
 		}),
 });

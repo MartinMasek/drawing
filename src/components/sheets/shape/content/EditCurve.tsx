@@ -1,0 +1,216 @@
+import { IconArrowLeft, IconCopy, IconTrash } from "@tabler/icons-react";
+import type { FC } from "react";
+import { useMemo } from "react";
+import Button from "~/components/Button";
+import { Icon } from "~/components/Icon";
+import { SheetFooter, SheetHeader, SheetTitle } from "~/components/ui/sheet";
+import type { ShapeSheetView } from "../ShapeSheet";
+import CurvesSizeInput from "../components/CurvesSizeInput";
+import CurvesAnglesInput from "../components/CurvesAnglesInput";
+import PositioningInput from "../components/PositioningInput";
+import DistanceInput from "../components/DistanceInput";
+import { useShape } from "~/context/ShapeContext";
+import { EdgeModificationList } from "~/types/drawing";
+import { EdgeModificationType, EdgeShapePosition } from "@prisma/client";
+import { useDeleteEdgeModification } from "~/hooks/mutations/edges/useDeleteEdgeModification";
+import { useUpdateEdgeModificationDebounced } from "~/hooks/mutations/edges/useUpdateEdgeModificationDebounced";
+import FullRadiusDepthInput from "../components/FullRadiusDepthInput";
+import { getAvailablePositions } from "~/components/shape/edge/edgeValidation";
+import { api } from "~/utils/api";
+import { useDrawing } from "~/context/DrawingContext";
+
+interface EditCurveProps {
+	setView: (value: ShapeSheetView) => void;
+}
+
+const EditCurve: FC<EditCurveProps> = ({ setView }) => {
+	const { designId } = useDrawing();
+	const { selectedEdge } = useShape();
+	const deleteEdgeModification = useDeleteEdgeModification(designId);
+	const updateEdgeMod = useUpdateEdgeModificationDebounced(designId);
+
+	// Get cached design data (don't trigger a new query)
+	const utils = api.useUtils();
+	const designData = designId ? utils.design.getById.getData({ id: designId }) : undefined;
+
+	// Calculate available positions for this edge
+	const availablePositions = useMemo(() => {
+		if (!selectedEdge || !designData) {
+			return undefined; // No validation if we don't have the data
+		}
+
+		// Find the shape
+		const shape = designData.shapes.find((s) => s.id === selectedEdge.shapeId);
+		if (!shape) return undefined;
+
+		// Find the edge
+		const edge = shape.edges.find((e) => e.id === selectedEdge.edgeId);
+		if (!edge) return undefined;
+
+		// Get available positions, excluding the current modification being edited
+		// This way the current position is automatically included in available positions
+		const available = getAvailablePositions(
+			edge.edgeModifications,
+			selectedEdge.edgeModification?.id
+		);
+
+		return available;
+	}, [selectedEdge, designData]);
+
+	const handleSizeChange = (value: { depth: number; width: number }) => {
+		if (!selectedEdge?.edgeModification?.id) return;
+		updateEdgeMod.updateSize(
+			selectedEdge.edgeModification.id,
+			value.depth,
+			value.width,
+		);
+	};
+
+	const handleAnglesChange = (value: { left: number; right: number }) => {
+		if (!selectedEdge?.edgeModification?.id) return;
+		updateEdgeMod.updateAngles(
+			selectedEdge.edgeModification.id,
+			value.left,
+			value.right,
+		);
+	};
+
+	const handlePositionChange = (value: string) => {
+		if (!selectedEdge?.edgeModification?.id) return;
+		updateEdgeMod.updatePosition(
+			selectedEdge.edgeModification.id,
+			value as EdgeShapePosition,
+		);
+	};
+
+	const handleDistanceChange = (value: number) => {
+		if (!selectedEdge?.edgeModification?.id) return;
+		updateEdgeMod.updateDistance(selectedEdge.edgeModification.id, value);
+	};
+
+	const handleFullRadiusDepthChange = (value: number) => {
+		if (!selectedEdge?.edgeModification?.id) return;
+
+		updateEdgeMod.updateFullRadiusDepth(
+			selectedEdge.edgeModification.id,
+			value,
+		);
+	};
+
+	const handleDeleteEdgeModification = () => {
+		if (!selectedEdge?.edgeModification?.id) return;
+
+		deleteEdgeModification.mutate({
+			edgeModificationId: selectedEdge.edgeModification.id,
+		});
+
+		setView("generalCurves");
+	};
+
+	const bumpTypeLabel = EdgeModificationList.find(
+		(em) => em.id === selectedEdge?.edgeModification?.type,
+	)?.label;
+	const bumpType = selectedEdge?.edgeModification?.type;
+	const hasPosition =
+		selectedEdge?.edgeModification?.position !== EdgeShapePosition.Center;
+	return (
+		<>
+			<SheetHeader>
+				<SheetTitle className="flex items-center gap-2 text-xl">
+					<Button
+						color="neutral"
+						iconOnly
+						size="sm"
+						variant="text"
+						onClick={() => setView("generalCurves")}
+					>
+						<Icon size="md">
+							<IconArrowLeft />
+						</Icon>
+					</Button>
+					Bump Parameters
+				</SheetTitle>
+			</SheetHeader>
+			<div className="flex flex-col gap-4 p-4">
+				<p>
+					Bump Type:{" "}
+					<span className="text-text-colors-secondary">{bumpTypeLabel}</span>
+				</p>
+				<div className="flex h-[170px] items-center justify-center rounded-md border border-border-neutral">
+					<span className="text-sm text-text-neutral-disabled">TBD.</span>
+				</div>
+				{bumpType !== EdgeModificationType.FullCurve && (
+					<CurvesSizeInput
+						onChange={handleSizeChange}
+						depth={selectedEdge?.edgeModification?.depth ?? 0}
+						width={selectedEdge?.edgeModification?.width ?? 0}
+					/>
+				)}
+				{(bumpType === EdgeModificationType.BumpOut ||
+					bumpType === EdgeModificationType.BumpIn) && (
+						<CurvesAnglesInput
+							onChange={handleAnglesChange}
+							left={selectedEdge?.edgeModification?.sideAngleLeft ?? 0}
+							right={selectedEdge?.edgeModification?.sideAngleRight ?? 0}
+						/>
+					)}
+				{bumpType !== EdgeModificationType.FullCurve && (
+					<PositioningInput
+						onChange={handlePositionChange}
+						position={
+							selectedEdge?.edgeModification?.position ??
+							EdgeShapePosition.Center
+						}
+						availablePositions={availablePositions}
+					/>
+				)}
+				{bumpType !== EdgeModificationType.FullCurve && hasPosition && (
+					<DistanceInput
+						onChange={handleDistanceChange}
+						distance={selectedEdge?.edgeModification?.distance ?? 0}
+					/>
+				)}
+				{bumpType === EdgeModificationType.FullCurve && (
+					<FullRadiusDepthInput
+						onChange={handleFullRadiusDepthChange}
+						fullRadiusDepth={
+							selectedEdge?.edgeModification?.fullRadiusDepth ?? 0
+						}
+					/>
+				)}
+			</div>
+			<SheetFooter>
+				<div className="flex w-full items-center gap-2">
+					<Button
+						variant="outlined"
+						iconLeft={
+							<Icon size="md">
+								<IconCopy />
+							</Icon>
+						}
+						color="neutral"
+						disabled
+						className="flex-1 justify-center"
+					>
+						Duplicate
+					</Button>
+					<Button
+						variant="outlined"
+						iconLeft={
+							<Icon size="md">
+								<IconTrash />
+							</Icon>
+						}
+						color="danger"
+						className="flex-1 justify-center"
+						onClick={handleDeleteEdgeModification}
+					>
+						Remove
+					</Button>
+				</div>
+			</SheetFooter>
+		</>
+	);
+};
+
+export default EditCurve;

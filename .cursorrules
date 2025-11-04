@@ -5,7 +5,6 @@
 - Prioritize clarity over cleverness. Favor explicit math and early returns.
 
 ## Files and ownership
-- src/components/DimensionedPolygon.tsx — Orchestrates state and Konva stage. Event handlers live here.
 - src/components/drawing/types.ts — Extend types here instead of using any.
 - src/components/drawing/constants.ts — Add/modify constants and options here.
 - src/components/drawing/URLImage.tsx — Image drag bounds and interactions.

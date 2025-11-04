@@ -3,7 +3,11 @@
 // #########################################################
 
 import {
+	type CentrelinesX,
+	type CentrelinesY,
 	CornerType,
+	CutoutShape,
+	CutoutSinkType,
 	EdgeModificationType,
 	type EdgeShapePosition,
 } from "@prisma/client";
@@ -24,7 +28,7 @@ export interface Shape {
 	endEdge: Edge;
 	edges: Edge[];
 	corners: Corner[];
-	cutouts: Cutout[];
+	sinkCutouts: SinkCutout[];
 }
 
 // Lightweight coordinate type without ID (for calculations and intermediate data)
@@ -92,34 +96,31 @@ export interface Corner {
 	linkedService: string; // TODO: Define Service type
 }
 
-export interface Cutout {
+export interface SinkCutout {
 	id: string;
 	posX: number;
 	posY: number;
-	config: CutoutConfig;
-	template?: CutoutTemplate;
+	sinkCutoutConfig: SinkCutoutConfig;
+	sinkCutoutTemplate?: SinkCutoutTemplate;
 }
 
-export interface CutoutTemplate {
+export interface SinkCutoutTemplate {
 	id: string;
 	name: string;
-	config: CutoutConfig;
+	sinkCutoutConfig: SinkCutoutConfig;
 }
 
-export type SinkType = "Undermount" | "Drop-in" | "Oval" | "Double";
-export type CutoutShape = "Rectangle" | "Oval" | "Double";
-
-export interface CutoutConfig {
+export interface SinkCutoutConfig {
 	id: string;
-	sinkType: SinkType;
+	sinkType: CutoutSinkType;
 	shape: CutoutShape;
 	length: number;
 	width: number;
 	holeCount: number;
-	centerRules: string; // TODO: Define CenterRules type
-	faucetRules: string; // TODO: Define FaucetRules type
-	product: Product;
-	linkedService: Service;
+	centrelinesX: CentrelinesX;
+	centrelinesY: CentrelinesY;
+	product?: Product;
+	linkedService?: Service;
 }
 
 export interface BacksplashConfig {
@@ -201,6 +202,7 @@ export type CanvasShape = {
 		modificationLength?: number;
 		modificationDepth?: number;
 	}[];
+	sinkCutouts: SinkCutout[];
 };
 
 export type CanvasText = {
@@ -270,7 +272,17 @@ export type EdgeModification = {
 };
 
 // TODO COMMENT
-export type EdgeModificationForCalculation = Pick<EdgeModification, "type" | "position" | "distance" | "width" | "depth" | "fullRadiusDepth" | "sideAngleLeft" | "sideAngleRight">;
+export type EdgeModificationForCalculation = Pick<
+	EdgeModification,
+	| "type"
+	| "position"
+	| "distance"
+	| "width"
+	| "depth"
+	| "fullRadiusDepth"
+	| "sideAngleLeft"
+	| "sideAngleRight"
+>;
 
 export const EdgeModificationList: {
 	id: EdgeModificationType;
@@ -294,3 +306,67 @@ export const CornerModificationList: {
 	{ id: CornerType.Notch, label: "Notch" },
 	{ id: CornerType.None, label: "None" },
 ];
+
+export const CutoutShapeList: {
+	id: CutoutShape;
+	label: string;
+}[] = [
+	{ id: CutoutShape.Rectangle, label: "Rectangle" },
+	{ id: CutoutShape.Oval, label: "Oval" },
+	{ id: CutoutShape.Double, label: "Double" },
+];
+
+export const CutoutSinkTypeList: {
+	id: CutoutSinkType;
+	label: string;
+}[] = [
+	{ id: CutoutSinkType.Undermount, label: "Undermount" },
+	{ id: CutoutSinkType.DropIn, label: "Drop-In" },
+	{ id: CutoutSinkType.Oval, label: "Oval" },
+	{ id: CutoutSinkType.Double, label: "Double" },
+];
+
+export enum DrawingTab {
+	Dimensions = 1,
+	Shape = 2,
+	Edges = 3,
+	Cutouts = 4,
+	Layout = 5,
+	Quote = 6,
+}
+export const DrawingTabList: { id: DrawingTab; label: string }[] = [
+	{ id: DrawingTab.Dimensions, label: "Dimensions" },
+	{ id: DrawingTab.Shape, label: "Shape" },
+	{ id: DrawingTab.Edges, label: "Edges" },
+	{ id: DrawingTab.Cutouts, label: "Cutouts" },
+	{ id: DrawingTab.Layout, label: "Layout" },
+	{ id: DrawingTab.Quote, label: "Quote" },
+];
+
+export enum CursorTypes {
+	Dimesions = 1,
+	Curves = 2,
+	Corners = 3,
+	Edges = 4,
+	Cutouts = 5,
+	Layout = 6,
+	Quote = 7,
+	Text = 8,
+	Area = 9,
+	Package = 10,
+}
+
+export const defaultCursorByTab: Record<DrawingTab, CursorTypes> = {
+	[DrawingTab.Dimensions]: CursorTypes.Dimesions,
+	[DrawingTab.Shape]: CursorTypes.Curves,
+	[DrawingTab.Edges]: CursorTypes.Edges,
+	[DrawingTab.Cutouts]: CursorTypes.Cutouts,
+	[DrawingTab.Layout]: CursorTypes.Layout,
+	[DrawingTab.Quote]: CursorTypes.Quote,
+};
+
+export type ContextMenu = {
+	shapeId: string;
+	x: number;
+	y: number;
+};

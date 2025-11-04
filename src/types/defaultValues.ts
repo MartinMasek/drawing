@@ -1,5 +1,9 @@
 import {
+	CentrelinesX,
+	CentrelinesY,
 	CornerType,
+	CutoutShape,
+	CutoutSinkType,
 	EdgeModificationType,
 	EdgeShapePosition,
 } from "@prisma/client";
@@ -104,6 +108,16 @@ export const defaultCornerNotchValues = {
 	radius: 0,
 	modificationLength: 4,
 	modificationDepth: 4,
+};
+
+export const defaultSinkCutoutValues = {
+	sinkType: CutoutSinkType.Undermount,
+	shape: CutoutShape.Rectangle,
+	length: 27.875,
+	width: 15.9375,
+	holeCount: 3,
+	centrelinesX: CentrelinesX.Left,
+	centrelinesY: CentrelinesY.Top,
 };
 
 export const getDefaultValueForEdgeModification = (

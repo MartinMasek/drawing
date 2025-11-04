@@ -1,12 +1,13 @@
 import type { FC } from "react";
-import { useDrawing } from "./header/context/DrawingContext";
+
 import { Sheet } from "./ui/sheet";
-import SidePanelTriggerButton from "./drawing-old/SidePanelTriggerButton";
-import { CursorTypes } from "./header/header/drawing-types";
-import SidePanelCutouts from "./sidePanelContent/SidePanelCutouts";
-import SidePanelDimensions from "./sidePanelContent/materialSidePanel/MaterialSidePanel";
-import SidePanelEdges from "./sidePanelContent/SidePanelEdges";
-import ShapeSidePanel from "./sidePanelContent/sidePanelShapes/ShapeSidePanel";
+import { CursorTypes } from "~/types/drawing";
+import MaterialSheet from "./sheets/material/MaterialSheet";
+import CutoutSheet from "./sheets/cutout/CutoutSheet";
+import ShapeSheet from "./sheets/shape/ShapeSheet";
+import EdgeSheet from "./sheets/edge/EdgeSheet";
+import SidePanelTriggerButton from "./SidePanelTriggerButton";
+import { useDrawing } from "~/context/DrawingContext";
 
 const SidePanel: FC = () => {
 	const { isOpenSideDialog, setIsOpenSideDialog, cursorType } = useDrawing();
@@ -16,11 +17,11 @@ const SidePanel: FC = () => {
 			<SidePanelTriggerButton />
 			{isOpenSideDialog && (
 				<>
-					{cursorType === CursorTypes.Dimesions && <SidePanelDimensions />}
-					{cursorType === CursorTypes.Curves && <ShapeSidePanel />}
-					{cursorType === CursorTypes.Corners && <ShapeSidePanel />}
-					{cursorType === CursorTypes.Egdes && <SidePanelEdges />}
-					{cursorType === CursorTypes.Cutouts && <SidePanelCutouts />}
+					{cursorType === CursorTypes.Dimesions && <MaterialSheet />}
+					{cursorType === CursorTypes.Curves && <ShapeSheet />}
+					{cursorType === CursorTypes.Corners && <ShapeSheet />}
+					{cursorType === CursorTypes.Edges && <EdgeSheet />}
+					{cursorType === CursorTypes.Cutouts && <CutoutSheet />}
 				</>
 			)}
 		</Sheet>

@@ -1,12 +1,14 @@
 import { useCallback } from "react";
 import type { KonvaEventObject } from "konva/lib/Node";
 import type { CanvasShape, Coordinate } from "~/types/drawing";
-import { CornerType, EdgeModificationType, EdgeShapePosition } from "@prisma/client";
 import {
-	CursorTypes,
-} from "~/components/header/header/drawing-types";
-import { useDrawing } from "~/components/header/context/DrawingContext";
-import { useShape } from "~/components/header/context/ShapeContext";
+	CornerType,
+	EdgeModificationType,
+	EdgeShapePosition,
+} from "@prisma/client";
+import { CursorTypes } from "~/types/drawing";
+import { useDrawing } from "~/context/DrawingContext";
+import { useShape } from "~/context/ShapeContext";
 import { calculateAvailablePosition } from "../edge/edgeValidation";
 
 interface ShapeInteractionHandlers {
@@ -43,119 +45,157 @@ export const useShapeInteractions = (
 		handlers.onDragStart?.();
 	}, [setIsDragging, handlers]);
 
-	const handleDragMove = useCallback((e: KonvaEventObject<DragEvent>) => {
-		const node = e.target;
-		const offsetX = node.x() - (shape.xPos + centerX);
-		const offsetY = node.y() - (shape.yPos + centerY);
-		setDragOffset({ x: offsetX, y: offsetY });
+	const handleDragMove = useCallback(
+		(e: KonvaEventObject<DragEvent>) => {
+			const node = e.target;
+			const offsetX = node.x() - (shape.xPos + centerX);
+			const offsetY = node.y() - (shape.yPos + centerY);
+			setDragOffset({ x: offsetX, y: offsetY });
 
-		// Notify parent of drag position (for temp ID cache updates)
-		if (handlers.onDragMove) {
+			// Notify parent of drag position (for temp ID cache updates)
+			if (handlers.onDragMove) {
+				const newX = node.x() - centerX;
+				const newY = node.y() - centerY;
+				handlers.onDragMove(newX, newY);
+			}
+		},
+		[shape.xPos, shape.yPos, centerX, centerY, setDragOffset, handlers],
+	);
+
+	const handleDragEnd = useCallback(
+		(e: KonvaEventObject<DragEvent>) => {
+			const node = e.target;
 			const newX = node.x() - centerX;
 			const newY = node.y() - centerY;
-			handlers.onDragMove(newX, newY);
-		}
-	}, [shape.xPos, shape.yPos, centerX, centerY, setDragOffset, handlers]);
+			setIsDragging(false);
+			handlers.onDragEnd(newX, newY);
+		},
+		[centerX, centerY, setIsDragging, handlers],
+	);
 
-	const handleDragEnd = useCallback((e: KonvaEventObject<DragEvent>) => {
-		const node = e.target;
-		const newX = node.x() - centerX;
-		const newY = node.y() - centerY;
-		setIsDragging(false);
-		handlers.onDragEnd(newX, newY);
-	}, [centerX, centerY, setIsDragging, handlers]);
+	const handleEdgeClick = useCallback(
+		(
+			edgeIndex: number,
+			point1Id: string,
+			point2Id: string,
+			e: KonvaEventObject<MouseEvent>,
+		) => {
+			if (isDrawing || e.evt.button !== 0) return;
 
-	const handleEdgeClick = useCallback((
-		edgeIndex: number,
-		point1Id: string,
-		point2Id: string,
-		e: KonvaEventObject<MouseEvent>,
-	) => {
-		if (isDrawing || e.evt.button !== 0) return;
+			const startPoint = absolutePoints[edgeIndex];
+			const endPoint = absolutePoints[(edgeIndex + 1) % absolutePoints.length];
 
-		const startPoint = absolutePoints[edgeIndex];
-		const endPoint = absolutePoints[(edgeIndex + 1) % absolutePoints.length];
+			if (!startPoint || !endPoint) return;
 
-		if (!startPoint || !endPoint) return;
+			const doesEdgeExist = shape.edges.find(
+				(edge) => edge.point1Id === point1Id && edge.point2Id === point2Id,
+			);
 
-		const doesEdgeExist = shape.edges.find((edge) => edge.point1Id === point1Id && edge.point2Id === point2Id);
+			const hasModification =
+				doesEdgeExist?.edgeModifications.length &&
+				doesEdgeExist?.edgeModifications.length > 0;
+			const modification = hasModification
+				? doesEdgeExist?.edgeModifications[0]
+				: null;
 
-		const hasModification = doesEdgeExist?.edgeModifications.length && doesEdgeExist?.edgeModifications.length > 0;
-		const modification = hasModification ? doesEdgeExist?.edgeModifications[0] : null;
+			setCursorType(CursorTypes.Curves);
 
-		setCursorType(CursorTypes.Curves);
+			setSelectedEdge({
+				shapeId: shape.id,
+				edgeIndex,
+				edgeId: doesEdgeExist?.id ?? null,
+				edgePoint1Id: point1Id,
+				edgePoint2Id: point2Id,
+				edgeModification: {
+					id: modification?.id ?? null,
+					type: modification?.type ?? EdgeModificationType.None,
+					position: modification?.position ?? EdgeShapePosition.Center,
+					distance: modification?.distance ?? 0,
+					depth: modification?.depth ?? 0,
+					width: modification?.width ?? 0,
+					sideAngleLeft: modification?.sideAngleLeft ?? 0,
+					sideAngleRight: modification?.sideAngleRight ?? 0,
+					fullRadiusDepth: modification?.fullRadiusDepth ?? 0,
+					points: modification?.points ?? [],
+				},
+			});
+			setSelectedCorner(null);
+			handlers.onClick(e);
+		},
+		[
+			isDrawing,
+			absolutePoints,
+			shape,
+			setCursorType,
+			setSelectedEdge,
+			setSelectedCorner,
+			handlers,
+		],
+	);
 
-		setSelectedEdge({
-			shapeId: shape.id,
-			edgeIndex,
-			edgeId: doesEdgeExist?.id ?? null,
-			edgePoint1Id: point1Id,
-			edgePoint2Id: point2Id,
-			edgeModification: {
-				id: modification?.id ?? null,
-				type: modification?.type ?? EdgeModificationType.None,
-				position: modification?.position ?? EdgeShapePosition.Center,
-				distance: modification?.distance ?? 0,
-				depth: modification?.depth ?? 0,
-				width: modification?.width ?? 0,
-				sideAngleLeft: modification?.sideAngleLeft ?? 0,
-				sideAngleRight: modification?.sideAngleRight ?? 0,
-				fullRadiusDepth: modification?.fullRadiusDepth ?? 0,
-				points: modification?.points ?? [],
-			},
-		});
-		setSelectedCorner(null);
-		handlers.onClick(e);
-	}, [isDrawing, absolutePoints, shape, setCursorType, setSelectedEdge, setSelectedCorner, handlers]);
+	const handlePointClick = useCallback(
+		(pointIndex: number, pointId: string, e: KonvaEventObject<MouseEvent>) => {
+			e.cancelBubble = true;
+			if (isDrawing || e.evt.button !== 0) return;
 
-	const handlePointClick = useCallback((
-		pointIndex: number,
-		pointId: string,
-		e: KonvaEventObject<MouseEvent>,
-	) => {
-		e.cancelBubble = true;
-		if (isDrawing || e.evt.button !== 0) return;
+			const point = absolutePoints[pointIndex];
+			if (!point) return;
 
-		const point = absolutePoints[pointIndex];
-		if (!point) return;
+			const doesCornerExist = shape.corners.find(
+				(corner) => corner.pointId === pointId,
+			);
 
-		const doesCornerExist = shape.corners.find((corner) => corner.pointId === pointId);
+			setCursorType(CursorTypes.Corners);
 
-		setCursorType(CursorTypes.Corners);
+			setSelectedCorner({
+				shapeId: shape.id,
+				pointIndex,
+				pointId,
+				cornerId: doesCornerExist?.id ?? null,
+				type: doesCornerExist?.type ?? CornerType.None,
+				clip: doesCornerExist?.clip ?? undefined,
+				radius: doesCornerExist?.radius ?? undefined,
+				modificationLength: doesCornerExist?.modificationLength ?? undefined,
+				modificationDepth: doesCornerExist?.modificationDepth ?? undefined,
+			});
+			setSelectedEdge(null);
+			handlers.onClick(e);
+		},
+		[
+			isDrawing,
+			absolutePoints,
+			shape,
+			setCursorType,
+			setSelectedCorner,
+			setSelectedEdge,
+			handlers,
+		],
+	);
 
-		setSelectedCorner({
-			shapeId: shape.id,
-			pointIndex,
-			pointId,
-			cornerId: doesCornerExist?.id ?? null,
-			type: doesCornerExist?.type ?? CornerType.None,
-			clip: doesCornerExist?.clip ?? undefined,
-			radius: doesCornerExist?.radius ?? undefined,
-			modificationLength: doesCornerExist?.modificationLength ?? undefined,
-			modificationDepth: doesCornerExist?.modificationDepth ?? undefined
-		});
-		setSelectedEdge(null);
-		handlers.onClick(e);
-	}, [isDrawing, absolutePoints, shape, setCursorType, setSelectedCorner, setSelectedEdge, handlers]);
-
-	const handleEdgeMouseEnter = useCallback((index: number) => {
-		if (!isDrawing) {
-			setHoveredEdgeIndex(index);
-			handlers.onMouseEnter();
-		}
-	}, [isDrawing, setHoveredEdgeIndex, handlers]);
+	const handleEdgeMouseEnter = useCallback(
+		(index: number) => {
+			if (!isDrawing) {
+				setHoveredEdgeIndex(index);
+				handlers.onMouseEnter();
+			}
+		},
+		[isDrawing, setHoveredEdgeIndex, handlers],
+	);
 
 	const handleEdgeMouseLeave = useCallback(() => {
 		setHoveredEdgeIndex(null);
 		handlers.onMouseLeave();
 	}, [setHoveredEdgeIndex, handlers]);
 
-	const handlePointMouseEnter = useCallback((index: number) => {
-		if (!isDrawing) {
-			setHoveredPointIndex(index);
-			handlers.onMouseEnter();
-		}
-	}, [isDrawing, setHoveredPointIndex, handlers]);
+	const handlePointMouseEnter = useCallback(
+		(index: number) => {
+			if (!isDrawing) {
+				setHoveredPointIndex(index);
+				handlers.onMouseEnter();
+			}
+		},
+		[isDrawing, setHoveredPointIndex, handlers],
+	);
 
 	const handlePointMouseLeave = useCallback(() => {
 		setHoveredPointIndex(null);
@@ -165,67 +205,82 @@ export const useShapeInteractions = (
 	 * Handle click on a specific modification
 	 * Selects that modification for editing
 	 */
-	const handleModificationClick = useCallback((
-		edgeIndex: number,
-		modificationId: string,
-		e: KonvaEventObject<MouseEvent>,
-	) => {
-		if (isDrawing || e.evt.button !== 0) return;
+	const handleModificationClick = useCallback(
+		(
+			edgeIndex: number,
+			modificationId: string,
+			e: KonvaEventObject<MouseEvent>,
+		) => {
+			if (isDrawing || e.evt.button !== 0) return;
 
-		const point1Id = shape.points[edgeIndex]?.id;
-		const point2Id = shape.points[(edgeIndex + 1) % shape.points.length]?.id;
-		
-		if (!point1Id || !point2Id) return;
+			const point1Id = shape.points[edgeIndex]?.id;
+			const point2Id = shape.points[(edgeIndex + 1) % shape.points.length]?.id;
 
-		const edge = shape.edges.find((edge) => edge.point1Id === point1Id && edge.point2Id === point2Id);
-		const modification = edge?.edgeModifications.find((m) => m.id === modificationId);
+			if (!point1Id || !point2Id) return;
 
-		if (!modification) return;
+			const edge = shape.edges.find(
+				(edge) => edge.point1Id === point1Id && edge.point2Id === point2Id,
+			);
+			const modification = edge?.edgeModifications.find(
+				(m) => m.id === modificationId,
+			);
 
-		setCursorType(CursorTypes.Curves);
+			if (!modification) return;
 
-		setSelectedEdge({
-			shapeId: shape.id,
-			edgeIndex,
-			edgeId: edge?.id ?? null,
-			edgePoint1Id: point1Id,
-			edgePoint2Id: point2Id,
-			edgeModification: {
-				id: modification.id,
-				type: modification.type,
-				position: modification.position,
-				distance: modification.distance,
-				depth: modification.depth,
-				width: modification.width,
-				sideAngleLeft: modification.sideAngleLeft,
-				sideAngleRight: modification.sideAngleRight,
-				fullRadiusDepth: modification.fullRadiusDepth,
-				points: modification.points,
-			},
-		});
-		setSelectedCorner(null);
-		handlers.onClick(e);
-	}, [isDrawing, shape, setCursorType, setSelectedEdge, setSelectedCorner, handlers]);
+			setCursorType(CursorTypes.Curves);
+
+			setSelectedEdge({
+				shapeId: shape.id,
+				edgeIndex,
+				edgeId: edge?.id ?? null,
+				edgePoint1Id: point1Id,
+				edgePoint2Id: point2Id,
+				edgeModification: {
+					id: modification.id,
+					type: modification.type,
+					position: modification.position,
+					distance: modification.distance,
+					depth: modification.depth,
+					width: modification.width,
+					sideAngleLeft: modification.sideAngleLeft,
+					sideAngleRight: modification.sideAngleRight,
+					fullRadiusDepth: modification.fullRadiusDepth,
+					points: modification.points,
+				},
+			});
+			setSelectedCorner(null);
+			handlers.onClick(e);
+		},
+		[
+			isDrawing,
+			shape,
+			setCursorType,
+			setSelectedEdge,
+			setSelectedCorner,
+			handlers,
+		],
+	);
 
 	/**
 	 * Handle click on empty edge segment (for adding new modification)
 	 * Creates a new modification at the clicked position
 	 * Opens side panel even if edge is full (will show warning message in UI)
 	 */
-	const handleEmptyEdgeClick = useCallback((
-		edgeIndex: number,
-		point1Id: string,
-		point2Id: string,
-		clickPosition: EdgeShapePosition,
-		e: KonvaEventObject<MouseEvent>,
-	) => {
-		if (isDrawing || e.evt.button !== 0) return;
+	const handleEmptyEdgeClick = useCallback(
+		(
+			edgeIndex: number,
+			point1Id: string,
+			point2Id: string,
+			clickPosition: EdgeShapePosition,
+			e: KonvaEventObject<MouseEvent>,
+		) => {
+			if (isDrawing || e.evt.button !== 0) return;
 
 		const edge = shape.edges.find((edge) => edge.point1Id === point1Id && edge.point2Id === point2Id);
 		
 		const validPosition = calculateAvailablePosition(edge, clickPosition);
 
-		setCursorType(CursorTypes.Curves);
+			setCursorType(CursorTypes.Curves);
 
 		// Always open side panel - it will show a message if edge is full
 		setSelectedEdge({
@@ -255,12 +310,15 @@ export const useShapeInteractions = (
 	 * Handle mouse enter on a specific modification
 	 * Only highlights that modification, not the entire edge
 	 */
-	const handleModificationMouseEnter = useCallback((modificationId: string) => {
-		if (!isDrawing) {
-			setHoveredModificationId(modificationId);
-			handlers.onMouseEnter();
-		}
-	}, [isDrawing, setHoveredModificationId, handlers]);
+	const handleModificationMouseEnter = useCallback(
+		(modificationId: string) => {
+			if (!isDrawing) {
+				setHoveredModificationId(modificationId);
+				handlers.onMouseEnter();
+			}
+		},
+		[isDrawing, setHoveredModificationId, handlers],
+	);
 
 	/**
 	 * Handle mouse leave from a modification
@@ -286,4 +344,3 @@ export const useShapeInteractions = (
 		handleModificationMouseLeave,
 	};
 };
-

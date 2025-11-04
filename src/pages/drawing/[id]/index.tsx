@@ -2,8 +2,8 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import DrawingLoading from "~/components/DrawingLoading";
 import DrawingHeader from "~/components/header/DrawingHeader";
-import { DrawingProvider } from "~/components/header/context/DrawingContext";
-import { ShapeProvider } from "~/components/header/context/ShapeContext";
+import { DrawingProvider } from "~/context/DrawingContext";
+import { ShapeProvider } from "~/context/ShapeContext";
 import { api } from "~/utils/api";
 
 const DrawingCanvas = dynamic(() => import("~/components/DrawingCanvas"), {
@@ -30,7 +30,7 @@ export default function Drawing() {
 
 	return (
 		<>
-			<DrawingProvider>
+			<DrawingProvider designIdParam={designId}>
 				<main className="flex min-h-screen flex-col overflow-hidden bg-white">
 					<ShapeProvider shapes={design?.shapes}>
 						<DrawingHeader title={design.name} />

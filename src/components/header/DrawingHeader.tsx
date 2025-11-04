@@ -1,9 +1,9 @@
 import type { FC } from "react";
 
-import { Divider } from "./header/Divider";
-import DrawingHeaderActions from "./header/DrawingHeaderActions";
-import DrawingHeaderInfo from "./header/DrawingHeaderInfo";
-import DrawingTabs from "./header/DrawingTabs";
+import { Divider } from "~/components/Divider";
+import DrawingHeaderActions from "./components/DrawingHeaderActions";
+import DrawingHeaderInfo from "./components/DrawingHeaderInfo";
+import DrawingTabs from "./components/DrawingTabs";
 
 type Props = { title?: string };
 
