@@ -25,6 +25,7 @@ const SinkSizeInput: FC<SinkSizeInputProps> = ({ length, width, onChange }) => {
                     inputSize="sm"
                     endAdornment={<p className="text-sm">in</p>}
                     onChange={handleLengthChange}
+                    onlyPositive
                 />
                 <p className="text-sm text-text-neutral-disabled">x</p>
                 <NumberInput className="h-[36px] w-[140px]"
@@ -32,6 +33,7 @@ const SinkSizeInput: FC<SinkSizeInputProps> = ({ length, width, onChange }) => {
                     inputSize="sm"
                     endAdornment={<p className="text-sm">in</p>}
                     onChange={handleWidthChange}
+                    onlyPositive
                 />
             </div>
         </div>

@@ -144,6 +144,7 @@ const EditCurve: FC<EditCurveProps> = ({ setView }) => {
 						onChange={handleSizeChange}
 						depth={selectedEdge?.edgeModification?.depth ?? 0}
 						width={selectedEdge?.edgeModification?.width ?? 0}
+						type={bumpType === EdgeModificationType.BumpOutCurve || bumpType === EdgeModificationType.BumpInCurve ? 'curve' : 'normal'}
 					/>
 				)}
 				{(bumpType === EdgeModificationType.BumpOut ||

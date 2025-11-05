@@ -21,6 +21,7 @@ const ClipInput: FC<ClipInputProps> = ({ onChange, clip }) => {
                 inputSize="sm"
                 endAdornment={<p className="text-sm">in</p>}
                 onChange={handleClipChange}
+                onlyPositive
             />
         </div>
     );

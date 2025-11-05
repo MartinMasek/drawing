@@ -325,9 +325,9 @@ const CurveOverview: FC<
 									onClick={
 										isFullCurveEnabled
 											? () =>
-													handleSelectModification(
-														EdgeModificationType.FullCurve,
-													)
+												handleSelectModification(
+													EdgeModificationType.FullCurve,
+												)
 											: undefined
 									}
 									isActive={
