@@ -21,6 +21,7 @@ const RadiusInput: FC<RadiusInputProps> = ({ onChange, radius }) => {
                 inputSize="sm"
                 endAdornment={<p className="text-sm">in</p>}
                 onChange={handleRadiusChange}
+                onlyPositive
             />
         </div>
     );

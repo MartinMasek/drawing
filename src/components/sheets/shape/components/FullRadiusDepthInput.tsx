@@ -20,6 +20,7 @@ const FullRadiusDepthInput: FC<FullRadiusDepthInputProps> = ({ onChange, fullRad
                 inputSize="sm"
                 endAdornment={<p className="text-sm">in</p>}
                 onChange={handleFullRadiusDepthChange}
+                onlyPositive
             />
         </div>
     );

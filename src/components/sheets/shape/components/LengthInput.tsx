@@ -21,6 +21,7 @@ const LengthInput: FC<LengthInputProps> = ({ onChange, length }) => {
 				inputSize="sm"
 				endAdornment={<p className="text-sm">in</p>}
 				onChange={handleLengthChange}
+				onlyPositive
 			/>
 		</div>
 	);

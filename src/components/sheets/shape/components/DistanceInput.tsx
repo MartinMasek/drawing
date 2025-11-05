@@ -20,6 +20,7 @@ const DistanceInput: FC<DistanceInputProps> = ({ onChange, distance }) => {
 				inputSize="sm"
 				endAdornment={<p className="text-sm">in</p>}
 				onChange={handleDistanceChange}
+				onlyPositive
 			/>
 		</div>
 	);

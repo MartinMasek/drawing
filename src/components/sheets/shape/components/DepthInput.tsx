@@ -21,6 +21,7 @@ const DepthInput: FC<DepthInputProps> = ({ onChange, depth }) => {
                 inputSize="sm"
                 endAdornment={<p className="text-sm">in</p>}
                 onChange={handleDepthChange}
+                onlyPositive
             />
         </div>
     );
